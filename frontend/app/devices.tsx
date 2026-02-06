@@ -383,9 +383,24 @@ export default function Devices() {
             <Text style={styles.deviceCode}>Kod: {device.kod_kreskowy}</Text>
           )}
           {assignedWorker && !isInstalled && (
-            <View style={styles.assignedBadge}>
-              <Ionicons name="person" size={12} color="#3b82f6" />
-              <Text style={styles.assignedName}>{assignedWorker.name}</Text>
+            <View style={styles.assignedInfo}>
+              <View style={styles.assignedBadge}>
+                <Ionicons name="person" size={12} color="#3b82f6" />
+                <Text style={styles.assignedName}>{assignedWorker.name}</Text>
+              </View>
+              {/* Transfer button for admin on assigned devices */}
+              {isAdmin && device.status === 'przypisany' && (
+                <TouchableOpacity
+                  style={styles.transferButton}
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    openTransferModal(device);
+                  }}
+                >
+                  <Ionicons name="swap-horizontal" size={14} color="#8b5cf6" />
+                  <Text style={styles.transferButtonText}>Przenieś</Text>
+                </TouchableOpacity>
+              )}
             </View>
           )}
           
