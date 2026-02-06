@@ -12,7 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
 import { useAuth } from '../src/context/AuthContext';
-import { uploadFile } from '../src/utils/api';
+import { uploadFile, uploadFileWeb } from '../src/utils/api';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function Import() {
