@@ -419,16 +419,15 @@ export default function Tasks() {
             </View>
           )}
           
-          {/* Photos badge - clickable for admin */}
+          {/* Photos badge - clickable for admin and worker */}
           {item.completion_photos && item.completion_photos.length > 0 && (
             <TouchableOpacity 
               style={styles.photosBadge}
-              onPress={() => isAdmin && openPhotosModal(item)}
-              disabled={!isAdmin}
+              onPress={() => openPhotosModal(item)}
             >
               <Ionicons name="camera" size={14} color="#10b981" />
               <Text style={styles.photosText}>
-                {item.completion_photos.length} {isAdmin ? '(podgląd)' : 'zdjęć'}
+                {item.completion_photos.length} zdjęć (podgląd)
               </Text>
             </TouchableOpacity>
           )}
