@@ -240,20 +240,20 @@ export default function Devices() {
   const handleRestoreDevice = async (device: Device) => {
     const confirmRestore = () => {
       if (Platform.OS === 'web') {
-        return window.confirm(`Czy na pewno chcesz przywrócić urządzenie "${device.numer_seryjny}" do statusu "Dostępne"?`);
+        return window.confirm(`Czy na pewno chcesz przywrócić urządzenie "${device.numer_seryjny}" do użytkownika który je zainstalował?`);
       }
       return true; // For mobile, we handle via Alert
     };
 
     const performRestore = async () => {
       try {
-        await apiFetch(`/api/devices/${device.device_id}/restore`, {
+        const result = await apiFetch(`/api/devices/${device.device_id}/restore`, {
           method: 'POST',
         });
         if (Platform.OS === 'web') {
-          window.alert('Urządzenie zostało przywrócone do statusu "Dostępne"');
+          window.alert(result.message || 'Urządzenie zostało przywrócone');
         } else {
-          Alert.alert('Sukces', 'Urządzenie zostało przywrócone do statusu "Dostępne"');
+          Alert.alert('Sukces', result.message || 'Urządzenie zostało przywrócone');
         }
         loadData();
       } catch (error: any) {
@@ -272,12 +272,44 @@ export default function Devices() {
     } else {
       Alert.alert(
         'Przywróć urządzenie',
-        `Czy na pewno chcesz przywrócić urządzenie "${device.numer_seryjny}" do statusu "Dostępne"?`,
+        `Czy na pewno chcesz przywrócić urządzenie "${device.numer_seryjny}" do użytkownika który je zainstalował?`,
         [
           { text: 'Anuluj', style: 'cancel' },
           { text: 'Przywróć', onPress: performRestore }
         ]
       );
+    }
+  };
+
+  const openTransferModal = (device: Device) => {
+    setDeviceToTransfer(device);
+    setTransferModalVisible(true);
+  };
+
+  const handleTransferDevice = async (newWorkerId: string) => {
+    if (!deviceToTransfer) return;
+    
+    try {
+      const result = await apiFetch(`/api/devices/${deviceToTransfer.device_id}/transfer`, {
+        method: 'POST',
+        body: { worker_id: newWorkerId },
+      });
+      
+      if (Platform.OS === 'web') {
+        window.alert(result.message || 'Urządzenie zostało przeniesione');
+      } else {
+        Alert.alert('Sukces', result.message || 'Urządzenie zostało przeniesione');
+      }
+      
+      setTransferModalVisible(false);
+      setDeviceToTransfer(null);
+      loadData();
+    } catch (error: any) {
+      if (Platform.OS === 'web') {
+        window.alert('Błąd: ' + error.message);
+      } else {
+        Alert.alert('Błąd', error.message);
+      }
     }
   };
 
