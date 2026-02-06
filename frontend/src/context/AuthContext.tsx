@@ -96,39 +96,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Check initial URL on mount (cold start)
     const checkInitialUrl = async () => {
-      // For web, check window.location.hash
-      if (Platform.OS === 'web' && typeof window !== 'undefined') {
-        const hash = window.location.hash;
-        if (hash && hash.includes('session_id=')) {
-          const sessionId = hash.match(/session_id=([^&]+)/)?.[1];
+      try {
+        // For web, check window.location.hash
+        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+          const hash = window.location.hash;
+          const search = window.location.search;
+          
+          // Check both hash and query params for session_id
+          let sessionId = null;
+          if (hash && hash.includes('session_id=')) {
+            sessionId = hash.match(/session_id=([^&]+)/)?.[1];
+          } else if (search && search.includes('session_id=')) {
+            sessionId = search.match(/session_id=([^&]+)/)?.[1];
+          }
+          
           if (sessionId) {
             await processSessionId(sessionId);
             // Clean URL
             window.history.replaceState(null, '', window.location.pathname);
             return;
           }
+          
+          // No session_id, check existing auth
+          await checkAuth();
+          return;
         }
-      }
 
-      // For mobile, check Linking
-      const initialUrl = await Linking.getInitialURL();
-      if (initialUrl) {
-        await handleUrl(initialUrl);
-      } else {
-        await checkAuth();
+        // For mobile, check Linking
+        const initialUrl = await Linking.getInitialURL();
+        if (initialUrl) {
+          await handleUrl(initialUrl);
+        } else {
+          await checkAuth();
+        }
+      } catch (error) {
+        console.error('Error checking initial URL:', error);
+        setIsLoading(false);
       }
     };
 
     checkInitialUrl();
 
-    // Listen for URL changes
-    const subscription = Linking.addEventListener('url', (event) => {
-      handleUrl(event.url);
-    });
+    // Listen for URL changes (mobile only)
+    if (Platform.OS !== 'web') {
+      const subscription = Linking.addEventListener('url', (event) => {
+        handleUrl(event.url);
+      });
 
-    return () => {
-      subscription.remove();
-    };
+      return () => {
+        subscription.remove();
+      };
+    }
   }, []);
 
   const login = async () => {
