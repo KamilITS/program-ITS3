@@ -1436,4 +1436,43 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
   },
+  assignedInfo: {
+    marginTop: 4,
+  },
+  transferButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+    marginTop: 6,
+    gap: 4,
+  },
+  transferButtonText: {
+    color: '#8b5cf6',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  currentOwnerBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+    marginTop: 8,
+    gap: 6,
+  },
+  currentOwnerText: {
+    color: '#f59e0b',
+    fontSize: 13,
+  },
+  selectNewWorkerLabel: {
+    color: '#888',
+    fontSize: 14,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 12,
+  },
 });
