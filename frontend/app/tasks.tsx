@@ -257,10 +257,17 @@ export default function Tasks() {
   };
 
   const handleDeleteTask = async (taskId: string) => {
-    Alert.alert(
-      'Usuń zadanie',
-      'Czy na pewno chcesz usunąć to zadanie?',
-      [
+    if (Platform.OS === 'web') {
+      if (window.confirm('Czy na pewno chcesz usunąć to zadanie?')) {
+        try {
+          await apiFetch(`/api/tasks/${taskId}`, { method: 'DELETE' });
+          await loadData();
+        } catch (error: any) {
+          window.alert('Błąd: ' + error.message);
+        }
+      }
+    } else {
+      Alert.alert('Usuń zadanie', 'Czy na pewno chcesz usunąć to zadanie?', [
         { text: 'Anuluj', style: 'cancel' },
         {
           text: 'Usuń',
@@ -274,8 +281,25 @@ export default function Tasks() {
             }
           },
         },
-      ]
-    );
+      ]);
+    }
+  };
+
+  const openPhotosModal = (task: Task) => {
+    if (task.completion_photos && task.completion_photos.length > 0) {
+      setViewingPhotos(task.completion_photos);
+      setViewingTaskTitle(task.title);
+      setPhotosModalVisible(true);
+    }
+  };
+
+  const isTaskUrgent = (taskId: string) => {
+    return reminders.some(r => r.task_id === taskId);
+  };
+
+  const getTaskReminderMinutes = (taskId: string) => {
+    const reminder = reminders.find(r => r.task_id === taskId);
+    return reminder?.minutes_left;
   };
 
   const filteredTasks = tasks.filter((task) => 
