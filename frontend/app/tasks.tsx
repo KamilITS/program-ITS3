@@ -533,6 +533,94 @@ export default function Tasks() {
           </View>
         </View>
       </Modal>
+
+      {/* Complete Task Modal */}
+      <Modal
+        visible={completeModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setCompleteModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Zakończ zadanie</Text>
+              <TouchableOpacity onPress={() => setCompleteModalVisible(false)}>
+                <Ionicons name="close" size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalBody}>
+              {selectedTask && (
+                <View style={styles.taskSummary}>
+                  <Text style={styles.taskSummaryTitle}>{selectedTask.title}</Text>
+                  {selectedTask.description && (
+                    <Text style={styles.taskSummaryDesc}>{selectedTask.description}</Text>
+                  )}
+                </View>
+              )}
+
+              <View style={styles.photoRequirement}>
+                <Ionicons name="camera" size={24} color="#f59e0b" />
+                <Text style={styles.photoRequirementText}>
+                  Dodaj minimum 1 zdjęcie potwierdzające wykonanie zadania
+                </Text>
+              </View>
+
+              <View style={styles.photoButtons}>
+                <TouchableOpacity style={styles.photoButton} onPress={takePhoto}>
+                  <Ionicons name="camera" size={24} color="#fff" />
+                  <Text style={styles.photoButtonText}>Zrób zdjęcie</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.photoButton} onPress={pickImage}>
+                  <Ionicons name="images" size={24} color="#fff" />
+                  <Text style={styles.photoButtonText}>Wybierz z galerii</Text>
+                </TouchableOpacity>
+              </View>
+
+              {completionPhotos.length > 0 && (
+                <View style={styles.photosGrid}>
+                  {completionPhotos.map((photo, index) => (
+                    <View key={index} style={styles.photoContainer}>
+                      <Image source={{ uri: photo }} style={styles.photoPreview} />
+                      <TouchableOpacity
+                        style={styles.removePhotoButton}
+                        onPress={() => removePhoto(index)}
+                      >
+                        <Ionicons name="close-circle" size={24} color="#ef4444" />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              <Text style={styles.photosCount}>
+                Dodano zdjęć: {completionPhotos.length}
+              </Text>
+            </ScrollView>
+
+            <TouchableOpacity
+              style={[
+                styles.completeTaskButton,
+                completionPhotos.length === 0 && styles.completeTaskButtonDisabled
+              ]}
+              onPress={handleCompleteTask}
+              disabled={isSubmitting || completionPhotos.length === 0}
+            >
+              {isSubmitting ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <>
+                  <Ionicons name="checkmark-circle" size={24} color="#fff" />
+                  <Text style={styles.completeTaskButtonText}>
+                    {completionPhotos.length === 0 ? 'Dodaj zdjęcie aby zakończyć' : 'Zakończ zadanie'}
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
