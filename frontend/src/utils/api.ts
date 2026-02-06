@@ -34,17 +34,41 @@ export async function apiFetch(endpoint: string, options: FetchOptions = {}) {
   return response.json();
 }
 
-export async function uploadFile(endpoint: string, file: any) {
+export async function uploadFile(endpoint: string, file: { uri: string; name: string; type: string }) {
   const token = await AsyncStorage.getItem('session_token');
   
   const formData = new FormData();
-  formData.append('file', file);
+  
+  // Check if we're on web platform
+  if (typeof window !== 'undefined' && file.uri.startsWith('blob:')) {
+    // Web platform - fetch the blob and create a File object
+    const response = await fetch(file.uri);
+    const blob = await response.blob();
+    const fileObj = new File([blob], file.name, { type: file.type });
+    formData.append('file', fileObj);
+  } else if (typeof window !== 'undefined' && file.uri.startsWith('data:')) {
+    // Web platform with data URI - convert to blob
+    const response = await fetch(file.uri);
+    const blob = await response.blob();
+    const fileObj = new File([blob], file.name, { type: file.type });
+    formData.append('file', fileObj);
+  } else {
+    // Mobile platform - append as-is
+    formData.append('file', {
+      uri: file.uri,
+      name: file.name,
+      type: file.type,
+    } as any);
+  }
+  
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
   
   const response = await fetch(`${API_URL}${endpoint}`, {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
+    headers,
     body: formData,
   });
   
