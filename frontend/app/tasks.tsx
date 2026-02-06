@@ -848,6 +848,35 @@ export default function Tasks() {
           </View>
         </View>
       </Modal>
+
+      {/* Photos Viewing Modal */}
+      <Modal
+        visible={photosModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setPhotosModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Zdjęcia - {viewingTaskTitle}</Text>
+              <TouchableOpacity onPress={() => setPhotosModalVisible(false)}>
+                <Ionicons name="close" size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalBody}>
+              <View style={styles.photosGrid}>
+                {viewingPhotos.map((photo, index) => (
+                  <View key={index} style={styles.fullPhotoContainer}>
+                    <Image source={{ uri: photo }} style={styles.fullPhoto} />
+                  </View>
+                ))}
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
