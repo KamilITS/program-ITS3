@@ -772,6 +772,65 @@ export default function Devices() {
         </View>
       </Modal>
 
+      {/* Transfer Device Modal */}
+      <Modal
+        visible={transferModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setTransferModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Przenieś urządzenie</Text>
+              <TouchableOpacity onPress={() => setTransferModalVisible(false)}>
+                <Ionicons name="close" size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
+            
+            {deviceToTransfer && (
+              <View style={styles.modalDeviceInfo}>
+                <Text style={styles.modalDeviceName}>{deviceToTransfer.nazwa}</Text>
+                <Text style={styles.modalDeviceSerial}>{deviceToTransfer.numer_seryjny}</Text>
+                {deviceToTransfer.przypisany_do && (
+                  <View style={styles.currentOwnerBadge}>
+                    <Ionicons name="person" size={14} color="#f59e0b" />
+                    <Text style={styles.currentOwnerText}>
+                      Obecnie: {workers.find(w => w.user_id === deviceToTransfer.przypisany_do)?.name || 'Nieznany'}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            )}
+            
+            <Text style={styles.selectNewWorkerLabel}>Wybierz nowego właściciela:</Text>
+            
+            <FlatList
+              data={workers.filter(w => deviceToTransfer ? w.user_id !== deviceToTransfer.przypisany_do : true)}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.workerItem}
+                  onPress={() => handleTransferDevice(item.user_id)}
+                >
+                  <View style={styles.workerAvatar}>
+                    <Ionicons name="person" size={24} color="#fff" />
+                  </View>
+                  <View style={styles.workerInfo}>
+                    <Text style={styles.workerName}>{item.name}</Text>
+                    <Text style={styles.workerEmail}>{item.email}</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color="#888" />
+                </TouchableOpacity>
+              )}
+              keyExtractor={(item) => item.user_id}
+              ListEmptyComponent={
+                <Text style={styles.noWorkersText}>Brak innych pracowników</Text>
+              }
+            />
+          </View>
+        </View>
+      </Modal>
+
       {/* Advanced Filters Modal */}
       <Modal
         visible={showFiltersModal}
