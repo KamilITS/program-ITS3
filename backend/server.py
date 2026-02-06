@@ -943,6 +943,375 @@ async def get_daily_report(user: dict = Depends(require_user)):
         "by_user": report
     }
 
+# ==================== BACKUP FUNCTIONS ====================
+
+async def create_backup_data() -> dict:
+    """Create backup of all database collections"""
+    backup = {
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "version": "1.0",
+        "data": {}
+    }
+    
+    # Backup users (without passwords for security, but with hashed passwords for restore)
+    users = await db.users.find({}, {"_id": 0}).to_list(1000)
+    backup["data"]["users"] = users
+    
+    # Backup devices
+    devices = await db.devices.find({}, {"_id": 0}).to_list(10000)
+    backup["data"]["devices"] = devices
+    
+    # Backup installations
+    installations = await db.installations.find({}, {"_id": 0}).to_list(10000)
+    # Convert datetime objects to strings
+    for inst in installations:
+        if "data_instalacji" in inst and isinstance(inst["data_instalacji"], datetime):
+            inst["data_instalacji"] = inst["data_instalacji"].isoformat()
+    backup["data"]["installations"] = installations
+    
+    # Backup tasks
+    tasks = await db.tasks.find({}, {"_id": 0}).to_list(10000)
+    for task in tasks:
+        if "due_date" in task and isinstance(task["due_date"], datetime):
+            task["due_date"] = task["due_date"].isoformat()
+        if "created_at" in task and isinstance(task["created_at"], datetime):
+            task["created_at"] = task["created_at"].isoformat()
+    backup["data"]["tasks"] = tasks
+    
+    # Backup messages (without attachments for size)
+    messages = await db.messages.find({}, {"_id": 0, "attachment": 0}).to_list(10000)
+    for msg in messages:
+        if "created_at" in msg and isinstance(msg["created_at"], datetime):
+            msg["created_at"] = msg["created_at"].isoformat()
+    backup["data"]["messages"] = messages
+    
+    return backup
+
+def send_backup_email(backup_data: bytes, filename: str, settings: dict) -> bool:
+    """Send backup file via email"""
+    try:
+        msg = MIMEMultipart()
+        msg['From'] = settings['smtp_user']
+        msg['To'] = settings['email_recipient']
+        msg['Subject'] = f"Kopia zapasowa Magazyn ITS - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+        
+        body = f"""Automatyczna kopia zapasowa bazy danych Magazyn ITS Kielce.
+
+Data utworzenia: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+Rozmiar: {len(backup_data) / 1024:.2f} KB
+
+Ta wiadomość została wygenerowana automatycznie."""
+        
+        msg.attach(MIMEText(body, 'plain', 'utf-8'))
+        
+        # Attach backup file
+        part = MIMEBase('application', 'octet-stream')
+        part.set_payload(backup_data)
+        encoders.encode_base64(part)
+        part.add_header('Content-Disposition', f'attachment; filename="{filename}"')
+        msg.attach(part)
+        
+        # Send email
+        if settings.get('smtp_use_tls', True):
+            server = smtplib.SMTP(settings['smtp_host'], settings['smtp_port'])
+            server.starttls()
+        else:
+            server = smtplib.SMTP_SSL(settings['smtp_host'], settings['smtp_port'])
+        
+        server.login(settings['smtp_user'], settings['smtp_password'])
+        server.send_message(msg)
+        server.quit()
+        
+        return True
+    except Exception as e:
+        logger.error(f"Failed to send backup email: {e}")
+        return False
+
+def send_backup_ftp(backup_data: bytes, filename: str, settings: dict) -> bool:
+    """Upload backup file to FTP server"""
+    try:
+        ftp = ftplib.FTP()
+        ftp.connect(settings['ftp_host'], settings.get('ftp_port', 21))
+        ftp.login(settings['ftp_user'], settings['ftp_password'])
+        
+        # Navigate to backup directory
+        ftp_path = settings.get('ftp_path', '/backups/')
+        try:
+            ftp.cwd(ftp_path)
+        except:
+            # Try to create directory if it doesn't exist
+            ftp.mkd(ftp_path)
+            ftp.cwd(ftp_path)
+        
+        # Upload file
+        ftp.storbinary(f'STOR {filename}', BytesIO(backup_data))
+        ftp.quit()
+        
+        return True
+    except Exception as e:
+        logger.error(f"Failed to upload backup to FTP: {e}")
+        return False
+
+# ==================== BACKUP ENDPOINTS ====================
+
+@api_router.get("/backup/settings")
+async def get_backup_settings(request: Request):
+    """Get backup settings (admin only)"""
+    user = await get_current_user(request)
+    if not user or user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Brak uprawnień")
+    
+    settings = await db.backup_settings.find_one({}, {"_id": 0})
+    if not settings:
+        # Return default settings
+        settings = {
+            "smtp_host": "",
+            "smtp_port": 587,
+            "smtp_user": "",
+            "smtp_password": "",
+            "smtp_use_tls": True,
+            "email_recipient": "",
+            "email_enabled": False,
+            "ftp_host": "",
+            "ftp_port": 21,
+            "ftp_user": "",
+            "ftp_password": "",
+            "ftp_path": "/backups/",
+            "ftp_enabled": False,
+            "schedule_enabled": False,
+            "schedule_time": "02:00"
+        }
+    
+    # Hide passwords in response
+    if settings.get("smtp_password"):
+        settings["smtp_password"] = "********"
+    if settings.get("ftp_password"):
+        settings["ftp_password"] = "********"
+    
+    return settings
+
+@api_router.post("/backup/settings")
+async def update_backup_settings(request: Request):
+    """Update backup settings (admin only)"""
+    user = await get_current_user(request)
+    if not user or user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Brak uprawnień")
+    
+    data = await request.json()
+    
+    # Get existing settings to preserve passwords if not changed
+    existing = await db.backup_settings.find_one({})
+    
+    settings = {
+        "smtp_host": data.get("smtp_host", ""),
+        "smtp_port": data.get("smtp_port", 587),
+        "smtp_user": data.get("smtp_user", ""),
+        "smtp_use_tls": data.get("smtp_use_tls", True),
+        "email_recipient": data.get("email_recipient", ""),
+        "email_enabled": data.get("email_enabled", False),
+        "ftp_host": data.get("ftp_host", ""),
+        "ftp_port": data.get("ftp_port", 21),
+        "ftp_user": data.get("ftp_user", ""),
+        "ftp_path": data.get("ftp_path", "/backups/"),
+        "ftp_enabled": data.get("ftp_enabled", False),
+        "schedule_enabled": data.get("schedule_enabled", False),
+        "schedule_time": data.get("schedule_time", "02:00"),
+        "updated_at": datetime.now(timezone.utc)
+    }
+    
+    # Handle password fields - only update if not placeholder
+    if data.get("smtp_password") and data.get("smtp_password") != "********":
+        settings["smtp_password"] = data["smtp_password"]
+    elif existing and existing.get("smtp_password"):
+        settings["smtp_password"] = existing["smtp_password"]
+    else:
+        settings["smtp_password"] = ""
+    
+    if data.get("ftp_password") and data.get("ftp_password") != "********":
+        settings["ftp_password"] = data["ftp_password"]
+    elif existing and existing.get("ftp_password"):
+        settings["ftp_password"] = existing["ftp_password"]
+    else:
+        settings["ftp_password"] = ""
+    
+    await db.backup_settings.update_one({}, {"$set": settings}, upsert=True)
+    
+    return {"status": "ok", "message": "Ustawienia zostały zapisane"}
+
+@api_router.post("/backup/create")
+async def create_backup(request: Request):
+    """Create a new backup (admin only)"""
+    user = await get_current_user(request)
+    if not user or user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Brak uprawnień")
+    
+    data = await request.json()
+    send_email = data.get("send_email", False)
+    send_ftp = data.get("send_ftp", False)
+    
+    try:
+        # Create backup data
+        backup = await create_backup_data()
+        backup_json = json.dumps(backup, ensure_ascii=False, indent=2)
+        backup_bytes = backup_json.encode('utf-8')
+        
+        filename = f"magazyn_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        
+        # Log backup
+        log = {
+            "backup_id": f"backup_{uuid.uuid4().hex[:12]}",
+            "created_at": datetime.now(timezone.utc),
+            "size_bytes": len(backup_bytes),
+            "status": "success",
+            "sent_email": False,
+            "sent_ftp": False,
+            "error_message": None
+        }
+        
+        errors = []
+        
+        # Send via email if requested
+        if send_email:
+            settings = await db.backup_settings.find_one({})
+            if settings and settings.get("email_enabled") and settings.get("smtp_host"):
+                if send_backup_email(backup_bytes, filename, settings):
+                    log["sent_email"] = True
+                else:
+                    errors.append("Email: nie udało się wysłać")
+            else:
+                errors.append("Email: nie skonfigurowano")
+        
+        # Send via FTP if requested
+        if send_ftp:
+            settings = await db.backup_settings.find_one({})
+            if settings and settings.get("ftp_enabled") and settings.get("ftp_host"):
+                if send_backup_ftp(backup_bytes, filename, settings):
+                    log["sent_ftp"] = True
+                else:
+                    errors.append("FTP: nie udało się wysłać")
+            else:
+                errors.append("FTP: nie skonfigurowano")
+        
+        if errors:
+            log["error_message"] = "; ".join(errors)
+        
+        await db.backup_logs.insert_one(log)
+        
+        return {
+            "status": "ok",
+            "backup_id": log["backup_id"],
+            "size_bytes": log["size_bytes"],
+            "sent_email": log["sent_email"],
+            "sent_ftp": log["sent_ftp"],
+            "errors": errors
+        }
+        
+    except Exception as e:
+        logger.error(f"Backup failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Błąd tworzenia kopii zapasowej: {str(e)}")
+
+@api_router.get("/backup/download")
+async def download_backup(request: Request):
+    """Download backup file (admin only)"""
+    user = await get_current_user(request)
+    if not user or user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Brak uprawnień")
+    
+    try:
+        backup = await create_backup_data()
+        backup_json = json.dumps(backup, ensure_ascii=False, indent=2)
+        backup_bytes = backup_json.encode('utf-8')
+        
+        filename = f"magazyn_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        
+        # Log the download
+        log = {
+            "backup_id": f"backup_{uuid.uuid4().hex[:12]}",
+            "created_at": datetime.now(timezone.utc),
+            "size_bytes": len(backup_bytes),
+            "status": "success",
+            "sent_email": False,
+            "sent_ftp": False,
+            "downloaded": True
+        }
+        await db.backup_logs.insert_one(log)
+        
+        return StreamingResponse(
+            BytesIO(backup_bytes),
+            media_type="application/json",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+        )
+        
+    except Exception as e:
+        logger.error(f"Backup download failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Błąd pobierania kopii zapasowej: {str(e)}")
+
+@api_router.get("/backup/logs")
+async def get_backup_logs(request: Request):
+    """Get backup history (admin only)"""
+    user = await get_current_user(request)
+    if not user or user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Brak uprawnień")
+    
+    logs = await db.backup_logs.find({}, {"_id": 0}).sort("created_at", -1).to_list(50)
+    return logs
+
+@api_router.post("/backup/test-email")
+async def test_email_backup(request: Request):
+    """Test email configuration (admin only)"""
+    user = await get_current_user(request)
+    if not user or user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Brak uprawnień")
+    
+    settings = await db.backup_settings.find_one({})
+    if not settings or not settings.get("smtp_host"):
+        raise HTTPException(status_code=400, detail="Email nie jest skonfigurowany")
+    
+    try:
+        # Create a small test backup
+        test_data = {
+            "test": True,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "message": "To jest testowa kopia zapasowa"
+        }
+        test_bytes = json.dumps(test_data, ensure_ascii=False).encode('utf-8')
+        filename = f"test_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        
+        if send_backup_email(test_bytes, filename, settings):
+            return {"status": "ok", "message": "Email testowy został wysłany"}
+        else:
+            raise HTTPException(status_code=500, detail="Nie udało się wysłać emaila testowego")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Błąd: {str(e)}")
+
+@api_router.post("/backup/test-ftp")
+async def test_ftp_backup(request: Request):
+    """Test FTP configuration (admin only)"""
+    user = await get_current_user(request)
+    if not user or user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Brak uprawnień")
+    
+    settings = await db.backup_settings.find_one({})
+    if not settings or not settings.get("ftp_host"):
+        raise HTTPException(status_code=400, detail="FTP nie jest skonfigurowany")
+    
+    try:
+        # Create a small test file
+        test_data = {
+            "test": True,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "message": "To jest testowa kopia zapasowa"
+        }
+        test_bytes = json.dumps(test_data, ensure_ascii=False).encode('utf-8')
+        filename = f"test_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        
+        if send_backup_ftp(test_bytes, filename, settings):
+            return {"status": "ok", "message": "Plik testowy został wysłany na FTP"}
+        else:
+            raise HTTPException(status_code=500, detail="Nie udało się wysłać pliku na FTP")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Błąd: {str(e)}")
+
 # ==================== HEALTH CHECK ====================
 
 @api_router.get("/")
