@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 import uuid
 
 # Get backend URL from frontend .env
-BACKEND_URL = "https://inventotracker.preview.emergentagent.com"
+BACKEND_URL = "https://inventory-plus-101.preview.emergentagent.com"
 API_BASE = f"{BACKEND_URL}/api"
 
 # Test data
