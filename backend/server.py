@@ -459,14 +459,56 @@ async def assign_device(device_id: str, request: Request, admin: dict = Depends(
 
 @api_router.get("/devices/scan/{code}")
 async def scan_device(code: str, user: dict = Depends(require_user)):
-    """Find device by barcode or QR code"""
+    """Find device by barcode, QR code, or serial number (exact or partial match)"""
+    # Clean the code - remove whitespace and special characters
+    clean_code = code.strip().replace('\r', '').replace('\n', '')
+    
+    # First try exact match
     device = await db.devices.find_one(
-        {"$or": [{"kod_kreskowy": code}, {"kod_qr": code}, {"numer_seryjny": code}]},
+        {"$or": [
+            {"kod_kreskowy": clean_code}, 
+            {"kod_qr": clean_code}, 
+            {"numer_seryjny": clean_code}
+        ]},
         {"_id": 0}
     )
-    if not device:
-        raise HTTPException(status_code=404, detail="Nie znaleziono urządzenia")
-    return device
+    
+    if device:
+        return device
+    
+    # Try case-insensitive match
+    device = await db.devices.find_one(
+        {"$or": [
+            {"kod_kreskowy": {"$regex": f"^{clean_code}$", "$options": "i"}}, 
+            {"kod_qr": {"$regex": f"^{clean_code}$", "$options": "i"}}, 
+            {"numer_seryjny": {"$regex": f"^{clean_code}$", "$options": "i"}}
+        ]},
+        {"_id": 0}
+    )
+    
+    if device:
+        return device
+    
+    # Try partial match on serial number (contains)
+    device = await db.devices.find_one(
+        {"numer_seryjny": {"$regex": clean_code, "$options": "i"}},
+        {"_id": 0}
+    )
+    
+    if device:
+        return device
+    
+    # Try if code contains the serial number
+    all_devices = await db.devices.find({}, {"_id": 0}).to_list(1000)
+    for dev in all_devices:
+        if dev.get("numer_seryjny") and dev["numer_seryjny"].upper() in clean_code.upper():
+            return dev
+        if dev.get("kod_kreskowy") and dev["kod_kreskowy"].upper() in clean_code.upper():
+            return dev
+        if dev.get("kod_qr") and dev["kod_qr"].upper() in clean_code.upper():
+            return dev
+    
+    raise HTTPException(status_code=404, detail="Nie znaleziono urządzenia")
 
 # ==================== INSTALLATIONS ====================
 
