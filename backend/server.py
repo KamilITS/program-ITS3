@@ -636,6 +636,28 @@ async def assign_multiple_devices(request: Request, admin: dict = Depends(requir
     
     return {"message": f"Przypisano {result.modified_count} urządzeń"}
 
+@api_router.post("/devices/{device_id}/restore")
+async def restore_device(device_id: str, admin: dict = Depends(require_admin)):
+    """Restore installed device back to available status (admin only)"""
+    # Check if device exists and is installed
+    device = await db.devices.find_one({"device_id": device_id})
+    if not device:
+        raise HTTPException(status_code=404, detail="Nie znaleziono urządzenia")
+    
+    if device.get("status") != "zainstalowany":
+        raise HTTPException(status_code=400, detail="Urządzenie nie jest zainstalowane")
+    
+    # Restore device to available status
+    result = await db.devices.update_one(
+        {"device_id": device_id},
+        {"$set": {"status": "dostepny", "przypisany_do": None}}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=500, detail="Nie udało się przywrócić urządzenia")
+    
+    return {"message": "Urządzenie zostało przywrócone do statusu 'Dostępne'"}
+
 @api_router.get("/devices/scan/{code}")
 async def scan_device(code: str, user: dict = Depends(require_user)):
     """Find device by barcode, QR code, or serial number (exact or partial match)"""
