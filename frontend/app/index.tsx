@@ -75,11 +75,10 @@ export default function Index() {
           <View style={styles.logoContainer}>
             <Ionicons name="cube-outline" size={80} color="#3b82f6" />
             <Text style={styles.title}>Magazyn ITS</Text>
-            <Text style={styles.subtitle}>Kielce</Text>
           </View>
 
           <Text style={styles.description}>
-            System zarządzania magazynem{'\n'}i pracownikami
+            System zarządzania magazynem
           </Text>
 
           {/* Login Form */}
