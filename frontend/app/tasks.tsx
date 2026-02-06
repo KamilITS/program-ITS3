@@ -327,7 +327,7 @@ export default function Tasks() {
     const dueDate = new Date(item.due_date);
     const isOverdue = isBefore(dueDate, new Date()) && item.status !== 'zakonczone';
     const isUrgent = isTaskUrgent(item.task_id);
-    const reminderMinutes = getTaskReminderMinutes(item.task_id);
+    const minutesLeft = getTaskReminderMinutes(item.task_id);
 
     return (
       <View style={[
@@ -335,11 +335,12 @@ export default function Tasks() {
         item.status === 'zakonczone' && styles.taskCardCompleted,
         isUrgent && styles.taskCardUrgent,
       ]}>
+        {/* Urgent reminder banner */}
         {isUrgent && (
           <View style={styles.urgentBanner}>
-            <Ionicons name="warning" size={16} color="#ef4444" />
-            <Text style={styles.urgentText}>
-              Kończy się za {reminderMinutes} minut!
+            <Ionicons name="alarm" size={16} color="#fff" />
+            <Text style={styles.urgentBannerText}>
+              ⚠️ Zostało {minutesLeft} min do terminu!
             </Text>
           </View>
         )}
@@ -400,13 +401,13 @@ export default function Tasks() {
             <Text style={styles.priorityText}>{item.priority}</Text>
           </View>
 
-          <View style={[styles.dueDateBadge, isOverdue && styles.overdueBadge]}>
+          <View style={[styles.dueDateBadge, isOverdue && styles.overdueBadge, isUrgent && styles.urgentBadge]}>
             <Ionicons
               name="calendar-outline"
               size={14}
-              color={isOverdue ? '#ef4444' : '#888'}
+              color={isOverdue ? '#ef4444' : isUrgent ? '#f59e0b' : '#888'}
             />
-            <Text style={[styles.dueDateText, isOverdue && styles.overdueText]}>
+            <Text style={[styles.dueDateText, isOverdue && styles.overdueText, isUrgent && styles.urgentText]}>
               {getDateLabel(item.due_date)}
             </Text>
           </View>
@@ -418,13 +419,17 @@ export default function Tasks() {
             </View>
           )}
           
+          {/* Photos badge - clickable for admin */}
           {item.completion_photos && item.completion_photos.length > 0 && (
             <TouchableOpacity 
               style={styles.photosBadge}
-              onPress={() => openPhotosModal(item)}
+              onPress={() => isAdmin && openPhotosModal(item)}
+              disabled={!isAdmin}
             >
               <Ionicons name="camera" size={14} color="#10b981" />
-              <Text style={styles.photosText}>{item.completion_photos.length} zdjęć</Text>
+              <Text style={styles.photosText}>
+                {item.completion_photos.length} {isAdmin ? '(podgląd)' : 'zdjęć'}
+              </Text>
             </TouchableOpacity>
           )}
         </View>
