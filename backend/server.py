@@ -219,7 +219,7 @@ async def create_default_admin():
 # ==================== AUTH ENDPOINTS ====================
 
 @api_router.post("/auth/login")
-async def login(data: LoginRequest, response: Response):
+async def login(data: LoginRequest, request: Request, response: Response):
     """Login with email and password"""
     user = await db.users.find_one(
         {"email": data.email.lower()},
@@ -240,12 +240,27 @@ async def login(data: LoginRequest, response: Response):
     session_token = generate_token()
     expires_at = datetime.now(timezone.utc) + timedelta(days=7)
     
+    # Get IP address and User-Agent
+    forwarded_for = request.headers.get("X-Forwarded-For", "")
+    client_ip = forwarded_for.split(",")[0].strip() if forwarded_for else (request.client.host if request.client else "nieznany")
+    user_agent = request.headers.get("User-Agent", "nieznany")
+    
     await db.user_sessions.insert_one({
         "user_id": user["user_id"],
         "session_token": session_token,
         "expires_at": expires_at,
         "created_at": datetime.now(timezone.utc)
     })
+    
+    # Save last login info to user document
+    await db.users.update_one(
+        {"user_id": user["user_id"]},
+        {"$set": {
+            "last_login_at": datetime.now(timezone.utc),
+            "last_login_ip": client_ip,
+            "last_login_device": user_agent
+        }}
+    )
     
     response.set_cookie(
         key="session_token",
