@@ -518,32 +518,52 @@ export default function Devices() {
       </View>
 
       {/* Status Filters */}
-      <ScrollView 
-        horizontal 
-        showsHorizontalScrollIndicator={false}
-        style={styles.filtersScroll}
-        contentContainerStyle={styles.filtersContainer}
-      >
-        {statusFilters.map((filter) => (
-          <TouchableOpacity
-            key={filter.key || 'all'}
-            style={[
-              styles.filterButton,
-              statusFilter === filter.key && styles.filterButtonActive,
-            ]}
-            onPress={() => setStatusFilter(filter.key)}
-          >
-            <Text
+      <View style={styles.filtersRow}>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          style={styles.filtersScroll}
+          contentContainerStyle={styles.filtersContainer}
+        >
+          {statusFilters.map((filter) => (
+            <TouchableOpacity
+              key={filter.key || 'all'}
               style={[
-                styles.filterText,
-                statusFilter === filter.key && styles.filterTextActive,
+                styles.filterButton,
+                statusFilter === filter.key && styles.filterButtonActive,
               ]}
+              onPress={() => setStatusFilter(filter.key)}
             >
-              {filter.label}
-            </Text>
+              <Text
+                style={[
+                  styles.filterText,
+                  statusFilter === filter.key && styles.filterTextActive,
+                ]}
+              >
+                {filter.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+        
+        {/* Advanced Filters Button - Admin Only */}
+        {isAdmin && (
+          <TouchableOpacity
+            style={[
+              styles.advancedFilterButton,
+              activeFiltersCount > 0 && styles.advancedFilterButtonActive
+            ]}
+            onPress={() => setShowFiltersModal(true)}
+          >
+            <Ionicons name="options" size={20} color={activeFiltersCount > 0 ? '#fff' : '#3b82f6'} />
+            {activeFiltersCount > 0 && (
+              <View style={styles.filterBadge}>
+                <Text style={styles.filterBadgeText}>{activeFiltersCount}</Text>
+              </View>
+            )}
           </TouchableOpacity>
-        ))}
-      </ScrollView>
+        )}
+      </View>
 
       {/* Stats */}
       <View style={styles.statsRow}>
