@@ -1,198 +1,203 @@
-diff --git a/backend/server.py b/backend/server.py
-index 1f0e32e..593420d 100644
---- a/backend/server.py
-+++ b/backend/server.py
-@@ -403,7 +403,7 @@ async def create_installation(request: Request, user: User = Depends(require_use
-         "rodzaj_zlecenia": body.get("rodzaj_zlecenia", "instalacja")
-     }
-     
--    await db.installations.insert_one(installation)
-+    result = await db.installations.insert_one(installation)
-     
-     # Update device status
-     await db.devices.update_one(
-@@ -411,7 +411,8 @@ async def create_installation(request: Request, user: User = Depends(require_use
-         {"$set": {"status": "zainstalowany"}}
-     )
-     
--    return installation
-+    # Return the installation without _id
-+    return {k: v for k, v in installation.items() if k != "_id"}
- 
- @api_router.get("/installations")
- async def get_installations(
-@@ -503,8 +504,8 @@ async def send_message(request: Request, user: User = Depends(require_user)):
-         "created_at": datetime.now(timezone.utc)
-     }
-     
--    await db.messages.insert_one(message)
--    return message
-+    result = await db.messages.insert_one(message)
-+    return {k: v for k, v in message.items() if k != "_id"}
- 
- @api_router.get("/messages")
- async def get_messages(
-@@ -539,8 +540,8 @@ async def create_task(request: Request, admin: User = Depends(require_admin)):
-         "created_at": datetime.now(timezone.utc)
-     }
-     
--    await db.tasks.insert_one(task)
--    return task
-+    result = await db.tasks.insert_one(task)
-+    return {k: v for k, v in task.items() if k != "_id"}
- 
- @api_router.get("/tasks")
- async def get_tasks(
-diff --git a/test_result.md b/test_result.md
-index 5d6ff83..047ff09 100644
---- a/test_result.md
-+++ b/test_result.md
-@@ -107,87 +107,108 @@ user_problem_statement: "Aplikacja mobilna Magazyn ITS Kielce - zarządzanie mag
- backend:
-   - task: "API Health Check"
-     implemented: true
--    working: NA
-+    working: true
-     file: "server.py"
-     stuck_count: 0
-     priority: "high"
--    needs_retesting: true
-+    needs_retesting: false
-     status_history:
-       - working: NA
-         agent: "main"
-         comment: "Podstawowe API endpoints utworzone"
-+      - working: true
-+        agent: "testing"
-+        comment: "✅ Health endpoints working correctly. GET /api/ and GET /api/health both return proper responses with status 'ok'"
- 
-   - task: "Google Auth (Emergent)"
-     implemented: true
--    working: NA
-+    working: true
-     file: "server.py"
-     stuck_count: 0
-     priority: "high"
--    needs_retesting: true
-+    needs_retesting: false
-     status_history:
-       - working: NA
-         agent: "main"
-         comment: "Emergent Auth session exchange implemented"
-+      - working: true
-+        agent: "testing"
-+        comment: "✅ Authentication system working. Session-based auth with Bearer tokens functional. GET /api/auth/me returns correct user data"
- 
-   - task: "User Management API"
-     implemented: true
--    working: NA
-+    working: true
-     file: "server.py"
-     stuck_count: 0
-     priority: "high"
--    needs_retesting: true
-+    needs_retesting: false
-     status_history:
-       - working: NA
-         agent: "main"
-         comment: "GET /users, PUT /users/{id}/role endpoints"
-+      - working: true
-+        agent: "testing"
-+        comment: "✅ User management working. GET /api/users returns user list, GET /api/workers returns workers, admin role verification functional"
- 
-   - task: "Device Management API"
-     implemented: true
--    working: NA
-+    working: true
-     file: "server.py"
-     stuck_count: 0
-     priority: "high"
--    needs_retesting: true
-+    needs_retesting: false
-     status_history:
-       - working: NA
-         agent: "main"
-         comment: "CRUD + import XLSX + scan endpoints"
-+      - working: true
-+        agent: "testing"
-+        comment: "✅ Device management fully functional. GET /api/devices, GET /api/devices/{id}, and scan endpoints (barcode, QR, serial) all working correctly"
- 
-   - task: "Installation Recording API"
-     implemented: true
--    working: NA
-+    working: true
-     file: "server.py"
-     stuck_count: 0
-     priority: "high"
--    needs_retesting: true
-+    needs_retesting: false
-     status_history:
-       - working: NA
-         agent: "main"
-         comment: "POST /installations, GET /installations, stats"
-+      - working: true
-+        agent: "testing"
-+        comment: "✅ Installation recording working perfectly. POST /api/installations creates records, GET /api/installations retrieves data, GET /api/installations/stats provides analytics. Fixed ObjectId serialization issue"
- 
-   - task: "Chat Messages API"
-     implemented: true
--    working: NA
-+    working: true
-     file: "server.py"
-     stuck_count: 0
-     priority: "medium"
--    needs_retesting: true
-+    needs_retesting: false
-     status_history:
-       - working: NA
-         agent: "main"
-         comment: "POST/GET messages with attachments"
-+      - working: true
-+        agent: "testing"
-+        comment: "✅ Chat system working. POST /api/messages sends messages, GET /api/messages retrieves message history. Fixed ObjectId serialization issue"
- 
-   - task: "Tasks/Planner API"
-     implemented: true
--    working: NA
-+    working: true
-     file: "server.py"
-     stuck_count: 0
-     priority: "medium"
--    needs_retesting: true
-+    needs_retesting: false
-     status_history:
-       - working: NA
-         agent: "main"
-         comment: "CRUD for tasks with assignment"
-+      - working: true
-+        agent: "testing"
-+        comment: "✅ Task management fully functional. POST /api/tasks creates tasks, GET /api/tasks retrieves tasks, PUT /api/tasks/{id} updates tasks, DELETE /api/tasks/{id} removes tasks. Fixed ObjectId serialization issue"
- 
- frontend:
-   - task: "Login Screen with Google Auth"
-@@ -301,18 +322,17 @@ frontend:
- metadata:
-   created_by: "main_agent"
-   version: "1.0"
--  test_sequence: 1
-+  test_sequence: 2
-   run_ui: false
- 
- test_plan:
--  current_focus:
--    - "API Health Check"
--    - "Device Management API"
--    - "Installation Recording API"
-+  current_focus: []
-   stuck_tasks: []
-   test_all: false
-   test_priority: "high_first"
- 
- agent_communication:
-   - agent: "main"
--    message: "MVP aplikacji magazynowej zaimplementowany. Backend z FastAPI + MongoDB, Frontend z Expo React Native. Główne funkcje: auth Google, zarządzanie urządzeniami, skanowanie kodów, czat, zadania, statystyki. Proszę przetestować backend API."
-\ No newline at end of file
-+    message: "MVP aplikacji magazynowej zaimplementowany. Backend z FastAPI + MongoDB, Frontend z Expo React Native. Główne funkcje: auth Google, zarządzanie urządzeniami, skanowanie kodów, czat, zadania, statystyki. Proszę przetestować backend API."
-+  - agent: "testing"
-+    message: "✅ Backend testing completed successfully! All 24 tests passed (100% success rate). Fixed ObjectId serialization issues in POST endpoints for installations, messages, and tasks. All core functionality working: health checks, authentication, device management, installation recording, chat messages, task management, and user management. Authentication properly enforced on protected endpoints."
-\ No newline at end of file
+diff --git a/model.patch b/model.patch
+index dc413c5..e69de29 100644
+--- a/model.patch
++++ b/model.patch
+@@ -1,198 +0,0 @@
+-diff --git a/backend/server.py b/backend/server.py
+-index 1f0e32e..593420d 100644
+---- a/backend/server.py
+-+++ b/backend/server.py
+-@@ -403,7 +403,7 @@ async def create_installation(request: Request, user: User = Depends(require_use
+-         "rodzaj_zlecenia": body.get("rodzaj_zlecenia", "instalacja")
+-     }
+-     
+--    await db.installations.insert_one(installation)
+-+    result = await db.installations.insert_one(installation)
+-     
+-     # Update device status
+-     await db.devices.update_one(
+-@@ -411,7 +411,8 @@ async def create_installation(request: Request, user: User = Depends(require_use
+-         {"$set": {"status": "zainstalowany"}}
+-     )
+-     
+--    return installation
+-+    # Return the installation without _id
+-+    return {k: v for k, v in installation.items() if k != "_id"}
+- 
+- @api_router.get("/installations")
+- async def get_installations(
+-@@ -503,8 +504,8 @@ async def send_message(request: Request, user: User = Depends(require_user)):
+-         "created_at": datetime.now(timezone.utc)
+-     }
+-     
+--    await db.messages.insert_one(message)
+--    return message
+-+    result = await db.messages.insert_one(message)
+-+    return {k: v for k, v in message.items() if k != "_id"}
+- 
+- @api_router.get("/messages")
+- async def get_messages(
+-@@ -539,8 +540,8 @@ async def create_task(request: Request, admin: User = Depends(require_admin)):
+-         "created_at": datetime.now(timezone.utc)
+-     }
+-     
+--    await db.tasks.insert_one(task)
+--    return task
+-+    result = await db.tasks.insert_one(task)
+-+    return {k: v for k, v in task.items() if k != "_id"}
+- 
+- @api_router.get("/tasks")
+- async def get_tasks(
+-diff --git a/test_result.md b/test_result.md
+-index 5d6ff83..047ff09 100644
+---- a/test_result.md
+-+++ b/test_result.md
+-@@ -107,87 +107,108 @@ user_problem_statement: "Aplikacja mobilna Magazyn ITS Kielce - zarządzanie mag
+- backend:
+-   - task: "API Health Check"
+-     implemented: true
+--    working: NA
+-+    working: true
+-     file: "server.py"
+-     stuck_count: 0
+-     priority: "high"
+--    needs_retesting: true
+-+    needs_retesting: false
+-     status_history:
+-       - working: NA
+-         agent: "main"
+-         comment: "Podstawowe API endpoints utworzone"
+-+      - working: true
+-+        agent: "testing"
+-+        comment: "✅ Health endpoints working correctly. GET /api/ and GET /api/health both return proper responses with status 'ok'"
+- 
+-   - task: "Google Auth (Emergent)"
+-     implemented: true
+--    working: NA
+-+    working: true
+-     file: "server.py"
+-     stuck_count: 0
+-     priority: "high"
+--    needs_retesting: true
+-+    needs_retesting: false
+-     status_history:
+-       - working: NA
+-         agent: "main"
+-         comment: "Emergent Auth session exchange implemented"
+-+      - working: true
+-+        agent: "testing"
+-+        comment: "✅ Authentication system working. Session-based auth with Bearer tokens functional. GET /api/auth/me returns correct user data"
+- 
+-   - task: "User Management API"
+-     implemented: true
+--    working: NA
+-+    working: true
+-     file: "server.py"
+-     stuck_count: 0
+-     priority: "high"
+--    needs_retesting: true
+-+    needs_retesting: false
+-     status_history:
+-       - working: NA
+-         agent: "main"
+-         comment: "GET /users, PUT /users/{id}/role endpoints"
+-+      - working: true
+-+        agent: "testing"
+-+        comment: "✅ User management working. GET /api/users returns user list, GET /api/workers returns workers, admin role verification functional"
+- 
+-   - task: "Device Management API"
+-     implemented: true
+--    working: NA
+-+    working: true
+-     file: "server.py"
+-     stuck_count: 0
+-     priority: "high"
+--    needs_retesting: true
+-+    needs_retesting: false
+-     status_history:
+-       - working: NA
+-         agent: "main"
+-         comment: "CRUD + import XLSX + scan endpoints"
+-+      - working: true
+-+        agent: "testing"
+-+        comment: "✅ Device management fully functional. GET /api/devices, GET /api/devices/{id}, and scan endpoints (barcode, QR, serial) all working correctly"
+- 
+-   - task: "Installation Recording API"
+-     implemented: true
+--    working: NA
+-+    working: true
+-     file: "server.py"
+-     stuck_count: 0
+-     priority: "high"
+--    needs_retesting: true
+-+    needs_retesting: false
+-     status_history:
+-       - working: NA
+-         agent: "main"
+-         comment: "POST /installations, GET /installations, stats"
+-+      - working: true
+-+        agent: "testing"
+-+        comment: "✅ Installation recording working perfectly. POST /api/installations creates records, GET /api/installations retrieves data, GET /api/installations/stats provides analytics. Fixed ObjectId serialization issue"
+- 
+-   - task: "Chat Messages API"
+-     implemented: true
+--    working: NA
+-+    working: true
+-     file: "server.py"
+-     stuck_count: 0
+-     priority: "medium"
+--    needs_retesting: true
+-+    needs_retesting: false
+-     status_history:
+-       - working: NA
+-         agent: "main"
+-         comment: "POST/GET messages with attachments"
+-+      - working: true
+-+        agent: "testing"
+-+        comment: "✅ Chat system working. POST /api/messages sends messages, GET /api/messages retrieves message history. Fixed ObjectId serialization issue"
+- 
+-   - task: "Tasks/Planner API"
+-     implemented: true
+--    working: NA
+-+    working: true
+-     file: "server.py"
+-     stuck_count: 0
+-     priority: "medium"
+--    needs_retesting: true
+-+    needs_retesting: false
+-     status_history:
+-       - working: NA
+-         agent: "main"
+-         comment: "CRUD for tasks with assignment"
+-+      - working: true
+-+        agent: "testing"
+-+        comment: "✅ Task management fully functional. POST /api/tasks creates tasks, GET /api/tasks retrieves tasks, PUT /api/tasks/{id} updates tasks, DELETE /api/tasks/{id} removes tasks. Fixed ObjectId serialization issue"
+- 
+- frontend:
+-   - task: "Login Screen with Google Auth"
+-@@ -301,18 +322,17 @@ frontend:
+- metadata:
+-   created_by: "main_agent"
+-   version: "1.0"
+--  test_sequence: 1
+-+  test_sequence: 2
+-   run_ui: false
+- 
+- test_plan:
+--  current_focus:
+--    - "API Health Check"
+--    - "Device Management API"
+--    - "Installation Recording API"
+-+  current_focus: []
+-   stuck_tasks: []
+-   test_all: false
+-   test_priority: "high_first"
+- 
+- agent_communication:
+-   - agent: "main"
+--    message: "MVP aplikacji magazynowej zaimplementowany. Backend z FastAPI + MongoDB, Frontend z Expo React Native. Główne funkcje: auth Google, zarządzanie urządzeniami, skanowanie kodów, czat, zadania, statystyki. Proszę przetestować backend API."
+-\ No newline at end of file
+-+    message: "MVP aplikacji magazynowej zaimplementowany. Backend z FastAPI + MongoDB, Frontend z Expo React Native. Główne funkcje: auth Google, zarządzanie urządzeniami, skanowanie kodów, czat, zadania, statystyki. Proszę przetestować backend API."
+-+  - agent: "testing"
+-+    message: "✅ Backend testing completed successfully! All 24 tests passed (100% success rate). Fixed ObjectId serialization issues in POST endpoints for installations, messages, and tasks. All core functionality working: health checks, authentication, device management, installation recording, chat messages, task management, and user management. Authentication properly enforced on protected endpoints."
+-\ No newline at end of file
