@@ -540,8 +540,8 @@ async def create_task(request: Request, admin: User = Depends(require_admin)):
         "created_at": datetime.now(timezone.utc)
     }
     
-    await db.tasks.insert_one(task)
-    return task
+    result = await db.tasks.insert_one(task)
+    return {k: v for k, v in task.items() if k != "_id"}
 
 @api_router.get("/tasks")
 async def get_tasks(
