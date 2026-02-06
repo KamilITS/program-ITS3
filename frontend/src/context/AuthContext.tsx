@@ -15,9 +15,9 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  register: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -92,39 +92,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const register = async (email: string, password: string, name: string): Promise<{ success: boolean; error?: string }> => {
-    try {
-      setIsLoading(true);
-      const response = await fetch(`${API_URL}/api/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password, name }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        await AsyncStorage.setItem('session_token', data.session_token);
-        setUser({
-          user_id: data.user_id,
-          email: data.email,
-          name: data.name,
-          role: data.role,
-        });
-        return { success: true };
-      } else {
-        return { success: false, error: data.detail || 'Błąd rejestracji' };
-      }
-    } catch (error) {
-      console.error('Register failed:', error);
-      return { success: false, error: 'Błąd połączenia z serwerem' };
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const logout = async () => {
     try {
       const token = await AsyncStorage.getItem('session_token');
@@ -148,15 +115,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await checkAuth();
   };
 
+  const changePassword = async (currentPassword: string, newPassword: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const token = await AsyncStorage.getItem('session_token');
+      const response = await fetch(`${API_URL}/api/auth/change-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        return { success: true };
+      } else {
+        return { success: false, error: data.detail || 'Błąd zmiany hasła' };
+      }
+    } catch (error) {
+      console.error('Change password failed:', error);
+      return { success: false, error: 'Błąd połączenia z serwerem' };
+    }
+  };
+
   return (
     <AuthContext.Provider value={{
       user,
       isLoading,
       isAuthenticated: !!user,
       login,
-      register,
       logout,
       refreshUser,
+      changePassword,
     }}>
       {children}
     </AuthContext.Provider>
