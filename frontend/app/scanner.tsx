@@ -9,6 +9,8 @@ import {
   ScrollView,
   ActivityIndicator,
   Platform,
+  Modal,
+  FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -27,6 +29,12 @@ interface Device {
   status: string;
 }
 
+interface ScannedCode {
+  type: string;
+  data: string;
+  timestamp: number;
+}
+
 export default function Scanner() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
@@ -36,10 +44,14 @@ export default function Scanner() {
   const [isSearching, setIsSearching] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
-  const [address, setAddress] = useState('');
+  const [gpsAddress, setGpsAddress] = useState('');
+  const [clientAddress, setClientAddress] = useState('');
   const [orderType, setOrderType] = useState<string>('instalacja');
   const [showCamera, setShowCamera] = useState(false);
-  const [lastScannedCode, setLastScannedCode] = useState('');
+  
+  // Multiple codes handling
+  const [scannedCodes, setScannedCodes] = useState<ScannedCode[]>([]);
+  const [showCodeSelection, setShowCodeSelection] = useState(false);
 
   const orderTypes = ['instalacja', 'wymiana', 'awaria', 'uszkodzony'];
 
@@ -63,13 +75,12 @@ export default function Scanner() {
             longitude: loc.coords.longitude,
           });
           
-          // Reverse geocode
           const [addr] = await Location.reverseGeocodeAsync({
             latitude: loc.coords.latitude,
             longitude: loc.coords.longitude,
           });
           if (addr) {
-            setAddress(`${addr.street || ''} ${addr.streetNumber || ''}, ${addr.city || ''}`);
+            setGpsAddress(`${addr.street || ''} ${addr.streetNumber || ''}, ${addr.city || ''}`);
           }
         } catch (error) {
           console.error('Location error:', error);
@@ -78,28 +89,21 @@ export default function Scanner() {
     })();
   }, []);
 
-  // Parse scanned data - extract serial number from various formats
   const parseScannedData = (rawData: string): string => {
-    // Remove whitespace and normalize
     let data = rawData.trim();
     
-    // If it contains newlines or carriage returns, try to extract serial number
     if (data.includes('\n') || data.includes('\r')) {
       const lines = data.split(/[\r\n]+/).filter(line => line.trim());
       
-      // Look for serial number patterns
       for (const line of lines) {
-        // Pattern: starts with S, SN, or contains serial indicators
         if (line.match(/^S[N]?[0-9A-Z]/i) || line.match(/^[0-9]{2}S[A-Z0-9]/i)) {
           return line.trim();
         }
-        // Pattern: 20SM... format (common serial number format)
         if (line.match(/^20S[A-Z]/i)) {
           return line.trim();
         }
       }
       
-      // If no specific pattern found, return the longest alphanumeric line
       const sortedLines = lines.sort((a, b) => b.length - a.length);
       for (const line of sortedLines) {
         if (line.match(/^[A-Z0-9]+$/i) && line.length >= 6) {
@@ -107,7 +111,6 @@ export default function Scanner() {
         }
       }
       
-      // Return first meaningful line
       return lines[0]?.trim() || data;
     }
     
@@ -115,18 +118,39 @@ export default function Scanner() {
   };
 
   const handleBarCodeScanned = async ({ type, data }: { type: string; data: string }) => {
-    // Prevent duplicate scans
-    if (scanned || data === lastScannedCode) return;
-    
     const parsedCode = parseScannedData(data);
-    setLastScannedCode(data);
-    setScanned(true);
+    const now = Date.now();
+    
+    // Check if this code was already scanned recently (within 2 seconds)
+    const existingCode = scannedCodes.find(
+      c => c.data === parsedCode && now - c.timestamp < 2000
+    );
+    
+    if (existingCode) return;
+    
+    const newCode: ScannedCode = { type, data: parsedCode, timestamp: now };
+    const updatedCodes = [...scannedCodes.filter(c => now - c.timestamp < 3000), newCode];
+    setScannedCodes(updatedCodes);
+    
+    // If multiple codes detected, show selection modal
+    if (updatedCodes.length > 1) {
+      setShowCodeSelection(true);
+    } else {
+      // Single code - process immediately after a short delay
+      setTimeout(() => {
+        if (scannedCodes.length <= 1) {
+          selectCode(parsedCode);
+        }
+      }, 500);
+    }
+  };
+
+  const selectCode = async (code: string) => {
+    setShowCodeSelection(false);
     setShowCamera(false);
-    
-    console.log('Scanned raw:', data);
-    console.log('Parsed code:', parsedCode);
-    
-    await searchDevice(parsedCode);
+    setScanned(true);
+    setScannedCodes([]);
+    await searchDevice(code);
   };
 
   const searchDevice = async (code: string) => {
@@ -135,16 +159,14 @@ export default function Scanner() {
       return;
     }
     
-    // Clean the code
     const cleanCode = code.trim().replace(/[\r\n]/g, '');
     
     setIsSearching(true);
     try {
       const foundDevice = await apiFetch(`/api/devices/scan/${encodeURIComponent(cleanCode)}`);
       setDevice(foundDevice);
-      setManualCode(cleanCode);
+      setManualCode(foundDevice.numer_seryjny || cleanCode);
     } catch (error: any) {
-      // Try searching by parts if full code fails
       const parts = code.split(/[\r\n\s]+/).filter(p => p.trim());
       let found = false;
       
@@ -153,11 +175,11 @@ export default function Scanner() {
           try {
             const foundDevice = await apiFetch(`/api/devices/scan/${encodeURIComponent(part.trim())}`);
             setDevice(foundDevice);
-            setManualCode(part.trim());
+            setManualCode(foundDevice.numer_seryjny || part.trim());
             found = true;
             break;
           } catch (e) {
-            // Continue trying other parts
+            // Continue trying
           }
         }
       }
@@ -165,7 +187,7 @@ export default function Scanner() {
       if (!found) {
         Alert.alert(
           'Nie znaleziono',
-          `Urządzenie o kodzie "${cleanCode}" nie istnieje w systemie.\n\nSprawdź czy numer seryjny jest poprawny lub dodaj urządzenie przez import.`
+          `Urządzenie o kodzie "${cleanCode}" nie istnieje w systemie.\n\nSprawdź czy numer seryjny jest poprawny.`
         );
         setDevice(null);
       }
@@ -177,13 +199,18 @@ export default function Scanner() {
   const handleInstall = async () => {
     if (!device) return;
     
+    if (!clientAddress.trim()) {
+      Alert.alert('Błąd', 'Wprowadź adres klienta');
+      return;
+    }
+    
     setIsInstalling(true);
     try {
       await apiFetch('/api/installations', {
         method: 'POST',
         body: {
           device_id: device.device_id,
-          adres: address,
+          adres_klienta: clientAddress.trim(),
           latitude: location?.latitude,
           longitude: location?.longitude,
           rodzaj_zlecenia: orderType,
@@ -192,13 +219,8 @@ export default function Scanner() {
       
       Alert.alert(
         'Sukces',
-        `Urządzenie "${device.nazwa}" zostało zarejestrowane jako ${orderType}`,
-        [{ text: 'OK', onPress: () => {
-          setDevice(null);
-          setScanned(false);
-          setManualCode('');
-          setLastScannedCode('');
-        }}]
+        `Urządzenie "${device.nazwa}"\nNumer seryjny: ${device.numer_seryjny}\n\nZostało zarejestrowane jako ${orderType}\nAdres: ${clientAddress}`,
+        [{ text: 'OK', onPress: resetScanner }]
       );
     } catch (error: any) {
       Alert.alert('Błąd', error.message || 'Nie udało się zarejestrować instalacji');
@@ -211,7 +233,9 @@ export default function Scanner() {
     setScanned(false);
     setDevice(null);
     setManualCode('');
-    setLastScannedCode('');
+    setClientAddress('');
+    setScannedCodes([]);
+    setShowCodeSelection(false);
   };
 
   if (isLoading) {
@@ -240,7 +264,7 @@ export default function Scanner() {
           <View style={styles.cameraContainer}>
             <CameraView
               style={styles.camera}
-              onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+              onBarcodeScanned={handleBarCodeScanned}
               barcodeScannerSettings={{
                 barcodeTypes: ['qr', 'ean13', 'ean8', 'code128', 'code39', 'code93', 'codabar', 'itf14', 'upc_a', 'upc_e', 'pdf417', 'aztec', 'datamatrix'],
               }}
@@ -250,20 +274,46 @@ export default function Scanner() {
             </View>
             <TouchableOpacity
               style={styles.closeCameraButton}
-              onPress={() => setShowCamera(false)}
+              onPress={() => {
+                setShowCamera(false);
+                setScannedCodes([]);
+              }}
             >
               <Ionicons name="close" size={24} color="#fff" />
             </TouchableOpacity>
             <View style={styles.scanHint}>
-              <Text style={styles.scanHintText}>Skieruj kamerę na kod QR lub kreskowy</Text>
+              <Text style={styles.scanHintText}>
+                {scannedCodes.length > 0 
+                  ? `Wykryto ${scannedCodes.length} kod(y) - dotknij aby wybrać`
+                  : 'Skieruj kamerę na kod QR lub kreskowy'
+                }
+              </Text>
             </View>
+            
+            {/* Scanned codes preview */}
+            {scannedCodes.length > 0 && (
+              <View style={styles.scannedCodesPreview}>
+                {scannedCodes.map((code, index) => (
+                  <TouchableOpacity
+                    key={`${code.data}-${index}`}
+                    style={styles.scannedCodeItem}
+                    onPress={() => selectCode(code.data)}
+                  >
+                    <Ionicons name="barcode-outline" size={16} color="#3b82f6" />
+                    <Text style={styles.scannedCodeText} numberOfLines={1}>
+                      {code.data}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
           </View>
         ) : (
           <TouchableOpacity
             style={styles.scanButton}
             onPress={() => {
               setScanned(false);
-              setLastScannedCode('');
+              setScannedCodes([]);
               setShowCamera(true);
             }}
             disabled={!hasPermission}
@@ -313,7 +363,13 @@ export default function Scanner() {
             <View style={styles.deviceCard}>
               <View style={styles.deviceInfo}>
                 <Text style={styles.deviceName}>{device.nazwa}</Text>
-                <Text style={styles.deviceSerial}>Numer seryjny: {device.numer_seryjny}</Text>
+                
+                {/* Serial number in text */}
+                <View style={styles.serialBox}>
+                  <Text style={styles.serialLabel}>Numer seryjny:</Text>
+                  <Text style={styles.serialNumber}>{device.numer_seryjny}</Text>
+                </View>
+                
                 {device.kod_kreskowy && (
                   <Text style={styles.deviceCode}>Kod kreskowy: {device.kod_kreskowy}</Text>
                 )}
@@ -330,10 +386,29 @@ export default function Scanner() {
                 </View>
               </View>
 
-              {/* Location */}
-              <View style={styles.locationInfo}>
-                <Ionicons name="location" size={20} color="#3b82f6" />
-                <Text style={styles.locationText}>{address || 'Pobieranie lokalizacji...'}</Text>
+              {/* GPS Location */}
+              {gpsAddress && (
+                <View style={styles.locationInfo}>
+                  <Ionicons name="navigate" size={18} color="#10b981" />
+                  <Text style={styles.locationLabel}>Lokalizacja GPS:</Text>
+                  <Text style={styles.locationText}>{gpsAddress}</Text>
+                </View>
+              )}
+
+              {/* Client Address Input */}
+              <View style={styles.addressSection}>
+                <Text style={styles.addressLabel}>
+                  <Ionicons name="location" size={16} color="#3b82f6" /> Adres klienta *
+                </Text>
+                <TextInput
+                  style={styles.addressInput}
+                  placeholder="Wpisz adres klienta (wymagane)"
+                  placeholderTextColor="#666"
+                  value={clientAddress}
+                  onChangeText={setClientAddress}
+                  multiline
+                  numberOfLines={2}
+                />
               </View>
 
               {/* Order Type Selection */}
@@ -360,9 +435,12 @@ export default function Scanner() {
 
               {/* Install Button */}
               <TouchableOpacity
-                style={styles.installButton}
+                style={[
+                  styles.installButton,
+                  !clientAddress.trim() && styles.installButtonDisabled
+                ]}
                 onPress={handleInstall}
-                disabled={isInstalling}
+                disabled={isInstalling || !clientAddress.trim()}
               >
                 {isInstalling ? (
                   <ActivityIndicator size="small" color="#fff" />
@@ -379,6 +457,51 @@ export default function Scanner() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      {/* Code Selection Modal */}
+      <Modal
+        visible={showCodeSelection}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowCodeSelection(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Wykryto wiele kodów</Text>
+              <TouchableOpacity onPress={() => setShowCodeSelection(false)}>
+                <Ionicons name="close" size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.modalSubtitle}>Wybierz właściwy kod:</Text>
+            <FlatList
+              data={scannedCodes}
+              renderItem={({ item, index }) => (
+                <TouchableOpacity
+                  style={styles.codeSelectItem}
+                  onPress={() => selectCode(item.data)}
+                >
+                  <View style={styles.codeSelectIcon}>
+                    <Ionicons 
+                      name={item.type.includes('qr') ? 'qr-code' : 'barcode'} 
+                      size={24} 
+                      color="#3b82f6" 
+                    />
+                  </View>
+                  <View style={styles.codeSelectInfo}>
+                    <Text style={styles.codeSelectType}>
+                      {item.type.includes('qr') ? 'Kod QR' : 'Kod kreskowy'}
+                    </Text>
+                    <Text style={styles.codeSelectData}>{item.data}</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color="#888" />
+                </TouchableOpacity>
+              )}
+              keyExtractor={(item, index) => `${item.data}-${index}`}
+            />
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -450,7 +573,7 @@ const styles = StyleSheet.create({
   },
   scanHint: {
     position: 'absolute',
-    bottom: 20,
+    bottom: 60,
     left: 0,
     right: 0,
     alignItems: 'center',
@@ -462,6 +585,30 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     fontSize: 13,
+  },
+  scannedCodesPreview: {
+    position: 'absolute',
+    bottom: 10,
+    left: 10,
+    right: 10,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  scannedCodeItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(59, 130, 246, 0.9)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    maxWidth: '48%',
+  },
+  scannedCodeText: {
+    color: '#fff',
+    fontSize: 12,
+    marginLeft: 6,
+    flex: 1,
   },
   scanButton: {
     height: 200,
@@ -529,16 +676,29 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
   },
-  deviceSerial: {
+  serialBox: {
+    backgroundColor: '#0a0a0a',
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: '#3b82f6',
+  },
+  serialLabel: {
+    color: '#888',
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  serialNumber: {
     color: '#3b82f6',
-    fontSize: 14,
-    marginTop: 4,
+    fontSize: 18,
+    fontWeight: 'bold',
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
   deviceCode: {
     color: '#888',
     fontSize: 12,
-    marginTop: 2,
+    marginTop: 8,
   },
   statusBadge: {
     alignSelf: 'flex-start',
@@ -559,13 +719,40 @@ const styles = StyleSheet.create({
     backgroundColor: '#0a0a0a',
     borderRadius: 8,
     padding: 12,
-    marginBottom: 16,
+    marginBottom: 12,
+    flexWrap: 'wrap',
+  },
+  locationLabel: {
+    color: '#888',
+    fontSize: 12,
+    marginLeft: 8,
   },
   locationText: {
     color: '#fff',
-    fontSize: 14,
+    fontSize: 13,
     marginLeft: 8,
     flex: 1,
+  },
+  addressSection: {
+    marginBottom: 16,
+  },
+  addressLabel: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  addressInput: {
+    backgroundColor: '#0a0a0a',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    color: '#fff',
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: '#3b82f6',
+    minHeight: 60,
+    textAlignVertical: 'top',
   },
   orderTypeLabel: {
     color: '#888',
@@ -608,10 +795,72 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     gap: 8,
   },
+  installButtonDisabled: {
+    backgroundColor: '#333',
+  },
   installButtonText: {
     color: '#fff',
     fontSize: 18,
     fontWeight: '600',
     textTransform: 'capitalize',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#1a1a1a',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '60%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2a2a2a',
+  },
+  modalTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  modalSubtitle: {
+    color: '#888',
+    fontSize: 14,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+  },
+  codeSelectItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2a2a2a',
+  },
+  codeSelectIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#0a0a0a',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  codeSelectInfo: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  codeSelectType: {
+    color: '#888',
+    fontSize: 12,
+  },
+  codeSelectData: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginTop: 2,
   },
 });
