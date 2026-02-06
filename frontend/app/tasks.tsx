@@ -525,14 +525,161 @@ export default function Tasks() {
                 ))}
               </View>
 
-              <Text style={styles.inputLabel}>Termin</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="YYYY-MM-DDTHH:mm"
-                placeholderTextColor="#888"
-                value={newTask.due_date}
-                onChangeText={(text) => setNewTask({ ...newTask, due_date: text })}
-              />
+              <Text style={styles.inputLabel}>Termin wykonania</Text>
+              
+              {/* Quick Date Options */}
+              <View style={styles.quickDateOptions}>
+                <TouchableOpacity
+                  style={[styles.quickDateOption, format(selectedDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd') && styles.quickDateOptionActive]}
+                  onPress={() => {
+                    const today = new Date();
+                    setSelectedDate(today);
+                    setNewTask({ ...newTask, due_date: `${format(today, 'yyyy-MM-dd')}T${selectedTime}` });
+                  }}
+                >
+                  <Text style={styles.quickDateOptionText}>Dziś</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.quickDateOption, format(selectedDate, 'yyyy-MM-dd') === format(addDays(new Date(), 1), 'yyyy-MM-dd') && styles.quickDateOptionActive]}
+                  onPress={() => {
+                    const tomorrow = addDays(new Date(), 1);
+                    setSelectedDate(tomorrow);
+                    setNewTask({ ...newTask, due_date: `${format(tomorrow, 'yyyy-MM-dd')}T${selectedTime}` });
+                  }}
+                >
+                  <Text style={styles.quickDateOptionText}>Jutro</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.quickDateOption, format(selectedDate, 'yyyy-MM-dd') === format(addDays(new Date(), 7), 'yyyy-MM-dd') && styles.quickDateOptionActive]}
+                  onPress={() => {
+                    const nextWeek = addDays(new Date(), 7);
+                    setSelectedDate(nextWeek);
+                    setNewTask({ ...newTask, due_date: `${format(nextWeek, 'yyyy-MM-dd')}T${selectedTime}` });
+                  }}
+                >
+                  <Text style={styles.quickDateOptionText}>Za tydzień</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Calendar Picker */}
+              <TouchableOpacity 
+                style={styles.datePickerButton}
+                onPress={() => setShowDatePicker(!showDatePicker)}
+              >
+                <Ionicons name="calendar" size={24} color="#3b82f6" />
+                <Text style={styles.datePickerText}>
+                  {format(selectedDate, 'd MMMM yyyy', { locale: pl })}
+                </Text>
+                <Ionicons name={showDatePicker ? 'chevron-up' : 'chevron-down'} size={20} color="#888" />
+              </TouchableOpacity>
+
+              {showDatePicker && (
+                <View style={styles.calendarContainer}>
+                  {/* Simple calendar - show days of current month */}
+                  <View style={styles.calendarHeader}>
+                    <TouchableOpacity 
+                      onPress={() => {
+                        const prevMonth = new Date(selectedDate);
+                        prevMonth.setMonth(prevMonth.getMonth() - 1);
+                        setSelectedDate(prevMonth);
+                      }}
+                    >
+                      <Ionicons name="chevron-back" size={24} color="#fff" />
+                    </TouchableOpacity>
+                    <Text style={styles.calendarMonth}>
+                      {format(selectedDate, 'LLLL yyyy', { locale: pl })}
+                    </Text>
+                    <TouchableOpacity 
+                      onPress={() => {
+                        const nextMonth = new Date(selectedDate);
+                        nextMonth.setMonth(nextMonth.getMonth() + 1);
+                        setSelectedDate(nextMonth);
+                      }}
+                    >
+                      <Ionicons name="chevron-forward" size={24} color="#fff" />
+                    </TouchableOpacity>
+                  </View>
+                  
+                  <View style={styles.calendarWeekDays}>
+                    {['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'Sb', 'Nd'].map(day => (
+                      <Text key={day} style={styles.calendarWeekDay}>{day}</Text>
+                    ))}
+                  </View>
+                  
+                  <View style={styles.calendarDays}>
+                    {(() => {
+                      const firstDayOfMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+                      const lastDayOfMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+                      const startDay = firstDayOfMonth.getDay() === 0 ? 6 : firstDayOfMonth.getDay() - 1;
+                      const days = [];
+                      
+                      // Empty cells before first day
+                      for (let i = 0; i < startDay; i++) {
+                        days.push(<View key={`empty-${i}`} style={styles.calendarDayEmpty} />);
+                      }
+                      
+                      // Days of month
+                      for (let day = 1; day <= lastDayOfMonth.getDate(); day++) {
+                        const date = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), day);
+                        const isSelected = format(date, 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd');
+                        const isToday = format(date, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
+                        
+                        days.push(
+                          <TouchableOpacity
+                            key={day}
+                            style={[
+                              styles.calendarDay,
+                              isSelected && styles.calendarDaySelected,
+                              isToday && !isSelected && styles.calendarDayToday,
+                            ]}
+                            onPress={() => {
+                              const newDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), day);
+                              setSelectedDate(newDate);
+                              setNewTask({ ...newTask, due_date: `${format(newDate, 'yyyy-MM-dd')}T${selectedTime}` });
+                            }}
+                          >
+                            <Text style={[
+                              styles.calendarDayText,
+                              isSelected && styles.calendarDayTextSelected,
+                              isToday && !isSelected && styles.calendarDayTextToday,
+                            ]}>
+                              {day}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      }
+                      
+                      return days;
+                    })()}
+                  </View>
+                </View>
+              )}
+
+              {/* Time Selection */}
+              <Text style={[styles.inputLabel, { marginTop: 16 }]}>Godzina</Text>
+              <View style={styles.timeOptions}>
+                {suggestedTimes.map(time => (
+                  <TouchableOpacity
+                    key={time}
+                    style={[styles.timeOption, selectedTime === time && styles.timeOptionActive]}
+                    onPress={() => {
+                      setSelectedTime(time);
+                      setNewTask({ ...newTask, due_date: `${format(selectedDate, 'yyyy-MM-dd')}T${time}` });
+                    }}
+                  >
+                    <Text style={[styles.timeOptionText, selectedTime === time && styles.timeOptionTextActive]}>
+                      {time}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <View style={styles.selectedDateTime}>
+                <Ionicons name="time" size={18} color="#3b82f6" />
+                <Text style={styles.selectedDateTimeText}>
+                  Wybrany termin: {format(selectedDate, 'd MMMM yyyy', { locale: pl })} o {selectedTime}
+                </Text>
+              </View>
             </ScrollView>
 
             <TouchableOpacity style={styles.createButton} onPress={handleCreateTask}>
