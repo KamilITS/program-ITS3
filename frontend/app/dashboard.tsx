@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl, Platform } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl, Platform, AppState } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useAuth } from '../src/context/AuthContext';
 import { apiFetch } from '../src/utils/api';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface Stats {
   total: number;
@@ -19,6 +20,8 @@ export default function Dashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const [devicesCount, setDevicesCount] = useState(0);
   const [tasksCount, setTasksCount] = useState(0);
+  const [unreadMessages, setUnreadMessages] = useState(0);
+  const [pendingTasks, setPendingTasks] = useState(0);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -28,22 +31,59 @@ export default function Dashboard() {
 
   const loadData = async () => {
     try {
-      const [statsData, devices, tasks] = await Promise.all([
+      const [statsData, devices, tasks, messages] = await Promise.all([
         apiFetch('/api/installations/stats'),
         apiFetch('/api/devices'),
         apiFetch('/api/tasks'),
+        apiFetch('/api/messages?limit=100'),
       ]);
       setStats(statsData);
       setDevicesCount(devices.length);
-      setTasksCount(tasks.filter((t: any) => t.status !== 'zakonczone').length);
+      
+      // Count pending tasks (not completed)
+      const pending = tasks.filter((t: any) => t.status !== 'zakonczone').length;
+      setTasksCount(pending);
+      setPendingTasks(pending);
+      
+      // Count unread messages
+      const lastReadTimestamp = await AsyncStorage.getItem('lastReadMessageTimestamp');
+      if (lastReadTimestamp && messages.length > 0) {
+        const lastRead = new Date(lastReadTimestamp);
+        const unread = messages.filter((m: any) => {
+          const msgDate = new Date(m.created_at);
+          return msgDate > lastRead && m.sender_id !== user?.user_id;
+        }).length;
+        setUnreadMessages(unread);
+      } else if (messages.length > 0) {
+        // If no last read timestamp, count messages from last 24 hours
+        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        const unread = messages.filter((m: any) => {
+          const msgDate = new Date(m.created_at);
+          return msgDate > oneDayAgo && m.sender_id !== user?.user_id;
+        }).length;
+        setUnreadMessages(unread);
+      }
     } catch (error) {
       console.error('Error loading data:', error);
     }
   };
 
+  // Reload data when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      if (isAuthenticated) {
+        loadData();
+      }
+    }, [isAuthenticated])
+  );
+
   useEffect(() => {
     if (isAuthenticated) {
       loadData();
+      
+      // Poll for updates every 30 seconds
+      const interval = setInterval(loadData, 30000);
+      return () => clearInterval(interval);
     }
   }, [isAuthenticated]);
 
@@ -62,6 +102,15 @@ export default function Dashboard() {
   }
 
   const isAdmin = user.role === 'admin';
+
+  const renderBadge = (count: number) => {
+    if (count <= 0) return null;
+    return (
+      <View style={styles.badge}>
+        <Text style={styles.badgeText}>{count > 99 ? '99+' : count}</Text>
+      </View>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -159,9 +208,17 @@ export default function Dashboard() {
             
             <TouchableOpacity
               style={styles.actionButton}
-              onPress={() => router.push('/chat')}
+              onPress={async () => {
+                // Mark messages as read when entering chat
+                await AsyncStorage.setItem('lastReadMessageTimestamp', new Date().toISOString());
+                setUnreadMessages(0);
+                router.push('/chat');
+              }}
             >
-              <Ionicons name="chatbubbles-outline" size={32} color="#8b5cf6" />
+              <View style={styles.actionIconContainer}>
+                <Ionicons name="chatbubbles-outline" size={32} color="#8b5cf6" />
+                {renderBadge(unreadMessages)}
+              </View>
               <Text style={styles.actionText}>Czat</Text>
             </TouchableOpacity>
             
@@ -169,7 +226,10 @@ export default function Dashboard() {
               style={styles.actionButton}
               onPress={() => router.push('/tasks')}
             >
-              <Ionicons name="calendar-outline" size={32} color="#f59e0b" />
+              <View style={styles.actionIconContainer}>
+                <Ionicons name="calendar-outline" size={32} color="#f59e0b" />
+                {renderBadge(pendingTasks)}
+              </View>
               <Text style={styles.actionText}>Zadania</Text>
             </TouchableOpacity>
           </View>
@@ -352,11 +412,31 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
   },
+  actionIconContainer: {
+    position: 'relative',
+  },
   actionText: {
     color: '#fff',
     fontSize: 14,
     fontWeight: '500',
     marginTop: 8,
+  },
+  badge: {
+    position: 'absolute',
+    top: -8,
+    right: -12,
+    backgroundColor: '#ef4444',
+    borderRadius: 12,
+    minWidth: 22,
+    height: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: 'bold',
   },
   adminActions: {
     gap: 8,
