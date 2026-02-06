@@ -514,24 +514,41 @@ async def scan_device(code: str, user: dict = Depends(require_user)):
 
 @api_router.post("/installations")
 async def create_installation(request: Request, user: dict = Depends(require_user)):
-    """Record device installation"""
+    """Record device installation - moves device to admin account as installed"""
     body = await request.json()
     
     device_id = body.get("device_id")
+    adres_klienta = body.get("adres_klienta") or body.get("adres")
+    
     if not device_id:
         raise HTTPException(status_code=400, detail="Wymagane device_id")
+    
+    if not adres_klienta or not adres_klienta.strip():
+        raise HTTPException(status_code=400, detail="Wymagany adres klienta")
     
     device = await db.devices.find_one({"device_id": device_id}, {"_id": 0})
     if not device:
         raise HTTPException(status_code=404, detail="Nie znaleziono urządzenia")
     
+    # Check if device is assigned to this user
+    if device.get("przypisany_do") != user["user_id"] and user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="To urządzenie nie jest przypisane do Ciebie")
+    
+    # Get admin user
+    admin_user = await db.users.find_one({"role": "admin"}, {"_id": 0})
+    if not admin_user:
+        raise HTTPException(status_code=500, detail="Brak administratora w systemie")
+    
     installation = {
         "installation_id": f"inst_{uuid.uuid4().hex[:12]}",
         "device_id": device_id,
         "user_id": user["user_id"],
+        "installer_name": user["name"],
         "nazwa_urzadzenia": device["nazwa"],
+        "numer_seryjny": device.get("numer_seryjny", ""),
+        "kod_kreskowy": device.get("kod_kreskowy", ""),
         "data_instalacji": datetime.now(timezone.utc),
-        "adres": body.get("adres"),
+        "adres_klienta": adres_klienta.strip(),
         "latitude": body.get("latitude"),
         "longitude": body.get("longitude"),
         "rodzaj_zlecenia": body.get("rodzaj_zlecenia", "instalacja")
@@ -539,9 +556,17 @@ async def create_installation(request: Request, user: dict = Depends(require_use
     
     await db.installations.insert_one(installation)
     
+    # Move device to admin account as installed
     await db.devices.update_one(
         {"device_id": device_id},
-        {"$set": {"status": "zainstalowany"}}
+        {"$set": {
+            "status": "zainstalowany",
+            "przypisany_do": admin_user["user_id"],
+            "zainstalowany_przez": user["user_id"],
+            "installer_name": user["name"],
+            "adres_instalacji": adres_klienta.strip(),
+            "data_instalacji": datetime.now(timezone.utc)
+        }}
     )
     
     installation.pop("_id", None)
