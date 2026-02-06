@@ -25,6 +25,12 @@ interface Device {
   kod_qr?: string;
   przypisany_do?: string;
   status: string;
+  instalacja?: {
+    adres?: string;
+    data_instalacji?: string;
+    rodzaj_zlecenia?: string;
+    instalator_id?: string;
+  };
 }
 
 interface Worker {
