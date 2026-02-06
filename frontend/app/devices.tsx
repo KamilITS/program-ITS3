@@ -366,6 +366,20 @@ export default function Devices() {
                   </Text>
                 </View>
               )}
+              
+              {/* Restore button for admin */}
+              {isAdmin && (
+                <TouchableOpacity
+                  style={styles.restoreButton}
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    handleRestoreDevice(device);
+                  }}
+                >
+                  <Ionicons name="refresh" size={16} color="#3b82f6" />
+                  <Text style={styles.restoreButtonText}>Przywróć do dostępnych</Text>
+                </TouchableOpacity>
+              )}
             </View>
           )}
         </View>
