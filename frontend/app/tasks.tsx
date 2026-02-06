@@ -326,12 +326,24 @@ export default function Tasks() {
     const assignedWorker = workers.find((w) => w.user_id === item.assigned_to);
     const dueDate = new Date(item.due_date);
     const isOverdue = isBefore(dueDate, new Date()) && item.status !== 'zakonczone';
+    const isUrgent = isTaskUrgent(item.task_id);
+    const reminderMinutes = getTaskReminderMinutes(item.task_id);
 
     return (
       <View style={[
         styles.taskCard,
         item.status === 'zakonczone' && styles.taskCardCompleted,
+        isUrgent && styles.taskCardUrgent,
       ]}>
+        {isUrgent && (
+          <View style={styles.urgentBanner}>
+            <Ionicons name="warning" size={16} color="#ef4444" />
+            <Text style={styles.urgentText}>
+              Kończy się za {reminderMinutes} minut!
+            </Text>
+          </View>
+        )}
+        
         <View style={styles.taskHeader}>
           <TouchableOpacity
             style={[
@@ -407,10 +419,13 @@ export default function Tasks() {
           )}
           
           {item.completion_photos && item.completion_photos.length > 0 && (
-            <View style={styles.photosBadge}>
+            <TouchableOpacity 
+              style={styles.photosBadge}
+              onPress={() => openPhotosModal(item)}
+            >
               <Ionicons name="camera" size={14} color="#10b981" />
               <Text style={styles.photosText}>{item.completion_photos.length} zdjęć</Text>
-            </View>
+            </TouchableOpacity>
           )}
         </View>
 
