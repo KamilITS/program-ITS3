@@ -1428,4 +1428,32 @@ const styles = StyleSheet.create({
     fontSize: 14,
     flex: 1,
   },
+  taskCardUrgent: {
+    borderWidth: 2,
+    borderColor: '#ef4444',
+  },
+  urgentBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 12,
+    borderRadius: 8,
+    gap: 8,
+  },
+  urgentText: {
+    color: '#ef4444',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  fullPhotoContainer: {
+    width: '100%',
+    marginBottom: 16,
+  },
+  fullPhoto: {
+    width: '100%',
+    height: 300,
+    borderRadius: 12,
+  },
 });
