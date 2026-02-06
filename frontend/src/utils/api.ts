@@ -34,6 +34,32 @@ export async function apiFetch(endpoint: string, options: FetchOptions = {}) {
   return response.json();
 }
 
+// Upload file for web platform using native File object
+export async function uploadFileWeb(endpoint: string, file: File) {
+  const token = await AsyncStorage.getItem('session_token');
+  
+  const formData = new FormData();
+  formData.append('file', file, file.name);
+  
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    method: 'POST',
+    headers,
+    body: formData,
+  });
+  
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ detail: 'Błąd serwera' }));
+    throw new Error(errorData.detail || 'Wystąpił błąd');
+  }
+  
+  return response.json();
+}
+
 export async function uploadFile(endpoint: string, file: { uri: string; name: string; type: string }) {
   const token = await AsyncStorage.getItem('session_token');
   
