@@ -885,4 +885,34 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 8,
   },
+  loginInfoSection: {
+    backgroundColor: '#0a0a0a',
+    borderRadius: 10,
+    padding: 12,
+    marginTop: 12,
+  },
+  loginInfoTitle: {
+    color: '#888',
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+  },
+  loginInfoGrid: {
+    gap: 8,
+  },
+  loginInfoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  loginInfoText: {
+    color: '#fff',
+    fontSize: 13,
+  },
+  noLoginText: {
+    color: '#666',
+    fontSize: 13,
+    fontStyle: 'italic',
+  },
 });
