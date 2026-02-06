@@ -131,6 +131,90 @@ export default function Tasks() {
     }
   };
 
+  const openCompleteModal = (task: Task) => {
+    setSelectedTask(task);
+    setCompletionPhotos([]);
+    setCompleteModalVisible(true);
+  };
+
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: false,
+      quality: 0.7,
+      base64: true,
+    });
+
+    if (!result.canceled && result.assets[0].base64) {
+      setCompletionPhotos(prev => [...prev, `data:image/jpeg;base64,${result.assets[0].base64}`]);
+    }
+  };
+
+  const takePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Błąd', 'Brak dostępu do kamery');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: false,
+      quality: 0.7,
+      base64: true,
+    });
+
+    if (!result.canceled && result.assets[0].base64) {
+      setCompletionPhotos(prev => [...prev, `data:image/jpeg;base64,${result.assets[0].base64}`]);
+    }
+  };
+
+  const removePhoto = (index: number) => {
+    setCompletionPhotos(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleCompleteTask = async () => {
+    if (!selectedTask) return;
+    
+    if (completionPhotos.length === 0) {
+      if (Platform.OS === 'web') {
+        window.alert('Dodaj minimum 1 zdjęcie potwierdzające wykonanie zadania');
+      } else {
+        Alert.alert('Wymagane zdjęcie', 'Dodaj minimum 1 zdjęcie potwierdzające wykonanie zadania');
+      }
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await apiFetch(`/api/tasks/${selectedTask.task_id}`, {
+        method: 'PUT',
+        body: { 
+          status: 'zakonczone',
+          completion_photos: completionPhotos
+        },
+      });
+      
+      setCompleteModalVisible(false);
+      setSelectedTask(null);
+      setCompletionPhotos([]);
+      await loadData();
+      
+      if (Platform.OS === 'web') {
+        window.alert('Zadanie zostało zakończone');
+      } else {
+        Alert.alert('Sukces', 'Zadanie zostało zakończone');
+      }
+    } catch (error: any) {
+      if (Platform.OS === 'web') {
+        window.alert('Błąd: ' + error.message);
+      } else {
+        Alert.alert('Błąd', error.message);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleDeleteTask = async (taskId: string) => {
     Alert.alert(
       'Usuń zadanie',
