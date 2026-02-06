@@ -1036,6 +1036,10 @@ async def update_task(task_id: str, request: Request, user: dict = Depends(requi
         update_data["due_date"] = datetime.fromisoformat(body["due_date"])
     if "priority" in body and user.get("role") == "admin":
         update_data["priority"] = body["priority"]
+    if "completion_photos" in body:
+        update_data["completion_photos"] = body["completion_photos"]
+        update_data["completed_at"] = datetime.now(timezone.utc)
+        update_data["completed_by"] = user["user_id"]
     
     result = await db.tasks.update_one(
         {"task_id": task_id},
@@ -1046,6 +1050,54 @@ async def update_task(task_id: str, request: Request, user: dict = Depends(requi
         raise HTTPException(status_code=404, detail="Nie znaleziono zadania")
     
     return {"message": "Zadanie zaktualizowane"}
+
+@api_router.get("/tasks/{task_id}")
+async def get_task(task_id: str, user: dict = Depends(require_user)):
+    """Get single task with full details"""
+    task = await db.tasks.find_one({"task_id": task_id}, {"_id": 0})
+    if not task:
+        raise HTTPException(status_code=404, detail="Nie znaleziono zadania")
+    
+    # Check permissions - workers can only see their own tasks
+    if user.get("role") != "admin" and task.get("assigned_to") != user["user_id"]:
+        raise HTTPException(status_code=403, detail="Brak uprawnień")
+    
+    return task
+
+@api_router.get("/tasks/reminders/check")
+async def check_task_reminders(user: dict = Depends(require_user)):
+    """Check for tasks approaching deadline (within 2 hours)"""
+    now = datetime.now(timezone.utc)
+    two_hours_later = now + timedelta(hours=2)
+    
+    query = {
+        "status": {"$ne": "zakonczone"},
+        "due_date": {"$lte": two_hours_later, "$gt": now}
+    }
+    
+    # Workers only see their own reminders
+    if user.get("role") != "admin":
+        query["assigned_to"] = user["user_id"]
+    
+    tasks = await db.tasks.find(query, {"_id": 0}).to_list(100)
+    
+    reminders = []
+    for task in tasks:
+        due_date = task.get("due_date")
+        if isinstance(due_date, datetime):
+            time_left = due_date - now
+            minutes_left = int(time_left.total_seconds() / 60)
+            
+            reminders.append({
+                "task_id": task["task_id"],
+                "title": task["title"],
+                "due_date": due_date.isoformat(),
+                "minutes_left": minutes_left,
+                "assigned_to": task.get("assigned_to"),
+                "priority": task.get("priority", "normalne")
+            })
+    
+    return {"reminders": reminders, "count": len(reminders)}
 
 @api_router.delete("/tasks/{task_id}")
 async def delete_task(task_id: str, admin: dict = Depends(require_admin)):
