@@ -326,7 +326,9 @@ metadata:
   run_ui: false
 
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Admin Inventory API"
+    - "Installation Recording API (updated with address)"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -336,3 +338,5 @@ agent_communication:
     message: "MVP aplikacji magazynowej zaimplementowany. Backend z FastAPI + MongoDB, Frontend z Expo React Native. Główne funkcje: auth Google, zarządzanie urządzeniami, skanowanie kodów, czat, zadania, statystyki. Proszę przetestować backend API."
   - agent: "testing"
     message: "✅ Backend testing completed successfully! All 24 tests passed (100% success rate). Fixed ObjectId serialization issues in POST endpoints for installations, messages, and tasks. All core functionality working: health checks, authentication, device management, installation recording, chat messages, task management, and user management. Authentication properly enforced on protected endpoints."
+  - agent: "main"
+    message: "Dodano nowe endpointy: 1) GET /api/devices/inventory/summary - podsumowanie stanów magazynowych dla admina z alertami niskiego stanu (<4 szt), 2) GET /api/devices/inventory/{user_id} - szczegółowy widok dla konkretnego użytkownika, 3) POST /api/installations teraz wymaga adres_klienta i przypisuje urządzenie po instalacji do konta admina ze statusem 'zainstalowany'. Proszę przetestować te endpointy."
