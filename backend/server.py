@@ -439,6 +439,7 @@ async def import_devices(file: UploadFile = File(...), admin: dict = Depends(req
     ws = wb.active
     
     devices_imported = 0
+    duplicates = 0
     errors = []
     
     for row_num, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
@@ -446,10 +447,23 @@ async def import_devices(file: UploadFile = File(...), admin: dict = Depends(req
             continue
         
         try:
+            numer_seryjny = str(row[1]) if len(row) > 1 and row[1] else ""
+            
+            if not numer_seryjny:
+                errors.append(f"Wiersz {row_num}: Brak numeru seryjnego")
+                continue
+            
+            # Check for duplicate in database
+            existing = await db.devices.find_one({"numer_seryjny": numer_seryjny})
+            if existing:
+                duplicates += 1
+                errors.append(f"Wiersz {row_num}: Numer seryjny {numer_seryjny} już istnieje w systemie")
+                continue
+            
             device = {
                 "device_id": f"dev_{uuid.uuid4().hex[:12]}",
                 "nazwa": str(row[0]) if row[0] else "",
-                "numer_seryjny": str(row[1]) if len(row) > 1 and row[1] else "",
+                "numer_seryjny": numer_seryjny,
                 "kod_kreskowy": str(row[2]) if len(row) > 2 and row[2] else None,
                 "kod_qr": str(row[3]) if len(row) > 3 and row[3] else None,
                 "przypisany_do": None,
@@ -457,18 +471,16 @@ async def import_devices(file: UploadFile = File(...), admin: dict = Depends(req
                 "created_at": datetime.now(timezone.utc)
             }
             
-            existing = await db.devices.find_one({"numer_seryjny": device["numer_seryjny"]})
-            if not existing:
-                await db.devices.insert_one(device)
-                devices_imported += 1
-            else:
-                errors.append(f"Wiersz {row_num}: Urządzenie o numerze seryjnym {device['numer_seryjny']} już istnieje")
+            await db.devices.insert_one(device)
+            devices_imported += 1
         except Exception as e:
             errors.append(f"Wiersz {row_num}: {str(e)}")
     
     return {
         "imported": devices_imported,
-        "errors": errors
+        "duplicates": duplicates,
+        "errors": errors,
+        "message": f"Zaimportowano {devices_imported} urządzeń" + (f", pominięto {duplicates} duplikatów" if duplicates > 0 else "")
     }
 
 @api_router.get("/devices")
