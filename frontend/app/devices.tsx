@@ -1094,10 +1094,31 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a1a',
     paddingHorizontal: 16,
     paddingVertical: 12,
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  selectionInfo: {
+    flexDirection: 'column',
+    gap: 6,
   },
   selectionText: {
     color: '#fff',
     fontSize: 14,
+  },
+  selectAllButtons: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  selectAllButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+    backgroundColor: '#333',
+  },
+  selectAllButtonText: {
+    color: '#3b82f6',
+    fontSize: 12,
+    fontWeight: '500',
   },
   assignSelectedButton: {
     flexDirection: 'row',
