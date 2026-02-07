@@ -546,19 +546,29 @@ export default function Devices() {
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.title}>Urządzenia</Text>
-        {isAdmin && !selectionMode && (
-          <TouchableOpacity 
-            onPress={() => setSelectionMode(true)} 
-            style={styles.selectButton}
-          >
-            <Ionicons name="checkbox-outline" size={24} color="#3b82f6" />
-          </TouchableOpacity>
-        )}
-        {selectionMode && (
-          <TouchableOpacity onPress={cancelSelection} style={styles.cancelButton}>
-            <Text style={styles.cancelButtonText}>Anuluj</Text>
-          </TouchableOpacity>
-        )}
+        <View style={styles.headerRight}>
+          {isAdmin && !selectionMode && (
+            <>
+              <TouchableOpacity 
+                onPress={() => router.push('/assign')} 
+                style={styles.scanHeaderButton}
+              >
+                <Ionicons name="scan" size={22} color="#10b981" />
+              </TouchableOpacity>
+              <TouchableOpacity 
+                onPress={() => setSelectionMode(true)} 
+                style={styles.selectButton}
+              >
+                <Ionicons name="checkbox-outline" size={24} color="#3b82f6" />
+              </TouchableOpacity>
+            </>
+          )}
+          {selectionMode && (
+            <TouchableOpacity onPress={cancelSelection} style={styles.cancelButton}>
+              <Text style={styles.cancelButtonText}>Anuluj</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {/* Selection mode header */}
