@@ -1090,4 +1090,124 @@ const styles = StyleSheet.create({
   installButtonDamaged: {
     backgroundColor: '#f59e0b',
   },
+  // Scanned Serial Section Styles
+  scannedSerialSection: {
+    marginTop: 24,
+  },
+  scannedSerialCard: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 16,
+    padding: 16,
+  },
+  scannedSerialRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#0a0a0a',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 16,
+  },
+  scannedSerialText: {
+    flex: 1,
+    color: '#3b82f6',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginLeft: 12,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+  },
+  copyButton: {
+    padding: 8,
+  },
+  deviceTypeLabel: {
+    color: '#888',
+    fontSize: 14,
+    marginBottom: 10,
+  },
+  deviceTypePicker: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#0a0a0a',
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#333',
+    marginBottom: 12,
+  },
+  deviceTypePickerText: {
+    color: '#fff',
+    fontSize: 16,
+  },
+  deviceTypePickerPlaceholder: {
+    color: '#666',
+  },
+  deviceTypeChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
+  },
+  deviceTypeChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: '#0a0a0a',
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  deviceTypeChipActive: {
+    backgroundColor: '#3b82f6',
+    borderColor: '#3b82f6',
+  },
+  deviceTypeChipText: {
+    color: '#888',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  deviceTypeChipTextActive: {
+    color: '#fff',
+  },
+  notFoundWarning: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+    borderRadius: 10,
+    padding: 12,
+    gap: 10,
+  },
+  notFoundWarningText: {
+    color: '#f59e0b',
+    fontSize: 13,
+    flex: 1,
+    lineHeight: 18,
+  },
+  // Device Type Selection Modal Styles
+  deviceTypeSelectItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2a2a2a',
+  },
+  deviceTypeSelectItemActive: {
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+  },
+  deviceTypeSelectIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#0a0a0a',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  deviceTypeSelectText: {
+    flex: 1,
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '500',
+    marginLeft: 12,
+  },
+  deviceTypeSelectTextActive: {
+    color: '#3b82f6',
+  },
 });
