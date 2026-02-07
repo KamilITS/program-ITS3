@@ -700,9 +700,11 @@ export default function Devices() {
             </TouchableOpacity>
           ))}
         </ScrollView>
-        
-        {/* Advanced Filters Button - Admin Only */}
-        {isAdmin && (
+      </View>
+      
+      {/* Advanced Filters Button - Admin Only - in separate row */}
+      {isAdmin && (
+        <View style={styles.advancedFiltersContainer}>
           <TouchableOpacity
             style={[
               styles.advancedFilterButton,
@@ -710,15 +712,16 @@ export default function Devices() {
             ]}
             onPress={() => setShowFiltersModal(true)}
           >
-            <Ionicons name="options" size={20} color={activeFiltersCount > 0 ? '#fff' : '#3b82f6'} />
-            {activeFiltersCount > 0 && (
-              <View style={styles.filterBadge}>
-                <Text style={styles.filterBadgeText}>{activeFiltersCount}</Text>
-              </View>
-            )}
+            <Ionicons name="options" size={18} color={activeFiltersCount > 0 ? '#fff' : '#3b82f6'} />
+            <Text style={[
+              styles.advancedFilterText,
+              activeFiltersCount > 0 && styles.advancedFilterTextActive
+            ]}>
+              Filtry {activeFiltersCount > 0 ? `(${activeFiltersCount})` : ''}
+            </Text>
           </TouchableOpacity>
-        )}
-      </View>
+        </View>
+      )}
 
       {/* Stats */}
       <View style={styles.statsRow}>
