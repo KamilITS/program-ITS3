@@ -1554,6 +1554,11 @@ async def add_device_return(request: Request, admin: dict = Depends(require_admi
     if not device_status:
         raise HTTPException(status_code=400, detail="Stan urządzenia jest wymagany")
     
+    # Check for duplicates (only in pending returns)
+    existing = await db.device_returns.find_one({"device_serial": device_serial, "returned_to_warehouse": {"$ne": True}})
+    if existing:
+        raise HTTPException(status_code=400, detail="Ten numer seryjny już jest w zwrotach")
+    
     return_entry = {
         "return_id": f"ret_{uuid.uuid4().hex[:12]}",
         "device_serial": device_serial,
