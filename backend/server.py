@@ -1527,6 +1527,218 @@ async def test_ftp_backup(request: Request):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Błąd: {str(e)}")
 
+# ==================== DEVICE RETURNS ====================
+
+class DeviceReturn(BaseModel):
+    return_id: str = Field(default_factory=lambda: f"ret_{uuid.uuid4().hex[:12]}")
+    device_serial: str
+    device_type: str  # ONT, CPE, STB
+    device_status: str  # z awarii, nowy/uszkodzony
+    scanned_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    scanned_by: str
+    scanned_by_name: str
+
+@api_router.post("/returns")
+async def add_device_return(request: Request, admin: dict = Depends(require_admin)):
+    """Add a device to returns (admin only)"""
+    body = await request.json()
+    
+    device_serial = body.get("device_serial")
+    device_type = body.get("device_type")
+    device_status = body.get("device_status")
+    
+    if not device_serial:
+        raise HTTPException(status_code=400, detail="Numer seryjny jest wymagany")
+    if not device_type:
+        raise HTTPException(status_code=400, detail="Rodzaj urządzenia jest wymagany")
+    if not device_status:
+        raise HTTPException(status_code=400, detail="Stan urządzenia jest wymagany")
+    
+    return_entry = {
+        "return_id": f"ret_{uuid.uuid4().hex[:12]}",
+        "device_serial": device_serial,
+        "device_type": device_type,
+        "device_status": device_status,
+        "scanned_at": datetime.now(timezone.utc),
+        "scanned_by": admin["user_id"],
+        "scanned_by_name": admin["name"]
+    }
+    
+    await db.device_returns.insert_one(return_entry)
+    return_entry.pop("_id", None)
+    
+    return return_entry
+
+@api_router.get("/returns")
+async def get_device_returns(admin: dict = Depends(require_admin)):
+    """Get all device returns (admin only)"""
+    returns = await db.device_returns.find({}, {"_id": 0}).sort("scanned_at", -1).to_list(10000)
+    return returns
+
+@api_router.delete("/returns/{return_id}")
+async def delete_device_return(return_id: str, admin: dict = Depends(require_admin)):
+    """Delete a device return entry (admin only)"""
+    result = await db.device_returns.delete_one({"return_id": return_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Nie znaleziono wpisu")
+    return {"message": "Wpis usunięty"}
+
+@api_router.post("/returns/bulk")
+async def add_bulk_returns(request: Request, admin: dict = Depends(require_admin)):
+    """Add multiple devices to returns from damaged devices (admin only)"""
+    body = await request.json()
+    device_serials = body.get("device_serials", [])
+    device_type = body.get("device_type", "")  # Can be empty, admin fills later
+    device_status = body.get("device_status", "nowy/uszkodzony")
+    
+    if not device_serials:
+        raise HTTPException(status_code=400, detail="Brak urządzeń do dodania")
+    
+    added = 0
+    for serial in device_serials:
+        return_entry = {
+            "return_id": f"ret_{uuid.uuid4().hex[:12]}",
+            "device_serial": serial,
+            "device_type": device_type,
+            "device_status": device_status,
+            "scanned_at": datetime.now(timezone.utc),
+            "scanned_by": admin["user_id"],
+            "scanned_by_name": admin["name"]
+        }
+        await db.device_returns.insert_one(return_entry)
+        added += 1
+    
+    return {"message": f"Dodano {added} urządzeń do zwrotów", "added": added}
+
+@api_router.put("/returns/{return_id}")
+async def update_device_return(return_id: str, request: Request, admin: dict = Depends(require_admin)):
+    """Update a device return entry (admin only)"""
+    body = await request.json()
+    
+    update_data = {}
+    if "device_type" in body:
+        update_data["device_type"] = body["device_type"]
+    if "device_status" in body:
+        update_data["device_status"] = body["device_status"]
+    
+    if not update_data:
+        raise HTTPException(status_code=400, detail="Brak danych do aktualizacji")
+    
+    result = await db.device_returns.update_one(
+        {"return_id": return_id},
+        {"$set": update_data}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Nie znaleziono wpisu")
+    
+    return {"message": "Wpis zaktualizowany"}
+
+@api_router.get("/returns/export")
+async def export_returns_excel(admin: dict = Depends(require_admin)):
+    """Export device returns to Excel (admin only)"""
+    returns = await db.device_returns.find({}, {"_id": 0}).sort("scanned_at", -1).to_list(10000)
+    
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Zwroty urządzeń"
+    
+    # Headers
+    headers = ["Numer seryjny", "Rodzaj", "Stan", "Data skanowania"]
+    for col, header in enumerate(headers, 1):
+        ws.cell(row=1, column=col, value=header)
+    
+    # Data
+    for row_num, ret in enumerate(returns, 2):
+        ws.cell(row=row_num, column=1, value=ret.get("device_serial", ""))
+        ws.cell(row=row_num, column=2, value=ret.get("device_type", ""))
+        ws.cell(row=row_num, column=3, value=ret.get("device_status", ""))
+        scanned_at = ret.get("scanned_at")
+        if isinstance(scanned_at, datetime):
+            ws.cell(row=row_num, column=4, value=scanned_at.strftime("%Y-%m-%d %H:%M"))
+        else:
+            ws.cell(row=row_num, column=4, value=str(scanned_at) if scanned_at else "")
+    
+    # Save to bytes
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+    
+    filename = f"zwroty_urzadzen_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+    
+    return StreamingResponse(
+        output,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+# ==================== DEVICE STATUS UPDATE - DAMAGED ====================
+
+@api_router.post("/devices/{device_id}/mark-damaged")
+async def mark_device_damaged(device_id: str, request: Request, user: dict = Depends(require_user)):
+    """Mark a device as damaged"""
+    body = await request.json()
+    
+    device = await db.devices.find_one({"device_id": device_id})
+    if not device:
+        raise HTTPException(status_code=404, detail="Nie znaleziono urządzenia")
+    
+    # Check if user has access to this device
+    if user.get("role") != "admin" and device.get("przypisany_do") != user["user_id"]:
+        raise HTTPException(status_code=403, detail="Brak uprawnień do tego urządzenia")
+    
+    # Update device status to damaged
+    await db.devices.update_one(
+        {"device_id": device_id},
+        {"$set": {
+            "status": "uszkodzony",
+            "damaged_at": datetime.now(timezone.utc),
+            "damaged_by": user["user_id"],
+            "damaged_by_name": user["name"]
+        }}
+    )
+    
+    return {"message": "Urządzenie oznaczone jako uszkodzone"}
+
+@api_router.post("/devices/add-single")
+async def add_single_device(request: Request, admin: dict = Depends(require_admin)):
+    """Add a single device manually via barcode scan (admin only)"""
+    body = await request.json()
+    
+    nazwa = body.get("nazwa", "")
+    numer_seryjny = body.get("numer_seryjny")
+    kod_kreskowy = body.get("kod_kreskowy")
+    
+    if not numer_seryjny and not kod_kreskowy:
+        raise HTTPException(status_code=400, detail="Wymagany numer seryjny lub kod kreskowy")
+    
+    # Use barcode as serial if serial not provided
+    if not numer_seryjny:
+        numer_seryjny = kod_kreskowy
+    
+    # Check if device already exists
+    existing = await db.devices.find_one({"numer_seryjny": numer_seryjny})
+    if existing:
+        raise HTTPException(status_code=400, detail="Urządzenie o tym numerze seryjnym już istnieje")
+    
+    device = {
+        "device_id": f"dev_{uuid.uuid4().hex[:12]}",
+        "nazwa": nazwa,
+        "numer_seryjny": numer_seryjny,
+        "kod_kreskowy": kod_kreskowy or numer_seryjny,
+        "kod_qr": body.get("kod_qr"),
+        "przypisany_do": None,
+        "status": "dostepny",
+        "created_at": datetime.now(timezone.utc),
+        "added_by": admin["user_id"],
+        "added_manually": True
+    }
+    
+    await db.devices.insert_one(device)
+    device.pop("_id", None)
+    
+    return device
+
 # ==================== HEALTH CHECK ====================
 
 @api_router.get("/")
