@@ -405,31 +405,55 @@ export default function Returns() {
         </TouchableOpacity>
       </View>
 
-      {/* Stats */}
-      <View style={styles.statsRow}>
-        <View style={styles.statCard}>
-          <Text style={styles.statNumber}>{stats.total}</Text>
-          <Text style={styles.statLabel}>Razem</Text>
-        </View>
-        {Object.entries(stats.byType).slice(0, 3).map(([type, count]) => (
-          <View key={type} style={styles.statCard}>
-            <Text style={styles.statNumber}>{count}</Text>
-            <Text style={styles.statLabel}>{type}</Text>
-          </View>
-        ))}
+      {/* Tabs */}
+      <View style={styles.tabsContainer}>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'pending' && styles.tabActive]}
+          onPress={() => setActiveTab('pending')}
+        >
+          <Text style={[styles.tabText, activeTab === 'pending' && styles.tabTextActive]}>
+            Do zwrotu ({stats.pending})
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'returned' && styles.tabActive]}
+          onPress={() => setActiveTab('returned')}
+        >
+          <Text style={[styles.tabText, activeTab === 'returned' && styles.tabTextActive]}>
+            Zwrócone do magazynu ({stats.returned})
+          </Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Export Button */}
-      {Platform.OS === 'web' && returns.length > 0 && (
+      {/* Sorting */}
+      <View style={styles.sortRow}>
+        <Text style={styles.sortLabel}>Sortuj:</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {SORT_OPTIONS.map((option) => (
+            <TouchableOpacity
+              key={option.key}
+              style={[styles.sortButton, sortBy === option.key && styles.sortButtonActive]}
+              onPress={() => setSortBy(option.key)}
+            >
+              <Text style={[styles.sortButtonText, sortBy === option.key && styles.sortButtonTextActive]}>
+                {option.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+
+      {/* Export Button - only for pending items */}
+      {Platform.OS === 'web' && activeTab === 'pending' && filteredReturns.length > 0 && (
         <TouchableOpacity style={styles.exportButton} onPress={handleExport}>
           <Ionicons name="download-outline" size={20} color="#fff" />
-          <Text style={styles.exportButtonText}>Eksportuj do Excel</Text>
+          <Text style={styles.exportButtonText}>Eksportuj do Excel i przenieś do zwróconych</Text>
         </TouchableOpacity>
       )}
 
       {/* Returns List */}
       <FlatList
-        data={returns}
+        data={filteredReturns}
         renderItem={renderReturnItem}
         keyExtractor={(item) => item.return_id}
         contentContainerStyle={styles.listContainer}
@@ -439,8 +463,12 @@ export default function Returns() {
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Ionicons name="cube-outline" size={64} color="#333" />
-            <Text style={styles.emptyText}>Brak zwrotów</Text>
-            <Text style={styles.emptySubtext}>Dodaj pierwsze urządzenie</Text>
+            <Text style={styles.emptyText}>
+              {activeTab === 'pending' ? 'Brak zwrotów do przetworzenia' : 'Brak zwróconych urządzeń'}
+            </Text>
+            {activeTab === 'pending' && (
+              <Text style={styles.emptySubtext}>Dodaj pierwsze urządzenie</Text>
+            )}
           </View>
         }
       />
