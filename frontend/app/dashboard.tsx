@@ -262,7 +262,7 @@ export default function Dashboard() {
               
               <TouchableOpacity
                 style={styles.adminButton}
-                onPress={() => router.push('/inventory')}
+                onPress={() => router.push('/devices?view=inventory')}
               >
                 <Ionicons name="layers-outline" size={24} color="#fff" />
                 <Text style={styles.adminButtonText}>Stany magazynowe pracowników</Text>
