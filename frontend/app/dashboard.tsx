@@ -277,7 +277,6 @@ export default function Dashboard() {
                 <Text style={styles.adminButtonText}>Dodaj urządzenia do magazynu</Text>
                 <Ionicons name="chevron-forward" size={20} color="#888" />
               </TouchableOpacity>
-              )}
               
               <TouchableOpacity
                 style={styles.adminButton}
