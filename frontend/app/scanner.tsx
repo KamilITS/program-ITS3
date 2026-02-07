@@ -493,38 +493,45 @@ export default function Scanner() {
             <Text style={styles.sectionTitle}>Znalezione urządzenie</Text>
             <View style={styles.deviceCard}>
               <View style={styles.deviceInfo}>
-                {/* Device Type Selector */}
-                <Text style={styles.deviceTypeLabel}>Typ urządzenia:</Text>
-                <TouchableOpacity 
-                  style={styles.deviceTypePicker}
-                  onPress={() => setShowDeviceTypePicker(true)}
-                >
-                  <Text style={styles.deviceTypePickerText}>
-                    {selectedDeviceType || device.nazwa}
-                  </Text>
-                  <Ionicons name="chevron-down" size={20} color="#888" />
-                </TouchableOpacity>
-                
-                {/* Device Type Chips */}
-                <View style={styles.deviceTypeChips}>
-                  {DEVICE_TYPES.map((type) => (
-                    <TouchableOpacity
-                      key={type}
-                      style={[
-                        styles.deviceTypeChip,
-                        (selectedDeviceType === type || (!selectedDeviceType && device.nazwa === type)) && styles.deviceTypeChipActive,
-                      ]}
-                      onPress={() => setSelectedDeviceType(type)}
+                {/* Device Type Selector - ONLY FOR ADMIN */}
+                {isAdmin ? (
+                  <>
+                    <Text style={styles.deviceTypeLabel}>Typ urządzenia:</Text>
+                    <TouchableOpacity 
+                      style={styles.deviceTypePicker}
+                      onPress={() => setShowDeviceTypePicker(true)}
                     >
-                      <Text style={[
-                        styles.deviceTypeChipText,
-                        (selectedDeviceType === type || (!selectedDeviceType && device.nazwa === type)) && styles.deviceTypeChipTextActive,
-                      ]}>
-                        {type}
+                      <Text style={styles.deviceTypePickerText}>
+                        {selectedDeviceType || device.nazwa}
                       </Text>
+                      <Ionicons name="chevron-down" size={20} color="#888" />
                     </TouchableOpacity>
-                  ))}
-                </View>
+                    
+                    {/* Device Type Chips */}
+                    <View style={styles.deviceTypeChips}>
+                      {DEVICE_TYPES.map((type) => (
+                        <TouchableOpacity
+                          key={type}
+                          style={[
+                            styles.deviceTypeChip,
+                            (selectedDeviceType === type || (!selectedDeviceType && device.nazwa === type)) && styles.deviceTypeChipActive,
+                          ]}
+                          onPress={() => setSelectedDeviceType(type)}
+                        >
+                          <Text style={[
+                            styles.deviceTypeChipText,
+                            (selectedDeviceType === type || (!selectedDeviceType && device.nazwa === type)) && styles.deviceTypeChipTextActive,
+                          ]}>
+                            {type}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </>
+                ) : (
+                  /* Employee view - just show device name */
+                  <Text style={styles.deviceName}>{device.nazwa}</Text>
+                )}
                 
                 {/* Serial number in text */}
                 <View style={styles.serialBox}>
