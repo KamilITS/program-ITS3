@@ -244,6 +244,57 @@ export default function Devices() {
     setShowFiltersModal(false);
   };
 
+  const handleMoveToReturns = async () => {
+    if (selectedDevices.size === 0) return;
+
+    const performMove = async () => {
+      try {
+        // Get serials of selected devices
+        const serials = devices
+          .filter((d) => selectedDevices.has(d.device_id))
+          .map((d) => d.numer_seryjny);
+
+        await apiFetch('/api/returns/bulk', {
+          method: 'POST',
+          body: {
+            device_serials: serials,
+            device_status: 'nowy/uszkodzony',
+          },
+        });
+
+        if (Platform.OS === 'web') {
+          window.alert(`Przeniesiono ${serials.length} urządzeń do zwrotów`);
+        } else {
+          Alert.alert('Sukces', `Przeniesiono ${serials.length} urządzeń do zwrotów`);
+        }
+        
+        cancelSelection();
+        loadData();
+      } catch (error: any) {
+        if (Platform.OS === 'web') {
+          window.alert('Błąd: ' + error.message);
+        } else {
+          Alert.alert('Błąd', error.message);
+        }
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm(`Czy na pewno chcesz przenieść ${selectedDevices.size} urządzeń do zwrotów?`)) {
+        await performMove();
+      }
+    } else {
+      Alert.alert(
+        'Przenieś do zwrotów',
+        `Czy na pewno chcesz przenieść ${selectedDevices.size} urządzeń do zwrotów?`,
+        [
+          { text: 'Anuluj', style: 'cancel' },
+          { text: 'Przenieś', onPress: performMove },
+        ]
+      );
+    }
+  };
+
   const handleRestoreDevice = async (device: Device) => {
     const confirmRestore = () => {
       if (Platform.OS === 'web') {
