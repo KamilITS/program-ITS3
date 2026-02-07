@@ -625,9 +625,16 @@ async def get_user_inventory(user_id: str, admin: dict = Depends(require_admin))
         {"_id": 0}
     ).to_list(1000)
     
+    # Also get devices damaged by this user
+    damaged_devices = await db.devices.find(
+        {"damaged_by": user_id, "status": "uszkodzony"},
+        {"_id": 0}
+    ).to_list(1000)
+    
     # Separate by status
     available = [d for d in devices if d.get("status") == "przypisany"]
     installed = [d for d in devices if d.get("status") == "zainstalowany"]
+    damaged = damaged_devices
     
     # Count by barcode for available devices
     barcode_counts = {}
@@ -643,13 +650,20 @@ async def get_user_inventory(user_id: str, admin: dict = Depends(require_admin))
         barcode_counts[barcode]["count"] += 1
         barcode_counts[barcode]["devices"].append(device)
     
+    # Check for low stock items
+    low_stock = [item for item in barcode_counts.values() if item["count"] < 4]
+    
     return {
         "user": target_user,
         "total_available": len(available),
         "total_installed": len(installed),
+        "total_damaged": len(damaged),
         "available_devices": available,
         "installed_devices": installed,
-        "by_barcode": list(barcode_counts.values())
+        "damaged_devices": damaged,
+        "by_barcode": list(barcode_counts.values()),
+        "low_stock": low_stock,
+        "has_low_stock": len(low_stock) > 0
     }
 
 @api_router.get("/devices/{device_id}")
