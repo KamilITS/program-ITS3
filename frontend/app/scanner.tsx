@@ -568,6 +568,7 @@ export default function Scanner() {
           </View>
         </View>
       </Modal>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
