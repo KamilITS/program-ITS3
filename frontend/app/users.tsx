@@ -92,6 +92,53 @@ export default function Users() {
     }
   };
 
+  const loadUserActivityLogs = async (userId: string) => {
+    setActivityLoading(true);
+    try {
+      const data = await apiFetch(`/api/activity-logs/user/${userId}?limit=100`);
+      setActivityLogs(data);
+    } catch (error) {
+      console.error('Error loading activity logs:', error);
+      setActivityLogs([]);
+    } finally {
+      setActivityLoading(false);
+    }
+  };
+
+  const openActivityModal = (selectedUser: User) => {
+    setSelectedUser(selectedUser);
+    setActivityModalVisible(true);
+    loadUserActivityLogs(selectedUser.user_id);
+  };
+
+  const getActionTypeIcon = (actionType: string) => {
+    switch (actionType) {
+      case 'login': return 'log-in-outline';
+      case 'logout': return 'log-out-outline';
+      case 'device_install': return 'hardware-chip-outline';
+      case 'device_assign': return 'arrow-forward-circle-outline';
+      case 'device_add': return 'add-circle-outline';
+      case 'device_scan': return 'scan-outline';
+      case 'task_create': return 'create-outline';
+      case 'task_complete': return 'checkmark-circle-outline';
+      default: return 'ellipse-outline';
+    }
+  };
+
+  const getActionTypeColor = (actionType: string) => {
+    switch (actionType) {
+      case 'login': return '#10b981';
+      case 'logout': return '#888';
+      case 'device_install': return '#3b82f6';
+      case 'device_assign': return '#f59e0b';
+      case 'device_add': return '#10b981';
+      case 'device_scan': return '#8b5cf6';
+      case 'task_create': return '#ec4899';
+      case 'task_complete': return '#10b981';
+      default: return '#888';
+    }
+  };
+
   useEffect(() => {
     if (isAuthenticated && user?.role === 'admin') {
       loadUsers();
