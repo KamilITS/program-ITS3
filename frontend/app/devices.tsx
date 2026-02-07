@@ -119,6 +119,13 @@ export default function Devices() {
     }
   }, [isAuthenticated]);
 
+  // Load inventory when switching to inventory view
+  useEffect(() => {
+    if (viewMode === 'inventory' && isAdmin && inventoryData.length === 0) {
+      loadInventory();
+    }
+  }, [viewMode, isAdmin]);
+
   // Set default filter to 'przypisany' for employees
   useEffect(() => {
     if (user && user.role !== 'admin' && statusFilter === null) {
