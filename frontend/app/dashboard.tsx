@@ -290,6 +290,15 @@ export default function Dashboard() {
               </TouchableOpacity>
               
               <TouchableOpacity
+                style={[styles.adminButton, { borderColor: '#f59e0b', borderWidth: 1 }]}
+                onPress={() => router.push('/returns')}
+              >
+                <Ionicons name="arrow-undo-outline" size={24} color="#f59e0b" />
+                <Text style={[styles.adminButtonText, { color: '#f59e0b' }]}>Zwrot urządzeń</Text>
+                <Ionicons name="chevron-forward" size={20} color="#f59e0b" />
+              </TouchableOpacity>
+              
+              <TouchableOpacity
                 style={styles.adminButton}
                 onPress={() => router.push('/stats')}
               >
