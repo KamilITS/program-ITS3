@@ -84,6 +84,8 @@ export default function Devices() {
   // Expanded inventory users
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
 
+  const isAdmin = user?.role === 'admin';
+
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.replace('/');
