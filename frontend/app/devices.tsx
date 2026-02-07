@@ -961,6 +961,8 @@ export default function Devices() {
           </View>
         }
       />
+        </>
+      )}
 
       {/* Single Assign Modal */}
       <Modal
