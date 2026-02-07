@@ -1076,4 +1076,80 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontStyle: 'italic',
   },
+  // Activity History Styles
+  activityUserInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2a2a2a',
+    gap: 12,
+  },
+  activityUserName: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  activityLoading: {
+    padding: 40,
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: '#888',
+    fontSize: 14,
+  },
+  activityEmpty: {
+    padding: 40,
+    alignItems: 'center',
+    gap: 12,
+  },
+  emptyText: {
+    color: '#666',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  activityList: {
+    flex: 1,
+  },
+  activityItem: {
+    flexDirection: 'row',
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1a1a1a',
+    gap: 12,
+  },
+  activityIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  activityContent: {
+    flex: 1,
+  },
+  activityDescription: {
+    color: '#fff',
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  activityMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 2,
+  },
+  activityTime: {
+    color: '#888',
+    fontSize: 12,
+  },
+  activitySerial: {
+    color: '#3b82f6',
+    fontSize: 12,
+    fontFamily: 'monospace',
+  },
+  activityIp: {
+    color: '#888',
+    fontSize: 11,
+  },
 });
