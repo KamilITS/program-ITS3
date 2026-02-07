@@ -1835,4 +1835,129 @@ const styles = StyleSheet.create({
     borderLeftColor: '#f59e0b',
     backgroundColor: 'rgba(245, 158, 11, 0.05)',
   },
+  // View mode toggle styles
+  viewModeToggle: {
+    flexDirection: 'row',
+    margin: 16,
+    marginBottom: 8,
+    backgroundColor: '#1a1a1a',
+    borderRadius: 12,
+    padding: 4,
+  },
+  viewModeButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 10,
+    gap: 6,
+  },
+  viewModeButtonActive: {
+    backgroundColor: '#3b82f6',
+  },
+  viewModeText: {
+    color: '#888',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  viewModeTextActive: {
+    color: '#fff',
+  },
+  // Inventory view styles
+  inventoryUserCard: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 12,
+    marginHorizontal: 16,
+    marginBottom: 12,
+    padding: 16,
+  },
+  inventoryUserCardAlert: {
+    borderWidth: 1,
+    borderColor: '#ef4444',
+  },
+  inventoryUserHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  inventoryUserInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  inventoryUserName: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  inventoryUserEmail: {
+    color: '#888',
+    fontSize: 13,
+  },
+  inventoryStatsRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  inventoryStatBox: {
+    flex: 1,
+    backgroundColor: '#0a0a0a',
+    borderRadius: 8,
+    padding: 10,
+    alignItems: 'center',
+  },
+  inventoryStatBoxAlert: {
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+  },
+  inventoryStatNumber: {
+    color: '#3b82f6',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  inventoryStatLabel: {
+    color: '#888',
+    fontSize: 10,
+    marginTop: 2,
+  },
+  inventoryDetails: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#333',
+  },
+  inventoryDetailsTitle: {
+    color: '#888',
+    fontSize: 12,
+    marginBottom: 8,
+    textTransform: 'uppercase',
+  },
+  inventoryDetailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    marginBottom: 4,
+  },
+  inventoryDetailRowAlert: {
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+  },
+  inventoryDetailName: {
+    color: '#fff',
+    fontSize: 14,
+    flex: 1,
+  },
+  inventoryDetailNameAlert: {
+    color: '#ef4444',
+  },
+  inventoryDetailCount: {
+    color: '#888',
+    fontSize: 14,
+  },
+  inventoryDetailCountAlert: {
+    color: '#ef4444',
+    fontWeight: '600',
+  },
 });
