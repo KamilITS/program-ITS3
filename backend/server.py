@@ -1988,6 +1988,18 @@ async def add_single_device(request: Request, admin: dict = Depends(require_admi
     await db.devices.insert_one(device)
     device.pop("_id", None)
     
+    # Log device addition activity
+    await log_activity(
+        user_id=admin["user_id"],
+        user_name=admin["name"],
+        user_role="admin",
+        action_type="device_add",
+        action_description=f"Dodano nowe urządzenie {nazwa} ({numer_seryjny}) do magazynu",
+        device_serial=numer_seryjny,
+        device_name=nazwa,
+        device_id=device["device_id"]
+    )
+    
     return device
 
 # ==================== HEALTH CHECK ====================
