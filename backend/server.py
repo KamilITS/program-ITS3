@@ -784,6 +784,15 @@ async def assign_device(device_id: str, request: Request, admin: dict = Depends(
     if not worker_id:
         raise HTTPException(status_code=400, detail="Wymagane worker_id")
     
+    # Get device info before update
+    device = await db.devices.find_one({"device_id": device_id}, {"_id": 0})
+    if not device:
+        raise HTTPException(status_code=404, detail="Nie znaleziono urządzenia")
+    
+    # Get worker info
+    worker = await db.users.find_one({"user_id": worker_id}, {"_id": 0})
+    worker_name = worker.get("name", "Nieznany") if worker else "Nieznany"
+    
     result = await db.devices.update_one(
         {"device_id": device_id},
         {"$set": {"przypisany_do": worker_id, "status": "przypisany"}}
@@ -791,6 +800,20 @@ async def assign_device(device_id: str, request: Request, admin: dict = Depends(
     
     if result.modified_count == 0:
         raise HTTPException(status_code=404, detail="Nie znaleziono urządzenia")
+    
+    # Log assignment activity
+    await log_activity(
+        user_id=admin["user_id"],
+        user_name=admin["name"],
+        user_role="admin",
+        action_type="device_assign",
+        action_description=f"Przypisano urządzenie {device['nazwa']} ({device.get('numer_seryjny', 'brak SN')}) do {worker_name}",
+        device_serial=device.get("numer_seryjny"),
+        device_name=device["nazwa"],
+        device_id=device_id,
+        target_user_id=worker_id,
+        target_user_name=worker_name
+    )
     
     return {"message": "Urządzenie przypisane"}
 
