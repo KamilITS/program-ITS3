@@ -51,6 +51,9 @@ export default function Scanner() {
   const [orderType, setOrderType] = useState<string>('instalacja');
   const [showCamera, setShowCamera] = useState(false);
   
+  // Scroll ref for keyboard handling
+  const scrollViewRef = useRef<ScrollView>(null);
+  
   // Multiple codes handling
   const [scannedCodes, setScannedCodes] = useState<ScannedCode[]>([]);
   const [showCodeSelection, setShowCodeSelection] = useState(false);
