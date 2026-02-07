@@ -1587,4 +1587,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
+  deviceItemDamaged: {
+    borderLeftWidth: 3,
+    borderLeftColor: '#f59e0b',
+    backgroundColor: 'rgba(245, 158, 11, 0.05)',
+  },
 });
