@@ -1028,6 +1028,24 @@ async def create_installation(request: Request, user: dict = Depends(require_use
         }}
     )
     
+    # Log installation activity
+    await log_activity(
+        user_id=user["user_id"],
+        user_name=user["name"],
+        user_role=user.get("role", "pracownik"),
+        action_type="device_install",
+        action_description=f"Zainstalowano urządzenie {device['nazwa']} ({device.get('numer_seryjny', 'brak SN')})",
+        device_serial=device.get("numer_seryjny"),
+        device_name=device["nazwa"],
+        device_id=device_id,
+        details={
+            "adres_klienta": adres_klienta.strip(),
+            "rodzaj_zlecenia": body.get("rodzaj_zlecenia", "instalacja"),
+            "latitude": body.get("latitude"),
+            "longitude": body.get("longitude")
+        }
+    )
+    
     installation.pop("_id", None)
     return installation
 
