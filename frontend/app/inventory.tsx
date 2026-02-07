@@ -122,11 +122,15 @@ export default function Inventory() {
       <View style={styles.statsRow}>
         <View style={styles.statBox}>
           <Text style={styles.statNumber}>{item.total_devices}</Text>
-          <Text style={styles.statLabel}>Urządzeń</Text>
+          <Text style={styles.statLabel}>Przypisanych</Text>
         </View>
         <View style={styles.statBox}>
-          <Text style={styles.statNumber}>{item.by_barcode.length}</Text>
-          <Text style={styles.statLabel}>Typów</Text>
+          <Text style={[styles.statNumber, { color: '#8b5cf6' }]}>{item.total_installed || 0}</Text>
+          <Text style={styles.statLabel}>Zainstalowanych</Text>
+        </View>
+        <View style={styles.statBox}>
+          <Text style={[styles.statNumber, { color: '#f59e0b' }]}>{item.total_damaged || 0}</Text>
+          <Text style={styles.statLabel}>Uszkodzonych</Text>
         </View>
         {item.has_low_stock && (
           <View style={[styles.statBox, styles.statBoxAlert]}>
