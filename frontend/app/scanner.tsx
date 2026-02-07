@@ -277,17 +277,26 @@ export default function Scanner() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.title}>Skanuj urządzenie</Text>
-        <TouchableOpacity onPress={resetScanner} style={styles.resetButton}>
-          <Ionicons name="refresh" size={24} color="#3b82f6" />
-        </TouchableOpacity>
-      </View>
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color="#fff" />
+          </TouchableOpacity>
+          <Text style={styles.title}>Skanuj urządzenie</Text>
+          <TouchableOpacity onPress={resetScanner} style={styles.resetButton}>
+            <Ionicons name="refresh" size={24} color="#3b82f6" />
+          </TouchableOpacity>
+        </View>
 
-      <ScrollView style={styles.content}>
+        <ScrollView 
+          ref={scrollViewRef}
+          style={styles.content}
+          keyboardShouldPersistTaps="handled"
+        >
         {/* Camera Scanner */}
         {showCamera && hasPermission ? (
           <View style={styles.cameraContainer}>
