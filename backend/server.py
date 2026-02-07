@@ -326,6 +326,17 @@ async def login(data: LoginRequest, request: Request, response: Response):
         }}
     )
     
+    # Log login activity
+    await log_activity(
+        user_id=user["user_id"],
+        user_name=user["name"],
+        user_role=user.get("role", "pracownik"),
+        action_type="login",
+        action_description=f"Zalogowano do systemu",
+        ip_address=client_ip,
+        details={"device": user_agent}
+    )
+    
     response.set_cookie(
         key="session_token",
         value=session_token,
