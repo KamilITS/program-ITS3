@@ -175,6 +175,7 @@ export default function Scanner() {
     setShowCamera(false);
     setScanned(true);
     setScannedCodes([]);
+    setScannedSerialNumber(code); // Save the scanned serial number for display
     await searchDevice(code);
   };
 
@@ -185,12 +186,14 @@ export default function Scanner() {
     }
     
     const cleanCode = code.trim().replace(/[\r\n]/g, '');
+    setScannedSerialNumber(cleanCode); // Update scanned serial number
     
     setIsSearching(true);
     try {
       const foundDevice = await apiFetch(`/api/devices/scan/${encodeURIComponent(cleanCode)}`);
       setDevice(foundDevice);
       setManualCode(foundDevice.numer_seryjny || cleanCode);
+      setSelectedDeviceType(foundDevice.nazwa || ''); // Pre-select device type if found
       // Pre-fill client address with GPS address
       if (gpsAddress && !clientAddress) {
         setClientAddress(gpsAddress);
@@ -205,6 +208,7 @@ export default function Scanner() {
             const foundDevice = await apiFetch(`/api/devices/scan/${encodeURIComponent(part.trim())}`);
             setDevice(foundDevice);
             setManualCode(foundDevice.numer_seryjny || part.trim());
+            setSelectedDeviceType(foundDevice.nazwa || '');
             // Pre-fill client address with GPS address
             if (gpsAddress && !clientAddress) {
               setClientAddress(gpsAddress);
@@ -218,11 +222,14 @@ export default function Scanner() {
       }
       
       if (!found) {
-        Alert.alert(
-          'Nie znaleziono',
-          `Urządzenie o kodzie "${cleanCode}" nie istnieje w systemie.\n\nSprawdź czy numer seryjny jest poprawny.`
-        );
+        // Device not found - allow user to register anyway with device type selection
         setDevice(null);
+        setManualCode(cleanCode);
+        Alert.alert(
+          'Nie znaleziono w systemie',
+          `Urządzenie o kodzie "${cleanCode}" nie istnieje w bazie.\n\nMożesz wybrać typ urządzenia i kontynuować.`,
+          [{ text: 'OK' }]
+        );
       }
     } finally {
       setIsSearching(false);
