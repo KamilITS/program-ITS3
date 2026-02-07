@@ -818,6 +818,17 @@ async def scan_device(code: str, user: dict = Depends(require_user)):
     # Clean the code - remove whitespace and special characters
     clean_code = code.strip().replace('\r', '').replace('\n', '')
     
+    # First check if device is in pending returns
+    in_returns = await db.device_returns.find_one({
+        "device_serial": {"$regex": f"^{clean_code}$", "$options": "i"},
+        "returned_to_warehouse": {"$ne": True}
+    })
+    if in_returns:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Urządzenie {clean_code} jest już w panelu Zwrot urządzeń"
+        )
+    
     # First try exact match
     device = await db.devices.find_one(
         {"$or": [
@@ -828,42 +839,60 @@ async def scan_device(code: str, user: dict = Depends(require_user)):
         {"_id": 0}
     )
     
-    if device:
-        return device
+    if not device:
+        # Try case-insensitive match
+        device = await db.devices.find_one(
+            {"$or": [
+                {"kod_kreskowy": {"$regex": f"^{clean_code}$", "$options": "i"}}, 
+                {"kod_qr": {"$regex": f"^{clean_code}$", "$options": "i"}}, 
+                {"numer_seryjny": {"$regex": f"^{clean_code}$", "$options": "i"}}
+            ]},
+            {"_id": 0}
+        )
     
-    # Try case-insensitive match
-    device = await db.devices.find_one(
-        {"$or": [
-            {"kod_kreskowy": {"$regex": f"^{clean_code}$", "$options": "i"}}, 
-            {"kod_qr": {"$regex": f"^{clean_code}$", "$options": "i"}}, 
-            {"numer_seryjny": {"$regex": f"^{clean_code}$", "$options": "i"}}
-        ]},
-        {"_id": 0}
-    )
+    if not device:
+        # Try partial match on serial number (contains)
+        device = await db.devices.find_one(
+            {"numer_seryjny": {"$regex": clean_code, "$options": "i"}},
+            {"_id": 0}
+        )
     
-    if device:
-        return device
+    if not device:
+        # Try if code contains the serial number
+        all_devices = await db.devices.find({}, {"_id": 0}).to_list(1000)
+        for dev in all_devices:
+            if dev.get("numer_seryjny") and dev["numer_seryjny"].upper() in clean_code.upper():
+                device = dev
+                break
+            if dev.get("kod_kreskowy") and dev["kod_kreskowy"].upper() in clean_code.upper():
+                device = dev
+                break
+            if dev.get("kod_qr") and dev["kod_qr"].upper() in clean_code.upper():
+                device = dev
+                break
     
-    # Try partial match on serial number (contains)
-    device = await db.devices.find_one(
-        {"numer_seryjny": {"$regex": clean_code, "$options": "i"}},
-        {"_id": 0}
-    )
+    if not device:
+        raise HTTPException(status_code=404, detail="Nie znaleziono urządzenia")
     
-    if device:
-        return device
+    # Check if device is already installed or damaged - workers can't scan these again
+    if user.get("role") != "admin":
+        if device.get("status") == "zainstalowany":
+            raise HTTPException(
+                status_code=400, 
+                detail="To urządzenie jest już zainstalowane u klienta"
+            )
+        if device.get("status") == "uszkodzony":
+            raise HTTPException(
+                status_code=400, 
+                detail="To urządzenie jest oznaczone jako uszkodzone"
+            )
+        if device.get("status") == "zwrocony":
+            raise HTTPException(
+                status_code=400, 
+                detail="To urządzenie zostało zwrócone do magazynu"
+            )
     
-    # Try if code contains the serial number
-    all_devices = await db.devices.find({}, {"_id": 0}).to_list(1000)
-    for dev in all_devices:
-        if dev.get("numer_seryjny") and dev["numer_seryjny"].upper() in clean_code.upper():
-            return dev
-        if dev.get("kod_kreskowy") and dev["kod_kreskowy"].upper() in clean_code.upper():
-            return dev
-        if dev.get("kod_qr") and dev["kod_qr"].upper() in clean_code.upper():
-            return dev
-    
-    raise HTTPException(status_code=404, detail="Nie znaleziono urządzenia")
+    return device
 
 # ==================== INSTALLATIONS ====================
 
