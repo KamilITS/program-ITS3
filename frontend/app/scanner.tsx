@@ -78,6 +78,8 @@ export default function Scanner() {
   const [selectedDeviceType, setSelectedDeviceType] = useState<string>('');
   const [showDeviceTypePicker, setShowDeviceTypePicker] = useState(false);
 
+  const isAdmin = user?.role === 'admin';
+
   const orderTypes = ['instalacja', 'wymiana', 'awaria', 'uszkodzony'];
 
   useEffect(() => {
