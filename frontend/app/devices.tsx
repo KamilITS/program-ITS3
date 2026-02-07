@@ -402,6 +402,8 @@ export default function Devices() {
     const isSelected = selectedDevices.has(device.device_id);
     const isAvailable = device.status === 'dostepny';
     const isInstalled = device.status === 'zainstalowany';
+    const isDamaged = device.status === 'uszkodzony';
+    const canSelect = isAvailable || (isDamaged && statusFilter === 'uszkodzony');
 
     return (
       <TouchableOpacity
@@ -410,9 +412,10 @@ export default function Devices() {
           styles.deviceItem,
           isSelected && styles.deviceItemSelected,
           isInstalled && styles.deviceItemInstalled,
+          isDamaged && styles.deviceItemDamaged,
         ]}
         onPress={() => {
-          if (selectionMode && isAvailable) {
+          if (selectionMode && canSelect) {
             toggleDeviceSelection(device.device_id);
           } else if (isAdmin && isAvailable && !selectionMode) {
             setSelectedDevice(device);
@@ -420,7 +423,7 @@ export default function Devices() {
           }
         }}
         onLongPress={() => {
-          if (isAdmin && isAvailable && !selectionMode) {
+          if (isAdmin && canSelect && !selectionMode) {
             setSelectionMode(true);
             toggleDeviceSelection(device.device_id);
           }
@@ -430,7 +433,7 @@ export default function Devices() {
           <View style={[
             styles.checkbox,
             isSelected && styles.checkboxSelected,
-            !isAvailable && styles.checkboxDisabled,
+            !canSelect && styles.checkboxDisabled,
           ]}>
             {isSelected && <Ionicons name="checkmark" size={16} color="#fff" />}
           </View>
