@@ -292,6 +292,8 @@ export default function Scanner() {
     setClientAddress('');
     setScannedCodes([]);
     setShowCodeSelection(false);
+    setScannedSerialNumber('');
+    setSelectedDeviceType('');
   };
 
   if (isLoading) {
