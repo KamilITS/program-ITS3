@@ -30,10 +30,16 @@ interface DeviceReturn {
   scanned_at: string;
   scanned_by: string;
   scanned_by_name: string;
+  returned_to_warehouse?: boolean;
 }
 
 const DEVICE_TYPES = ['ONT', 'CPE', 'STB'];
 const DEVICE_STATUSES = ['z awarii', 'nowy/uszkodzony'];
+const SORT_OPTIONS = [
+  { key: 'date_desc', label: 'Data (najnowsze)' },
+  { key: 'date_asc', label: 'Data (najstarsze)' },
+  { key: 'type', label: 'Rodzaj urządzenia' },
+];
 
 export default function Returns() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -42,6 +48,12 @@ export default function Returns() {
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [scannerActive, setScannerActive] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
+  
+  // Tabs
+  const [activeTab, setActiveTab] = useState<'pending' | 'returned'>('pending');
+  
+  // Sorting
+  const [sortBy, setSortBy] = useState('date_desc');
   
   // Form state
   const [deviceSerial, setDeviceSerial] = useState('');
@@ -53,7 +65,7 @@ export default function Returns() {
   const [editingReturn, setEditingReturn] = useState<DeviceReturn | null>(null);
   
   // Stats
-  const [stats, setStats] = useState({ total: 0, byType: {} as Record<string, number>, byStatus: {} as Record<string, number> });
+  const [stats, setStats] = useState({ total: 0, pending: 0, returned: 0, byType: {} as Record<string, number>, byStatus: {} as Record<string, number> });
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
