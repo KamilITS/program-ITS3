@@ -1020,4 +1020,56 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  tabsContainer: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: '#1a1a1a',
+    marginHorizontal: 16,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  tabActive: {
+    borderBottomColor: '#3b82f6',
+  },
+  tabText: {
+    color: '#888',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  tabTextActive: {
+    color: '#3b82f6',
+  },
+  sortRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 10,
+  },
+  sortLabel: {
+    color: '#888',
+    fontSize: 13,
+  },
+  sortButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: '#1a1a1a',
+    marginRight: 8,
+  },
+  sortButtonActive: {
+    backgroundColor: '#3b82f6',
+  },
+  sortButtonText: {
+    color: '#888',
+    fontSize: 12,
+  },
+  sortButtonTextActive: {
+    color: '#fff',
+  },
 });
