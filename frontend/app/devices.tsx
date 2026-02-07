@@ -723,10 +723,6 @@ export default function Devices() {
       {/* Stats */}
       <View style={styles.statsRow}>
         <View style={styles.statItem}>
-          <Text style={styles.statNumber}>{categorizedDevices.length}</Text>
-          <Text style={styles.statLabel}>Kategorii</Text>
-        </View>
-        <View style={styles.statItem}>
           <Text style={styles.statNumber}>{devices.length}</Text>
           <Text style={styles.statLabel}>Urządzeń</Text>
         </View>
@@ -735,6 +731,24 @@ export default function Devices() {
             {devices.filter(d => d.status === 'dostepny').length}
           </Text>
           <Text style={styles.statLabel}>Dostępnych</Text>
+        </View>
+        <View style={styles.statItem}>
+          <Text style={[styles.statNumber, { color: '#3b82f6' }]}>
+            {devices.filter(d => d.status === 'przypisany').length}
+          </Text>
+          <Text style={styles.statLabel}>Przypisanych</Text>
+        </View>
+        <View style={styles.statItem}>
+          <Text style={[styles.statNumber, { color: '#8b5cf6' }]}>
+            {devices.filter(d => d.status === 'zainstalowany').length}
+          </Text>
+          <Text style={styles.statLabel}>Zainstalowanych</Text>
+        </View>
+        <View style={styles.statItem}>
+          <Text style={[styles.statNumber, { color: '#f59e0b' }]}>
+            {devices.filter(d => d.status === 'uszkodzony').length}
+          </Text>
+          <Text style={styles.statLabel}>Uszkodzonych</Text>
         </View>
       </View>
 
