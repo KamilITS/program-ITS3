@@ -1338,6 +1338,104 @@ export default function Devices() {
           </View>
         </View>
       </Modal>
+
+      {/* Device History Modal */}
+      <Modal
+        visible={historyModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => {
+          setHistoryModalVisible(false);
+          setDeviceHistory([]);
+          setHistoryDevice(null);
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { maxHeight: '90%' }]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Historia urządzenia</Text>
+              <TouchableOpacity onPress={() => {
+                setHistoryModalVisible(false);
+                setDeviceHistory([]);
+                setHistoryDevice(null);
+              }}>
+                <Ionicons name="close" size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
+            
+            {historyDevice && (
+              <View style={styles.historyDeviceInfo}>
+                <Ionicons name="hardware-chip" size={24} color="#3b82f6" />
+                <View style={styles.historyDeviceDetails}>
+                  <Text style={styles.historyDeviceName}>{historyDevice.nazwa}</Text>
+                  <Text style={styles.historyDeviceSerial}>{historyDevice.numer_seryjny}</Text>
+                </View>
+                <View style={[
+                  styles.historyStatusBadge,
+                  historyDevice.status === 'dostepny' && { backgroundColor: '#10b981' },
+                  historyDevice.status === 'przypisany' && { backgroundColor: '#3b82f6' },
+                  historyDevice.status === 'zainstalowany' && { backgroundColor: '#f59e0b' },
+                  historyDevice.status === 'uszkodzony' && { backgroundColor: '#ef4444' },
+                ]}>
+                  <Text style={styles.historyStatusText}>{historyDevice.status}</Text>
+                </View>
+              </View>
+            )}
+            
+            {historyLoading ? (
+              <View style={styles.historyLoading}>
+                <Text style={styles.loadingText}>Ładowanie historii...</Text>
+              </View>
+            ) : deviceHistory.length === 0 ? (
+              <View style={styles.historyEmpty}>
+                <Ionicons name="document-text-outline" size={48} color="#666" />
+                <Text style={styles.emptyText}>Brak zarejestrowanej historii</Text>
+                <Text style={styles.emptySubtext}>Historia będzie rejestrowana od teraz</Text>
+              </View>
+            ) : (
+              <FlatList
+                data={deviceHistory}
+                keyExtractor={(item) => item.log_id}
+                style={styles.historyList}
+                renderItem={({ item }) => (
+                  <View style={styles.historyItem}>
+                    <View style={[styles.historyIcon, { backgroundColor: getActionTypeColor(item.action_type) + '20' }]}>
+                      <Ionicons 
+                        name={getActionTypeIcon(item.action_type) as any} 
+                        size={20} 
+                        color={getActionTypeColor(item.action_type)} 
+                      />
+                    </View>
+                    <View style={styles.historyContent}>
+                      <Text style={styles.historyDescription}>{item.action_description}</Text>
+                      <View style={styles.historyMeta}>
+                        <Ionicons name="time-outline" size={12} color="#888" />
+                        <Text style={styles.historyTime}>{formatHistoryDate(item.timestamp)}</Text>
+                      </View>
+                      <View style={styles.historyMeta}>
+                        <Ionicons name="person-outline" size={12} color="#888" />
+                        <Text style={styles.historyUser}>{item.user_name}</Text>
+                      </View>
+                      {item.details?.adres_klienta && (
+                        <View style={styles.historyMeta}>
+                          <Ionicons name="location-outline" size={12} color="#888" />
+                          <Text style={styles.historyAddress} numberOfLines={1}>{item.details.adres_klienta}</Text>
+                        </View>
+                      )}
+                      {item.target_user_name && (
+                        <View style={styles.historyMeta}>
+                          <Ionicons name="arrow-forward" size={12} color="#888" />
+                          <Text style={styles.historyTarget}>Do: {item.target_user_name}</Text>
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                )}
+              />
+            )}
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
