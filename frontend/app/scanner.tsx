@@ -166,6 +166,10 @@ export default function Scanner() {
       const foundDevice = await apiFetch(`/api/devices/scan/${encodeURIComponent(cleanCode)}`);
       setDevice(foundDevice);
       setManualCode(foundDevice.numer_seryjny || cleanCode);
+      // Pre-fill client address with GPS address
+      if (gpsAddress && !clientAddress) {
+        setClientAddress(gpsAddress);
+      }
     } catch (error: any) {
       const parts = code.split(/[\r\n\s]+/).filter(p => p.trim());
       let found = false;
@@ -176,6 +180,10 @@ export default function Scanner() {
             const foundDevice = await apiFetch(`/api/devices/scan/${encodeURIComponent(part.trim())}`);
             setDevice(foundDevice);
             setManualCode(foundDevice.numer_seryjny || part.trim());
+            // Pre-fill client address with GPS address
+            if (gpsAddress && !clientAddress) {
+              setClientAddress(gpsAddress);
+            }
             found = true;
             break;
           } catch (e) {
