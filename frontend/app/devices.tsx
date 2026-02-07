@@ -577,21 +577,32 @@ export default function Devices() {
           <Text style={styles.selectionText}>
             Wybrano: {selectedDevices.size} urządzeń
           </Text>
-          <TouchableOpacity
-            style={[
-              styles.assignSelectedButton,
-              selectedDevices.size === 0 && styles.assignSelectedButtonDisabled,
-            ]}
-            onPress={() => {
-              if (selectedDevices.size > 0) {
-                setBulkAssignModalVisible(true);
-              }
-            }}
-            disabled={selectedDevices.size === 0}
-          >
-            <Ionicons name="person-add" size={20} color="#fff" />
-            <Text style={styles.assignSelectedButtonText}>Przypisz wybrane</Text>
-          </TouchableOpacity>
+          <View style={styles.selectionActions}>
+            {statusFilter === 'uszkodzony' && selectedDevices.size > 0 && (
+              <TouchableOpacity
+                style={styles.moveToReturnsButton}
+                onPress={handleMoveToReturns}
+              >
+                <Ionicons name="arrow-undo" size={18} color="#fff" />
+                <Text style={styles.moveToReturnsText}>Do zwrotów</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              style={[
+                styles.assignSelectedButton,
+                selectedDevices.size === 0 && styles.assignSelectedButtonDisabled,
+              ]}
+              onPress={() => {
+                if (selectedDevices.size > 0) {
+                  setBulkAssignModalVisible(true);
+                }
+              }}
+              disabled={selectedDevices.size === 0}
+            >
+              <Ionicons name="person-add" size={20} color="#fff" />
+              <Text style={styles.assignSelectedButtonText}>Przypisz wybrane</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
 
