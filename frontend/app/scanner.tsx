@@ -441,48 +441,60 @@ export default function Scanner() {
                 </TouchableOpacity>
               </View>
               
-              {/* Device Type Picker */}
-              <Text style={styles.deviceTypeLabel}>Wybierz typ urządzenia:</Text>
-              <TouchableOpacity 
-                style={styles.deviceTypePicker}
-                onPress={() => setShowDeviceTypePicker(true)}
-              >
-                <Text style={[
-                  styles.deviceTypePickerText,
-                  !selectedDeviceType && styles.deviceTypePickerPlaceholder
-                ]}>
-                  {selectedDeviceType || 'Wybierz typ urządzenia...'}
-                </Text>
-                <Ionicons name="chevron-down" size={20} color="#888" />
-              </TouchableOpacity>
-              
-              <View style={styles.deviceTypeChips}>
-                {DEVICE_TYPES.map((type) => (
-                  <TouchableOpacity
-                    key={type}
-                    style={[
-                      styles.deviceTypeChip,
-                      selectedDeviceType === type && styles.deviceTypeChipActive,
-                    ]}
-                    onPress={() => setSelectedDeviceType(type)}
+              {/* Device Type Picker - ONLY FOR ADMIN */}
+              {isAdmin ? (
+                <>
+                  <Text style={styles.deviceTypeLabel}>Wybierz typ urządzenia:</Text>
+                  <TouchableOpacity 
+                    style={styles.deviceTypePicker}
+                    onPress={() => setShowDeviceTypePicker(true)}
                   >
                     <Text style={[
-                      styles.deviceTypeChipText,
-                      selectedDeviceType === type && styles.deviceTypeChipTextActive,
+                      styles.deviceTypePickerText,
+                      !selectedDeviceType && styles.deviceTypePickerPlaceholder
                     ]}>
-                      {type}
+                      {selectedDeviceType || 'Wybierz typ urządzenia...'}
                     </Text>
+                    <Ionicons name="chevron-down" size={20} color="#888" />
                   </TouchableOpacity>
-                ))}
-              </View>
-              
-              {/* Warning that device is not in system */}
-              <View style={styles.notFoundWarning}>
-                <Ionicons name="information-circle" size={18} color="#f59e0b" />
-                <Text style={styles.notFoundWarningText}>
-                  Urządzenie nie zostało znalezione w systemie. Wybierz typ i kontynuuj.
-                </Text>
-              </View>
+                  
+                  <View style={styles.deviceTypeChips}>
+                    {DEVICE_TYPES.map((type) => (
+                      <TouchableOpacity
+                        key={type}
+                        style={[
+                          styles.deviceTypeChip,
+                          selectedDeviceType === type && styles.deviceTypeChipActive,
+                        ]}
+                        onPress={() => setSelectedDeviceType(type)}
+                      >
+                        <Text style={[
+                          styles.deviceTypeChipText,
+                          selectedDeviceType === type && styles.deviceTypeChipTextActive,
+                        ]}>
+                          {type}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                  
+                  {/* Info for admin */}
+                  <View style={styles.notFoundWarning}>
+                    <Ionicons name="information-circle" size={18} color="#f59e0b" />
+                    <Text style={styles.notFoundWarningText}>
+                      Urządzenie nie zostało znalezione w systemie. Wybierz typ i kontynuuj.
+                    </Text>
+                  </View>
+                </>
+              ) : (
+                /* Employee view - device not found error */
+                <View style={styles.notFoundError}>
+                  <Ionicons name="alert-circle" size={24} color="#ef4444" />
+                  <Text style={styles.notFoundErrorText}>
+                    Urządzenie nie zostało znalezione w systemie. Skontaktuj się z administratorem.
+                  </Text>
+                </View>
+              )}
             </View>
           </View>
         )}
