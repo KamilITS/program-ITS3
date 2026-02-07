@@ -199,31 +199,47 @@ export default function Scanner() {
   const handleInstall = async () => {
     if (!device) return;
     
-    if (!clientAddress.trim()) {
+    // For damaged devices, don't require address
+    if (orderType !== 'uszkodzony' && !clientAddress.trim()) {
       Alert.alert('Błąd', 'Wprowadź adres klienta');
       return;
     }
     
     setIsInstalling(true);
     try {
-      await apiFetch('/api/installations', {
-        method: 'POST',
-        body: {
-          device_id: device.device_id,
-          adres_klienta: clientAddress.trim(),
-          latitude: location?.latitude,
-          longitude: location?.longitude,
-          rodzaj_zlecenia: orderType,
-        },
-      });
-      
-      Alert.alert(
-        'Sukces',
-        `Urządzenie "${device.nazwa}"\nNumer seryjny: ${device.numer_seryjny}\n\nZostało zarejestrowane jako ${orderType}\nAdres: ${clientAddress}`,
-        [{ text: 'OK', onPress: resetScanner }]
-      );
+      if (orderType === 'uszkodzony') {
+        // Mark device as damaged
+        await apiFetch(`/api/devices/${device.device_id}/mark-damaged`, {
+          method: 'POST',
+          body: {},
+        });
+        
+        Alert.alert(
+          'Sukces',
+          `Urządzenie "${device.nazwa}"\nNumer seryjny: ${device.numer_seryjny}\n\nZostało oznaczone jako uszkodzone`,
+          [{ text: 'OK', onPress: resetScanner }]
+        );
+      } else {
+        // Normal installation
+        await apiFetch('/api/installations', {
+          method: 'POST',
+          body: {
+            device_id: device.device_id,
+            adres_klienta: clientAddress.trim(),
+            latitude: location?.latitude,
+            longitude: location?.longitude,
+            rodzaj_zlecenia: orderType,
+          },
+        });
+        
+        Alert.alert(
+          'Sukces',
+          `Urządzenie "${device.nazwa}"\nNumer seryjny: ${device.numer_seryjny}\n\nZostało zarejestrowane jako ${orderType}\nAdres: ${clientAddress}`,
+          [{ text: 'OK', onPress: resetScanner }]
+        );
+      }
     } catch (error: any) {
-      Alert.alert('Błąd', error.message || 'Nie udało się zarejestrować instalacji');
+      Alert.alert('Błąd', error.message || 'Nie udało się zarejestrować');
     } finally {
       setIsInstalling(false);
     }
