@@ -630,9 +630,11 @@ export default function Devices() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.title}>Urządzenia</Text>
+        <Text style={styles.title}>
+          {viewMode === 'inventory' ? 'Stany magazynowe' : 'Urządzenia'}
+        </Text>
         <View style={styles.headerRight}>
-          {isAdmin && !selectionMode && (
+          {isAdmin && !selectionMode && viewMode === 'devices' && (
             <>
               <TouchableOpacity 
                 onPress={() => router.push('/assign')} 
