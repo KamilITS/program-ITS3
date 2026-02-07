@@ -1442,6 +1442,18 @@ const styles = StyleSheet.create({
   advancedFilterButtonActive: {
     backgroundColor: '#3b82f6',
   },
+  advancedFiltersContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+  },
+  advancedFilterText: {
+    color: '#3b82f6',
+    fontSize: 14,
+    marginLeft: 6,
+  },
+  advancedFilterTextActive: {
+    color: '#fff',
+  },
   filterBadge: {
     position: 'absolute',
     top: -4,
