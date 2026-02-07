@@ -1731,9 +1731,32 @@ async def update_device_return(return_id: str, request: Request, admin: dict = D
     return {"message": "Wpis zaktualizowany"}
 
 @api_router.get("/returns/export")
-async def export_returns_excel(admin: dict = Depends(require_admin)):
+async def export_returns_excel(request: Request, token: str = None):
     """Export device returns to Excel (admin only)"""
-    returns = await db.device_returns.find({}, {"_id": 0}).sort("scanned_at", -1).to_list(10000)
+    # Try to get admin from header first, then from query param for mobile
+    admin = None
+    
+    # Try header authentication
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header.startswith("Bearer "):
+        session_token = auth_header.replace("Bearer ", "")
+        session = await db.user_sessions.find_one({"session_token": session_token})
+        if session:
+            admin = await db.users.find_one({"user_id": session["user_id"]})
+    
+    # Try query param authentication (for mobile)
+    if not admin and token:
+        session = await db.user_sessions.find_one({"session_token": token})
+        if session:
+            admin = await db.users.find_one({"user_id": session["user_id"]})
+    
+    if not admin or admin.get("role") != "admin":
+        raise HTTPException(status_code=401, detail="Brak uprawnień")
+    
+    returns = await db.device_returns.find(
+        {"returned_to_warehouse": {"$ne": True}},  # Only pending returns
+        {"_id": 0}
+    ).sort("scanned_at", -1).to_list(10000)
     
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -1751,7 +1774,7 @@ async def export_returns_excel(admin: dict = Depends(require_admin)):
         ws.cell(row=row_num, column=3, value=ret.get("device_status", ""))
         scanned_at = ret.get("scanned_at")
         if isinstance(scanned_at, datetime):
-            ws.cell(row=row_num, column=4, value=scanned_at.strftime("%Y-%m-%d %H:%M"))
+            ws.cell(row=row_num, column=4, value=scanned_at.strftime("%d-%m-%Y"))
         else:
             ws.cell(row=row_num, column=4, value=str(scanned_at) if scanned_at else "")
     
