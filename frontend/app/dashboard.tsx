@@ -260,6 +260,15 @@ export default function Dashboard() {
                 <Ionicons name="chevron-forward" size={20} color="#10b981" />
               </TouchableOpacity>
               
+              <TouchableOpacity
+                style={styles.adminButton}
+                onPress={() => router.push('/inventory')}
+              >
+                <Ionicons name="layers-outline" size={24} color="#fff" />
+                <Text style={styles.adminButtonText}>Stany magazynowe pracowników</Text>
+                <Ionicons name="chevron-forward" size={20} color="#888" />
+              </TouchableOpacity>
+              
               {Platform.OS === 'web' && (
                 <TouchableOpacity
                   style={styles.adminButton}
