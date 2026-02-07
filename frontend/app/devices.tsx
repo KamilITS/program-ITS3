@@ -46,6 +46,24 @@ interface DeviceCategory {
   expanded: boolean;
 }
 
+interface ActivityLog {
+  log_id: string;
+  timestamp: string;
+  user_id: string;
+  user_name: string;
+  user_role: string;
+  action_type: string;
+  action_description: string;
+  device_serial?: string;
+  device_name?: string;
+  device_id?: string;
+  task_id?: string;
+  target_user_id?: string;
+  target_user_name?: string;
+  details?: any;
+  ip_address?: string;
+}
+
 export default function Devices() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const { view } = useLocalSearchParams<{ view?: string }>();
@@ -83,6 +101,12 @@ export default function Devices() {
   
   // Expanded inventory users
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
+
+  // Device history modal
+  const [historyModalVisible, setHistoryModalVisible] = useState(false);
+  const [deviceHistory, setDeviceHistory] = useState<ActivityLog[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyDevice, setHistoryDevice] = useState<Device | null>(null);
 
   const isAdmin = user?.role === 'admin';
 
