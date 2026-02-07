@@ -99,11 +99,19 @@ export default function Returns() {
       // Calculate stats
       const byType: Record<string, number> = {};
       const byStatus: Record<string, number> = {};
+      let pending = 0;
+      let returned = 0;
+      
       data.forEach((r: DeviceReturn) => {
         byType[r.device_type] = (byType[r.device_type] || 0) + 1;
         byStatus[r.device_status] = (byStatus[r.device_status] || 0) + 1;
+        if (r.returned_to_warehouse) {
+          returned++;
+        } else {
+          pending++;
+        }
       });
-      setStats({ total: data.length, byType, byStatus });
+      setStats({ total: data.length, pending, returned, byType, byStatus });
     } catch (error) {
       console.error('Error loading returns:', error);
     }
