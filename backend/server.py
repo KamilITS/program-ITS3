@@ -574,15 +574,27 @@ async def get_inventory_summary(admin: dict = Depends(require_admin)):
     
     inventory = []
     for usr in users:
-        # Get devices assigned to this user
-        devices = await db.devices.find(
-            {"przypisany_do": usr["user_id"], "status": {"$ne": "zainstalowany"}},
+        # Get devices assigned to this user (przypisane)
+        assigned_devices = await db.devices.find(
+            {"przypisany_do": usr["user_id"], "status": "przypisany"},
             {"_id": 0}
         ).to_list(1000)
         
-        # Count by barcode
+        # Get installed devices
+        installed_devices = await db.devices.find(
+            {"przypisany_do": usr["user_id"], "status": "zainstalowany"},
+            {"_id": 0}
+        ).to_list(1000)
+        
+        # Get damaged devices by this user
+        damaged_devices = await db.devices.find(
+            {"damaged_by": usr["user_id"], "status": "uszkodzony"},
+            {"_id": 0}
+        ).to_list(1000)
+        
+        # Count by barcode for assigned devices
         barcode_counts = {}
-        for device in devices:
+        for device in assigned_devices:
             barcode = device.get("kod_kreskowy") or device.get("nazwa") or "brak_kodu"
             if barcode not in barcode_counts:
                 barcode_counts[barcode] = {
@@ -605,7 +617,9 @@ async def get_inventory_summary(admin: dict = Depends(require_admin)):
             "user_name": usr["name"],
             "user_email": usr["email"],
             "role": usr["role"],
-            "total_devices": len(devices),
+            "total_devices": len(assigned_devices),
+            "total_installed": len(installed_devices),
+            "total_damaged": len(damaged_devices),
             "by_barcode": list(barcode_counts.values()),
             "low_stock": low_stock_items,
             "has_low_stock": len(low_stock_items) > 0
