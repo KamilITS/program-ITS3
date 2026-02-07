@@ -10,6 +10,7 @@ import {
   TextInput,
   ScrollView,
   Modal,
+  FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -18,6 +19,21 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useAuth } from '../src/context/AuthContext';
 import { uploadFile, uploadFileWeb, apiFetch } from '../src/utils/api';
 import { Ionicons } from '@expo/vector-icons';
+
+// Device type options for selection
+const DEVICE_TYPES = [
+  'ONT',
+  'T-MOBILE CPE',
+  'T-MOBILE STB',
+  'PLAY CPE',
+  'UPC CPE',
+];
+
+interface ScannedCode {
+  type: string;
+  data: string;
+  timestamp: number;
+}
 
 export default function Import() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -32,6 +48,13 @@ export default function Import() {
   const [serialNumber, setSerialNumber] = useState('');
   const [barcode, setBarcode] = useState('');
   const [addingDevice, setAddingDevice] = useState(false);
+  
+  // Multiple codes handling
+  const [scannedCodes, setScannedCodes] = useState<ScannedCode[]>([]);
+  const [showCodeSelection, setShowCodeSelection] = useState(false);
+  
+  // Device type selection
+  const [showDeviceTypePicker, setShowDeviceTypePicker] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -115,10 +138,69 @@ export default function Import() {
     }
   };
 
-  const handleBarCodeScanned = ({ data }: { data: string }) => {
-    setSerialNumber(data);
-    setBarcode(data);
+  const parseScannedData = (rawData: string): string => {
+    let data = rawData.trim();
+    
+    if (data.includes('\n') || data.includes('\r')) {
+      const lines = data.split(/[\r\n]+/).filter(line => line.trim());
+      
+      for (const line of lines) {
+        if (line.match(/^S[N]?[0-9A-Z]/i) || line.match(/^[0-9]{2}S[A-Z0-9]/i)) {
+          return line.trim();
+        }
+        if (line.match(/^20S[A-Z]/i)) {
+          return line.trim();
+        }
+      }
+      
+      const sortedLines = lines.sort((a, b) => b.length - a.length);
+      for (const line of sortedLines) {
+        if (line.match(/^[A-Z0-9]+$/i) && line.length >= 6) {
+          return line.trim();
+        }
+      }
+      
+      return lines[0]?.trim() || data;
+    }
+    
+    return data;
+  };
+
+  const handleBarCodeScanned = ({ type, data }: { type: string; data: string }) => {
+    const parsedCode = parseScannedData(data);
+    const now = Date.now();
+    
+    // Check if this code was already scanned recently (within 2 seconds)
+    const existingCode = scannedCodes.find(
+      c => c.data === parsedCode && now - c.timestamp < 2000
+    );
+    
+    if (existingCode) return;
+    
+    const newCode: ScannedCode = { type, data: parsedCode, timestamp: now };
+    const updatedCodes = [...scannedCodes.filter(c => now - c.timestamp < 3000), newCode];
+    setScannedCodes(updatedCodes);
+    
+    // If multiple codes detected, show selection modal
+    if (updatedCodes.length > 1) {
+      setShowCodeSelection(true);
+    } else {
+      // Single code - process immediately after a short delay
+      setTimeout(() => {
+        if (scannedCodes.length <= 1) {
+          selectCode(parsedCode);
+        }
+      }, 500);
+    }
+  };
+
+  const selectCode = (code: string) => {
+    setSerialNumber(code);
+    setBarcode(code);
     setScannerActive(false);
+    setShowCodeSelection(false);
+    setScannedCodes([]);
+    setShowManualModal(true);
   };
 
   const handleAddSingleDevice = async () => {
@@ -127,12 +209,17 @@ export default function Import() {
       return;
     }
 
+    if (!deviceName.trim()) {
+      Alert.alert('Błąd', 'Wybierz typ urządzenia');
+      return;
+    }
+
     setAddingDevice(true);
     try {
       await apiFetch('/api/devices/add-single', {
         method: 'POST',
         body: {
-          nazwa: deviceName.trim() || 'Urządzenie',
+          nazwa: deviceName.trim(),
           numer_seryjny: serialNumber.trim(),
           kod_kreskowy: barcode.trim() || serialNumber.trim(),
         },
@@ -148,6 +235,11 @@ export default function Import() {
     } finally {
       setAddingDevice(false);
     }
+  };
+
+  const resetScanner = () => {
+    setScannedCodes([]);
+    setShowCodeSelection(false);
   };
 
   // Scanner view
@@ -174,7 +266,7 @@ export default function Import() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.scannerHeader}>
-          <TouchableOpacity onPress={() => setScannerActive(false)} style={styles.backButton}>
+          <TouchableOpacity onPress={() => { setScannerActive(false); resetScanner(); }} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.title}>Skanuj kod urządzenia</Text>
@@ -187,15 +279,86 @@ export default function Import() {
             facing="back"
             onBarcodeScanned={handleBarCodeScanned}
             barcodeScannerSettings={{
-              barcodeTypes: ['qr', 'ean13', 'ean8', 'code128', 'code39', 'code93'],
+              barcodeTypes: ['qr', 'ean13', 'ean8', 'code128', 'code39', 'code93', 'codabar', 'itf14', 'upc_a', 'upc_e', 'pdf417', 'aztec', 'datamatrix'],
             }}
           />
           <View style={styles.scannerOverlay}>
             <View style={styles.scannerFrame} />
           </View>
+          
+          {/* Hint text */}
+          <View style={styles.scanHintContainer}>
+            <Text style={styles.scanHintText}>
+              {scannedCodes.length > 0 
+                ? `Wykryto ${scannedCodes.length} kod(y) - dotknij aby wybrać`
+                : 'Skieruj kamerę na kod QR lub kreskowy'
+              }
+            </Text>
+          </View>
+          
+          {/* Scanned codes preview at bottom */}
+          {scannedCodes.length > 0 && (
+            <View style={styles.scannedCodesPreview}>
+              {scannedCodes.map((code, index) => (
+                <TouchableOpacity
+                  key={`${code.data}-${index}`}
+                  style={styles.scannedCodeItem}
+                  onPress={() => selectCode(code.data)}
+                >
+                  <Ionicons name="barcode-outline" size={16} color="#fff" />
+                  <Text style={styles.scannedCodeText} numberOfLines={1}>
+                    {code.data}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
         </View>
-        
-        <Text style={styles.scannerHint}>Skieruj kamerę na kod kreskowy lub QR</Text>
+
+        {/* Code Selection Modal */}
+        <Modal
+          visible={showCodeSelection}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setShowCodeSelection(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Wykryto wiele kodów</Text>
+                <TouchableOpacity onPress={() => setShowCodeSelection(false)}>
+                  <Ionicons name="close" size={24} color="#fff" />
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.modalSubtitle}>Wybierz właściwy kod:</Text>
+              <FlatList
+                data={scannedCodes}
+                renderItem={({ item, index }) => (
+                  <TouchableOpacity
+                    style={styles.codeSelectItem}
+                    onPress={() => selectCode(item.data)}
+                  >
+                    <View style={styles.codeSelectIcon}>
+                      <Ionicons 
+                        name={item.type.includes('qr') ? 'qr-code' : 'barcode'} 
+                        size={24} 
+                        color="#3b82f6" 
+                      />
+                    </View>
+                    <View style={styles.codeSelectInfo}>
+                      <Text style={styles.codeSelectType}>
+                        {item.type.includes('qr') ? 'Kod QR' : 'Kod kreskowy'}
+                      </Text>
+                      <Text style={styles.codeSelectData}>{item.data}</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color="#888" />
+                  </TouchableOpacity>
+                )}
+                keyExtractor={(item, index) => `${item.data}-${index}`}
+              />
+            </View>
+          </View>
+        </Modal>
       </SafeAreaView>
     );
   }
@@ -307,15 +470,53 @@ export default function Import() {
               </TouchableOpacity>
             </View>
 
-            <View style={styles.modalBody}>
-              <Text style={styles.inputLabel}>Nazwa urządzenia (opcjonalne)</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="np. T-MOBILE CPE HOMEBOX"
-                placeholderTextColor="#666"
-                value={deviceName}
-                onChangeText={setDeviceName}
-              />
+            <ScrollView style={styles.modalBody}>
+              {/* Scanned Serial Number Display */}
+              {serialNumber && (
+                <View style={styles.scannedSerialSection}>
+                  <Text style={styles.inputLabel}>Zeskanowany numer:</Text>
+                  <View style={styles.scannedSerialCard}>
+                    <Ionicons name="barcode-outline" size={20} color="#3b82f6" />
+                    <Text style={styles.scannedSerialText}>{serialNumber}</Text>
+                  </View>
+                </View>
+              )}
+
+              {/* Device Type Selection */}
+              <Text style={styles.inputLabel}>Typ urządzenia *</Text>
+              <TouchableOpacity 
+                style={styles.deviceTypePicker}
+                onPress={() => setShowDeviceTypePicker(true)}
+              >
+                <Text style={[
+                  styles.deviceTypePickerText,
+                  !deviceName && styles.deviceTypePickerPlaceholder
+                ]}>
+                  {deviceName || 'Wybierz typ urządzenia...'}
+                </Text>
+                <Ionicons name="chevron-down" size={20} color="#888" />
+              </TouchableOpacity>
+
+              {/* Device Type Chips */}
+              <View style={styles.deviceTypeChips}>
+                {DEVICE_TYPES.map((type) => (
+                  <TouchableOpacity
+                    key={type}
+                    style={[
+                      styles.deviceTypeChip,
+                      deviceName === type && styles.deviceTypeChipActive,
+                    ]}
+                    onPress={() => setDeviceName(type)}
+                  >
+                    <Text style={[
+                      styles.deviceTypeChipText,
+                      deviceName === type && styles.deviceTypeChipTextActive,
+                    ]}>
+                      {type}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
 
               <Text style={styles.inputLabel}>Numer seryjny *</Text>
               <View style={styles.serialInputRow}>
@@ -346,12 +547,15 @@ export default function Import() {
                 value={barcode}
                 onChangeText={setBarcode}
               />
-            </View>
+            </ScrollView>
 
             <TouchableOpacity
-              style={[styles.submitButton, addingDevice && styles.submitButtonDisabled]}
+              style={[
+                styles.submitButton, 
+                (addingDevice || !serialNumber.trim() || !deviceName.trim()) && styles.submitButtonDisabled
+              ]}
               onPress={handleAddSingleDevice}
-              disabled={addingDevice}
+              disabled={addingDevice || !serialNumber.trim() || !deviceName.trim()}
             >
               {addingDevice ? (
                 <ActivityIndicator color="#fff" />
@@ -362,6 +566,54 @@ export default function Import() {
                 </>
               )}
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Device Type Selection Modal */}
+      <Modal
+        visible={showDeviceTypePicker}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowDeviceTypePicker(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Wybierz typ urządzenia</Text>
+              <TouchableOpacity onPress={() => setShowDeviceTypePicker(false)}>
+                <Ionicons name="close" size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={DEVICE_TYPES}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.deviceTypeSelectItem,
+                    deviceName === item && styles.deviceTypeSelectItemActive,
+                  ]}
+                  onPress={() => {
+                    setDeviceName(item);
+                    setShowDeviceTypePicker(false);
+                  }}
+                >
+                  <View style={styles.deviceTypeSelectIcon}>
+                    <Ionicons name="hardware-chip" size={24} color={deviceName === item ? '#fff' : '#3b82f6'} />
+                  </View>
+                  <Text style={[
+                    styles.deviceTypeSelectText,
+                    deviceName === item && styles.deviceTypeSelectTextActive,
+                  ]}>
+                    {item}
+                  </Text>
+                  {deviceName === item && (
+                    <Ionicons name="checkmark-circle" size={24} color="#10b981" />
+                  )}
+                </TouchableOpacity>
+              )}
+              keyExtractor={(item) => item}
+            />
           </View>
         </View>
       </Modal>
@@ -519,6 +771,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
+  modalSubtitle: {
+    color: '#888',
+    fontSize: 14,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+  },
   modalBody: {
     padding: 20,
   },
@@ -588,7 +846,6 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   scannerFrame: {
     width: 250,
@@ -598,11 +855,44 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: 'transparent',
   },
-  scannerHint: {
-    color: '#888',
-    fontSize: 14,
-    textAlign: 'center',
-    padding: 20,
+  scanHintContainer: {
+    position: 'absolute',
+    bottom: 100,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  scanHintText: {
+    color: '#fff',
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    fontSize: 13,
+  },
+  scannedCodesPreview: {
+    position: 'absolute',
+    bottom: 20,
+    left: 10,
+    right: 10,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  scannedCodeItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(59, 130, 246, 0.9)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    maxWidth: '48%',
+  },
+  scannedCodeText: {
+    color: '#fff',
+    fontSize: 12,
+    marginLeft: 6,
+    flex: 1,
   },
   permissionContainer: {
     flex: 1,
@@ -629,5 +919,130 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  // Code selection modal styles
+  codeSelectItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2a2a2a',
+  },
+  codeSelectIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#0a0a0a',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  codeSelectInfo: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  codeSelectType: {
+    color: '#888',
+    fontSize: 12,
+  },
+  codeSelectData: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  // Scanned serial display
+  scannedSerialSection: {
+    marginBottom: 8,
+  },
+  scannedSerialCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#0a0a0a',
+    borderRadius: 12,
+    padding: 14,
+    borderLeftWidth: 3,
+    borderLeftColor: '#3b82f6',
+  },
+  scannedSerialText: {
+    flex: 1,
+    color: '#3b82f6',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginLeft: 10,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+  },
+  // Device type picker styles
+  deviceTypePicker: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#0a0a0a',
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#333',
+    marginBottom: 12,
+  },
+  deviceTypePickerText: {
+    color: '#fff',
+    fontSize: 16,
+  },
+  deviceTypePickerPlaceholder: {
+    color: '#666',
+  },
+  deviceTypeChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 8,
+  },
+  deviceTypeChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: '#0a0a0a',
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  deviceTypeChipActive: {
+    backgroundColor: '#3b82f6',
+    borderColor: '#3b82f6',
+  },
+  deviceTypeChipText: {
+    color: '#888',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  deviceTypeChipTextActive: {
+    color: '#fff',
+  },
+  // Device type selection modal styles
+  deviceTypeSelectItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2a2a2a',
+  },
+  deviceTypeSelectItemActive: {
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+  },
+  deviceTypeSelectIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#0a0a0a',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  deviceTypeSelectText: {
+    flex: 1,
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '500',
+    marginLeft: 12,
+  },
+  deviceTypeSelectTextActive: {
+    color: '#3b82f6',
   },
 });
