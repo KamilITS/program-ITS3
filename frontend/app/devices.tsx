@@ -711,71 +711,210 @@ export default function Devices() {
         </View>
       )}
 
-      {/* Search */}
-      <View style={styles.searchContainer}>
-        <Ionicons name="search" size={20} color="#888" style={styles.searchIcon} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Szukaj urządzenia..."
-          placeholderTextColor="#888"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-      </View>
-
-      {/* Status Filters */}
-      <View style={styles.filtersRow}>
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          style={styles.filtersScroll}
-          contentContainerStyle={styles.filtersContainer}
-        >
-          {statusFilters.map((filter) => (
-            <TouchableOpacity
-              key={filter.key || 'all'}
-              style={[
-                styles.filterButton,
-                statusFilter === filter.key && styles.filterButtonActive,
-              ]}
-              onPress={() => setStatusFilter(filter.key)}
-            >
-              <Text
-                style={[
-                  styles.filterText,
-                  statusFilter === filter.key && styles.filterTextActive,
-                ]}
-              >
-                {filter.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
-      
-      {/* Advanced Filters Button - Admin Only - in separate row */}
-      {isAdmin && (
-        <View style={styles.advancedFiltersContainer}>
+      {/* View Mode Toggle - Admin Only */}
+      {isAdmin && !selectionMode && (
+        <View style={styles.viewModeToggle}>
           <TouchableOpacity
-            style={[
-              styles.advancedFilterButton,
-              activeFiltersCount > 0 && styles.advancedFilterButtonActive
-            ]}
-            onPress={() => setShowFiltersModal(true)}
+            style={[styles.viewModeButton, viewMode === 'devices' && styles.viewModeButtonActive]}
+            onPress={() => setViewMode('devices')}
           >
-            <Ionicons name="options" size={18} color={activeFiltersCount > 0 ? '#fff' : '#3b82f6'} />
-            <Text style={[
-              styles.advancedFilterText,
-              activeFiltersCount > 0 && styles.advancedFilterTextActive
-            ]}>
-              Filtry {activeFiltersCount > 0 ? `(${activeFiltersCount})` : ''}
+            <Ionicons name="list" size={18} color={viewMode === 'devices' ? '#fff' : '#888'} />
+            <Text style={[styles.viewModeText, viewMode === 'devices' && styles.viewModeTextActive]}>
+              Urządzenia
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.viewModeButton, viewMode === 'inventory' && styles.viewModeButtonActive]}
+            onPress={() => setViewMode('inventory')}
+          >
+            <Ionicons name="people" size={18} color={viewMode === 'inventory' ? '#fff' : '#888'} />
+            <Text style={[styles.viewModeText, viewMode === 'inventory' && styles.viewModeTextActive]}>
+              Stany pracowników
             </Text>
           </TouchableOpacity>
         </View>
       )}
 
-      {/* Stats */}
-      <View style={styles.statsRow}>
+      {/* INVENTORY VIEW */}
+      {viewMode === 'inventory' && isAdmin ? (
+        <ScrollView
+          style={styles.content}
+          refreshControl={
+            <RefreshControl refreshing={inventoryLoading} onRefresh={loadInventory} tintColor="#3b82f6" />
+          }
+        >
+          {inventoryData.filter(u => u.role !== 'admin').map((userData) => (
+            <TouchableOpacity
+              key={userData.user_id}
+              style={[
+                styles.inventoryUserCard,
+                userData.has_low_stock && styles.inventoryUserCardAlert,
+              ]}
+              onPress={() => {
+                const newExpanded = new Set(expandedUsers);
+                if (newExpanded.has(userData.user_id)) {
+                  newExpanded.delete(userData.user_id);
+                } else {
+                  newExpanded.add(userData.user_id);
+                }
+                setExpandedUsers(newExpanded);
+              }}
+            >
+              <View style={styles.inventoryUserHeader}>
+                <View style={styles.inventoryUserInfo}>
+                  <Ionicons 
+                    name="person-circle" 
+                    size={40} 
+                    color={userData.has_low_stock ? '#ef4444' : '#3b82f6'} 
+                  />
+                  <View>
+                    <Text style={styles.inventoryUserName}>{userData.user_name}</Text>
+                    <Text style={styles.inventoryUserEmail}>{userData.user_email}</Text>
+                  </View>
+                </View>
+                <Ionicons 
+                  name={expandedUsers.has(userData.user_id) ? 'chevron-up' : 'chevron-down'} 
+                  size={24} 
+                  color="#888" 
+                />
+              </View>
+              
+              <View style={styles.inventoryStatsRow}>
+                <View style={styles.inventoryStatBox}>
+                  <Text style={styles.inventoryStatNumber}>{userData.total_devices}</Text>
+                  <Text style={styles.inventoryStatLabel}>Przypisanych</Text>
+                </View>
+                <View style={styles.inventoryStatBox}>
+                  <Text style={[styles.inventoryStatNumber, { color: '#8b5cf6' }]}>
+                    {userData.total_installed || 0}
+                  </Text>
+                  <Text style={styles.inventoryStatLabel}>Zainstalowanych</Text>
+                </View>
+                <View style={styles.inventoryStatBox}>
+                  <Text style={[styles.inventoryStatNumber, { color: '#f59e0b' }]}>
+                    {userData.total_damaged || 0}
+                  </Text>
+                  <Text style={styles.inventoryStatLabel}>Uszkodzonych</Text>
+                </View>
+                {userData.has_low_stock && (
+                  <View style={[styles.inventoryStatBox, styles.inventoryStatBoxAlert]}>
+                    <Text style={[styles.inventoryStatNumber, { color: '#ef4444' }]}>
+                      {userData.low_stock.length}
+                    </Text>
+                    <Text style={[styles.inventoryStatLabel, { color: '#ef4444' }]}>Niski stan</Text>
+                  </View>
+                )}
+              </View>
+              
+              {/* Expanded details */}
+              {expandedUsers.has(userData.user_id) && userData.by_barcode.length > 0 && (
+                <View style={styles.inventoryDetails}>
+                  <Text style={styles.inventoryDetailsTitle}>Urządzenia wg typu:</Text>
+                  {userData.by_barcode.map((item: any, idx: number) => (
+                    <View 
+                      key={idx} 
+                      style={[
+                        styles.inventoryDetailRow,
+                        item.count < 4 && styles.inventoryDetailRowAlert,
+                      ]}
+                    >
+                      <Text style={[
+                        styles.inventoryDetailName,
+                        item.count < 4 && styles.inventoryDetailNameAlert,
+                      ]}>
+                        {item.nazwa || item.kod_kreskowy}
+                      </Text>
+                      <Text style={[
+                        styles.inventoryDetailCount,
+                        item.count < 4 && styles.inventoryDetailCountAlert,
+                      ]}>
+                        {item.count} szt.
+                        {item.count < 4 && ' ⚠️'}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </TouchableOpacity>
+          ))}
+          
+          {inventoryData.filter(u => u.role !== 'admin').length === 0 && (
+            <View style={styles.emptyContainer}>
+              <Ionicons name="people-outline" size={64} color="#333" />
+              <Text style={styles.emptyText}>Brak pracowników</Text>
+            </View>
+          )}
+          
+          <View style={{ height: 40 }} />
+        </ScrollView>
+      ) : (
+        <>
+          {/* DEVICES VIEW */}
+          {/* Search */}
+          <View style={styles.searchContainer}>
+            <Ionicons name="search" size={20} color="#888" style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Szukaj urządzenia..."
+              placeholderTextColor="#888"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+          </View>
+
+          {/* Status Filters */}
+          <View style={styles.filtersRow}>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              style={styles.filtersScroll}
+              contentContainerStyle={styles.filtersContainer}
+            >
+              {statusFilters.map((filter) => (
+                <TouchableOpacity
+                  key={filter.key || 'all'}
+                  style={[
+                    styles.filterButton,
+                    statusFilter === filter.key && styles.filterButtonActive,
+                  ]}
+                  onPress={() => setStatusFilter(filter.key)}
+                >
+                  <Text
+                    style={[
+                      styles.filterText,
+                      statusFilter === filter.key && styles.filterTextActive,
+                    ]}
+                  >
+                    {filter.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+          
+          {/* Advanced Filters Button - Admin Only - in separate row */}
+          {isAdmin && (
+            <View style={styles.advancedFiltersContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.advancedFilterButton,
+                  activeFiltersCount > 0 && styles.advancedFilterButtonActive
+                ]}
+                onPress={() => setShowFiltersModal(true)}
+              >
+                <Ionicons name="options" size={18} color={activeFiltersCount > 0 ? '#fff' : '#3b82f6'} />
+                <Text style={[
+                  styles.advancedFilterText,
+                  activeFiltersCount > 0 && styles.advancedFilterTextActive
+                ]}>
+                  Filtry {activeFiltersCount > 0 ? `(${activeFiltersCount})` : ''}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Stats */}
+          <View style={styles.statsRow}>
         <View style={styles.statItem}>
           <Text style={styles.statNumber}>{devices.length}</Text>
           <Text style={styles.statLabel}>Urządzeń</Text>
