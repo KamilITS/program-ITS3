@@ -34,13 +34,17 @@ export default function Dashboard() {
     // Only check for workers (not admins)
     if (user?.role === 'admin') return;
     
-    const lastCheckTimestamp = await AsyncStorage.getItem('lastTaskCheckTimestamp');
+    const lastCheckTimestamp = await AsyncStorage.getItem(`lastTaskCheck_${user?.user_id}`);
     const myPendingTasks = tasks.filter((t: any) => 
       t.status !== 'zakonczone' && t.assigned_to === user?.user_id
     );
     
+    // If no pending tasks, nothing to show
+    if (myPendingTasks.length === 0) return;
+    
     if (lastCheckTimestamp) {
       const lastCheck = new Date(lastCheckTimestamp);
+      // Show tasks created after last check
       const newTasks = myPendingTasks.filter((t: any) => {
         const taskCreated = new Date(t.created_at);
         return taskCreated > lastCheck;
@@ -53,13 +57,16 @@ export default function Dashboard() {
         });
       }
     } else {
-      // First time - just save current timestamp
-      await AsyncStorage.setItem('lastTaskCheckTimestamp', new Date().toISOString());
+      // First time login - show all pending tasks as "new"
+      setNewTasksAlert({
+        count: myPendingTasks.length,
+        titles: myPendingTasks.slice(0, 3).map((t: any) => t.title)
+      });
     }
   };
 
   const dismissNewTasksAlert = async () => {
-    await AsyncStorage.setItem('lastTaskCheckTimestamp', new Date().toISOString());
+    await AsyncStorage.setItem(`lastTaskCheck_${user?.user_id}`, new Date().toISOString());
     setNewTasksAlert(null);
   };
 
