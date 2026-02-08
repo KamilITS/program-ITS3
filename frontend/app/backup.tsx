@@ -998,6 +998,20 @@ const styles = StyleSheet.create({
   textDisabled: {
     color: '#666',
   },
+  importButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+    paddingVertical: 14,
+    gap: 8,
+  },
+  importButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
   loadingRow: {
     flexDirection: 'row',
     alignItems: 'center',
