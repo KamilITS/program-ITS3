@@ -693,4 +693,44 @@ const styles = StyleSheet.create({
   newTasksAlertClose: {
     padding: 8,
   },
+  // New Chat Alert Styles
+  newChatAlert: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#10b981',
+    borderRadius: 16,
+    padding: 16,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    shadowColor: '#10b981',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  newChatAlertIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  newChatAlertContent: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  newChatAlertTitle: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  newChatAlertSubtitle: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 13,
+  },
+  newChatAlertClose: {
+    padding: 8,
+  },
 });
