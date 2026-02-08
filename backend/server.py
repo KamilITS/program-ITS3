@@ -934,6 +934,24 @@ async def transfer_device(device_id: str, request: Request, admin: dict = Depend
     if result.modified_count == 0:
         raise HTTPException(status_code=500, detail="Nie udało się przenieść urządzenia")
     
+    # Log transfer activity
+    old_worker = await db.users.find_one({"user_id": device.get("przypisany_do")})
+    old_worker_name = old_worker.get("name", "Nieznany") if old_worker else "Nieznany"
+    
+    await log_activity(
+        user_id=admin["user_id"],
+        user_name=admin["name"],
+        user_role="admin",
+        action_type="device_transfer",
+        action_description=f"Przeniesiono urządzenie {device.get('nazwa', 'Nieznane')} ({device.get('numer_seryjny', 'brak SN')}) od {old_worker_name} do {new_worker.get('name', 'Nieznany')}",
+        device_serial=device.get("numer_seryjny"),
+        device_name=device.get("nazwa"),
+        device_id=device_id,
+        target_user_id=new_worker_id,
+        target_user_name=new_worker.get("name"),
+        details={"old_worker_id": device.get("przypisany_do"), "old_worker_name": old_worker_name}
+    )
+    
     return {
         "message": f"Urządzenie przeniesione do: {new_worker.get('name', 'Nieznany')}",
         "new_worker_id": new_worker_id,
