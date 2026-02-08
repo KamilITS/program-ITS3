@@ -193,6 +193,35 @@ export default function Dashboard() {
           </View>
         )}
 
+        {/* New Tasks Alert - for workers */}
+        {newTasksAlert && (
+          <TouchableOpacity 
+            style={styles.newTasksAlert}
+            onPress={() => {
+              dismissNewTasksAlert();
+              router.push('/tasks');
+            }}
+          >
+            <View style={styles.newTasksAlertIcon}>
+              <Ionicons name="notifications" size={24} color="#fff" />
+            </View>
+            <View style={styles.newTasksAlertContent}>
+              <Text style={styles.newTasksAlertTitle}>
+                🔔 Masz {newTasksAlert.count} {newTasksAlert.count === 1 ? 'nowe zadanie' : 'nowe zadania'}!
+              </Text>
+              <Text style={styles.newTasksAlertSubtitle}>
+                {newTasksAlert.titles.join(', ')}{newTasksAlert.count > 3 ? '...' : ''}
+              </Text>
+            </View>
+            <TouchableOpacity 
+              style={styles.newTasksAlertClose}
+              onPress={dismissNewTasksAlert}
+            >
+              <Ionicons name="close" size={20} color="#fff" />
+            </TouchableOpacity>
+          </TouchableOpacity>
+        )}
+
         {/* Installation Types - only for admin */}
         {isAdmin && stats && Object.keys(stats.by_type).length > 0 && (
           <View style={styles.section}>
