@@ -1776,7 +1776,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a1a',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    maxHeight: '80%',
+    maxHeight: '85%',
+    paddingBottom: Platform.OS === 'ios' ? 34 : 20,
   },
   modalHeader: {
     flexDirection: 'row',
