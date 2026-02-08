@@ -1185,4 +1185,35 @@ const styles = StyleSheet.create({
     color: '#f59e0b',
     fontSize: 12,
   },
+  // Timeline styles
+  historyTimelineHeader: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2a2a2a',
+    backgroundColor: '#1a1a1a',
+  },
+  historyTimelineTitle: {
+    color: '#888',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  timelineLine: {
+    width: 24,
+    alignItems: 'center',
+  },
+  timelineDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#3b82f6',
+    marginTop: 4,
+  },
+  timelineConnector: {
+    width: 2,
+    flex: 1,
+    backgroundColor: '#333',
+    marginTop: 4,
+    minHeight: 40,
+  },
 });
