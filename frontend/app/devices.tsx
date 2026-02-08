@@ -1674,6 +1674,20 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: 2,
   },
+  lowStockBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ef4444',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    gap: 4,
+  },
+  lowStockText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '600',
+  },
   selectedBadge: {
     backgroundColor: '#3b82f6',
     paddingHorizontal: 10,
