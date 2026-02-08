@@ -543,10 +543,26 @@ async def import_devices(file: UploadFile = File(...), admin: dict = Depends(req
                 "kod_qr": str(row[3]) if len(row) > 3 and row[3] else None,
                 "przypisany_do": None,
                 "status": "dostepny",
-                "created_at": datetime.now(timezone.utc)
+                "created_at": datetime.now(timezone.utc),
+                "imported_at": datetime.now(timezone.utc),
+                "imported_by": admin["user_id"]
             }
             
             await db.devices.insert_one(device)
+            
+            # Log device import
+            await log_activity(
+                user_id=admin["user_id"],
+                user_name=admin["name"],
+                user_role="admin",
+                action_type="device_import",
+                action_description=f"Zaimportowano urządzenie {device['nazwa']} ({numer_seryjny}) z pliku Excel",
+                device_serial=numer_seryjny,
+                device_name=device["nazwa"],
+                device_id=device["device_id"],
+                details={"source": "excel_import", "filename": file.filename}
+            )
+            
             devices_imported += 1
         except Exception as e:
             errors.append(f"Wiersz {row_num}: {str(e)}")
