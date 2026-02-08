@@ -48,6 +48,7 @@ export default function Tasks() {
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [completeModalVisible, setCompleteModalVisible] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
