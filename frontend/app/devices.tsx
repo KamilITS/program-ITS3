@@ -706,7 +706,7 @@ export default function Devices() {
           <View style={styles.categoryInfo}>
             <Text style={styles.categoryName} numberOfLines={1}>{category.name}</Text>
             <Text style={styles.categoryCount}>
-              {category.count} szt. ({category.availableCount} dostępnych)
+              {category.count} szt.
             </Text>
           </View>
           
