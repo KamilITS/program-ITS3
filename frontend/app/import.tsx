@@ -573,6 +573,7 @@ export default function Import() {
             </TouchableOpacity>
           </View>
         </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Device Type Selection Modal */}
