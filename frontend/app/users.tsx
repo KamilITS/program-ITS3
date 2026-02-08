@@ -793,8 +793,6 @@ export default function Users() {
                 </ScrollView>
               </View>
             )}
-              />
-            )}
           </View>
         </View>
       </Modal>
