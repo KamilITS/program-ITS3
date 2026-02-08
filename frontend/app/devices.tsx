@@ -256,7 +256,10 @@ export default function Devices() {
         device.nazwa.toLowerCase().includes(searchQuery.toLowerCase()) ||
         device.numer_seryjny.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStatus = !statusFilter || device.status === statusFilter;
-      const matchesWorker = !workerFilter || device.przypisany_do === workerFilter;
+      // For installed devices, check installer_id instead of przypisany_do
+      const matchesWorker = !workerFilter || 
+        device.przypisany_do === workerFilter || 
+        (device.status === 'zainstalowany' && device.instalacja?.instalator_id === workerFilter);
       const matchesName = !nameFilter || device.nazwa === nameFilter;
       return matchesSearch && matchesStatus && matchesWorker && matchesName;
     });
