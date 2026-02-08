@@ -152,23 +152,11 @@ export default function Index() {
             </View>
           </View>
 
-          {/* Features */}
+          {/* Info Box */}
           <View style={styles.features}>
             <View style={styles.featureItem}>
-              <Ionicons name="barcode-outline" size={20} color="#3b82f6" />
-              <Text style={styles.featureText}>Skanowanie urządzeń</Text>
-            </View>
-            <View style={styles.featureItem}>
-              <Ionicons name="location-outline" size={20} color="#3b82f6" />
-              <Text style={styles.featureText}>Śledzenie lokalizacji</Text>
-            </View>
-            <View style={styles.featureItem}>
-              <Ionicons name="chatbubbles-outline" size={20} color="#3b82f6" />
-              <Text style={styles.featureText}>Komunikator</Text>
-            </View>
-            <View style={styles.featureItem}>
-              <Ionicons name="calendar-outline" size={20} color="#3b82f6" />
-              <Text style={styles.featureText}>Planer zadań</Text>
+              <Ionicons name="shield-checkmark-outline" size={20} color="#3b82f6" />
+              <Text style={styles.featureText}>Bezpieczne logowanie</Text>
             </View>
           </View>
         </ScrollView>
