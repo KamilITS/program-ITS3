@@ -711,7 +711,7 @@ export default function Users() {
         }}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { maxHeight: '85%', flex: 0 }]}>
+          <View style={[styles.modalContent, { maxHeight: '85%' }]}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Historia aktywności</Text>
               <TouchableOpacity onPress={() => {
@@ -740,7 +740,7 @@ export default function Users() {
                 <Text style={styles.emptyText}>Brak zarejestrowanych aktywności</Text>
               </View>
             ) : (
-              <View style={{ flex: 1, minHeight: 300 }}>
+              <View style={{ flex: 1, minHeight: 250 }}>
                 <View style={styles.historyTimelineHeader}>
                   <Text style={styles.historyTimelineTitle}>Oś czasu ({activityLogs.length} zdarzeń)</Text>
                 </View>
