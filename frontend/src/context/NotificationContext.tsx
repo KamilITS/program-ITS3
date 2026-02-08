@@ -95,10 +95,17 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   }, [user, hideBanner]);
 
   const checkForNewMessages = useCallback(async () => {
-    if (!isAuthenticated || !user) return;
+    if (!isAuthenticated || !user) {
+      console.log('[Notifications] Not authenticated or no user');
+      return;
+    }
+
+    console.log('[Notifications] Checking for new messages...');
 
     try {
       const messages: ChatMessage[] = await apiFetch('/api/messages?limit=50');
+      
+      console.log('[Notifications] Got messages:', messages.length);
       
       if (messages.length === 0) return;
 
@@ -106,8 +113,12 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       const lastCheckKey = `lastChatCheck_${user.user_id}`;
       const lastCheckTimestamp = await AsyncStorage.getItem(lastCheckKey);
       
+      console.log('[Notifications] Last check:', lastCheckTimestamp);
+      
       // Filter messages from others (not from current user)
       const messagesFromOthers = messages.filter(m => m.sender_id !== user.user_id);
+      
+      console.log('[Notifications] Messages from others:', messagesFromOthers.length);
       
       if (messagesFromOthers.length === 0) return;
 
@@ -126,6 +137,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         unreadCount = newMessages.length;
       }
 
+      console.log('[Notifications] Unread count:', unreadCount, 'New messages:', newMessages.length);
+
       setUnreadChatCount(unreadCount);
 
       // Show notification for the newest unread message if:
@@ -134,6 +147,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       // 3. Haven't shown notification for this message yet
       if (!isOnChatScreen && newMessages.length > 0) {
         const newestMessage = newMessages[0];
+        console.log('[Notifications] Should show notification for:', newestMessage.message_id, 'Already shown:', shownMessageIds.has(newestMessage.message_id));
         if (!shownMessageIds.has(newestMessage.message_id)) {
           showNotification(
             newestMessage.sender_name,
@@ -143,7 +157,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         }
       }
     } catch (error) {
-      console.error('Error checking messages:', error);
+      console.error('[Notifications] Error checking messages:', error);
     }
   }, [isAuthenticated, user, isOnChatScreen, shownMessageIds, showNotification]);
 
