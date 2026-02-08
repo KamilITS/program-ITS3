@@ -152,13 +152,6 @@ export default function Index() {
             </View>
           </View>
 
-          {/* Info Box */}
-          <View style={styles.features}>
-            <View style={styles.featureItem}>
-              <Ionicons name="shield-checkmark-outline" size={20} color="#3b82f6" />
-              <Text style={styles.featureText}>Bezpieczne logowanie</Text>
-            </View>
-          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
