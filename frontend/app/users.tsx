@@ -395,7 +395,7 @@ export default function Users() {
               <View style={styles.loginInfoItem}>
                 <Ionicons name="time-outline" size={16} color="#3b82f6" />
                 <Text style={styles.loginInfoText}>
-                  {format(lastLoginDate, 'd MMM yyyy, HH:mm', { locale: pl })}
+                  {formatInWarsaw(item.last_login_at, 'd MMM yyyy, HH:mm')}
                 </Text>
               </View>
               {item.last_login_ip && (
