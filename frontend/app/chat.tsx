@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../src/context/AuthContext';
+import { useNotifications } from '../src/context/NotificationContext';
 import { apiFetch } from '../src/utils/api';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
@@ -32,6 +33,7 @@ interface Message {
 
 export default function Chat() {
   const { user, isAuthenticated, isLoading } = useAuth();
+  const { markChatAsRead } = useNotifications();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
