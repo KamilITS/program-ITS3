@@ -186,8 +186,8 @@ export default function Dashboard() {
     if (isAuthenticated) {
       loadData();
       
-      // Poll for updates every 30 seconds
-      const interval = setInterval(loadData, 30000);
+      // Poll for updates every 10 seconds (for chat notifications)
+      const interval = setInterval(loadData, 10000);
       return () => clearInterval(interval);
     }
   }, [isAuthenticated]);
