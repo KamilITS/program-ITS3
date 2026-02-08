@@ -585,13 +585,38 @@ async def get_devices(
     
     if is_admin:
         # Admin can see all devices
-        query = {}
-        if status:
-            query["status"] = status
         if assigned_to:
-            query["przypisany_do"] = assigned_to
-        
-        devices = await db.devices.find(query, {"_id": 0}).to_list(1000)
+            # When filtering by worker, include both assigned AND installed by them
+            query_assigned = {"przypisany_do": assigned_to}
+            if status and status != "zainstalowany":
+                query_assigned["status"] = status
+            
+            assigned_devices = await db.devices.find(query_assigned, {"_id": 0}).to_list(1000)
+            
+            # Also get devices installed by this worker
+            if not status or status == "zainstalowany":
+                installations = await db.installations.find(
+                    {"user_id": assigned_to},
+                    {"_id": 0}
+                ).to_list(1000)
+                installed_device_ids = [inst["device_id"] for inst in installations]
+                
+                installed_query = {"device_id": {"$in": installed_device_ids}, "status": "zainstalowany"}
+                installed_devices = await db.devices.find(installed_query, {"_id": 0}).to_list(1000)
+                
+                # Merge without duplicates
+                device_ids = set(d["device_id"] for d in assigned_devices)
+                for d in installed_devices:
+                    if d["device_id"] not in device_ids:
+                        assigned_devices.append(d)
+                        device_ids.add(d["device_id"])
+            
+            devices = assigned_devices
+        else:
+            query = {}
+            if status:
+                query["status"] = status
+            devices = await db.devices.find(query, {"_id": 0}).to_list(1000)
     else:
         # Worker - get assigned devices + devices they installed
         worker_id = user["user_id"]
