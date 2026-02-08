@@ -304,9 +304,13 @@ export default function Tasks() {
     return reminder?.minutes_left;
   };
 
-  const filteredTasks = tasks.filter((task) => 
-    !statusFilter || task.status === statusFilter
-  );
+  const filteredTasks = tasks.filter((task) => {
+    const matchesStatus = !statusFilter || task.status === statusFilter;
+    const matchesSearch = !searchQuery.trim() || 
+      task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (task.description && task.description.toLowerCase().includes(searchQuery.toLowerCase()));
+    return matchesStatus && matchesSearch;
+  });
 
   // Sort tasks by due date (nearest first)
   const sortedTasks = [...filteredTasks].sort((a, b) => {
