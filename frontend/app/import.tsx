@@ -462,16 +462,20 @@ export default function Import() {
         animationType="slide"
         onRequestClose={() => setShowManualModal(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Dodaj urządzenie</Text>
-              <TouchableOpacity onPress={() => setShowManualModal(false)}>
-                <Ionicons name="close" size={24} color="#fff" />
-              </TouchableOpacity>
-            </View>
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Dodaj urządzenie</Text>
+                <TouchableOpacity onPress={() => setShowManualModal(false)}>
+                  <Ionicons name="close" size={24} color="#fff" />
+                </TouchableOpacity>
+              </View>
 
-            <ScrollView style={styles.modalBody}>
+              <ScrollView style={styles.modalBody} keyboardShouldPersistTaps="handled">
               {/* Scanned Serial Number Display */}
               {serialNumber && (
                 <View style={styles.scannedSerialSection}>
