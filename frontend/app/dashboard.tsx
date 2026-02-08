@@ -73,11 +73,10 @@ export default function Dashboard() {
 
   const loadData = async () => {
     try {
-      const [statsData, devices, tasks, messages] = await Promise.all([
+      const [statsData, devices, tasks] = await Promise.all([
         apiFetch('/api/installations/stats'),
         apiFetch('/api/devices'),
         apiFetch('/api/tasks'),
-        apiFetch('/api/messages?limit=100'),
       ]);
       setStats(statsData);
       setDevicesCount(devices.length);
@@ -89,25 +88,6 @@ export default function Dashboard() {
       
       // Check for new tasks (only for workers)
       await checkForNewTasks(tasks);
-      
-      // Count unread messages
-      const lastReadTimestamp = await AsyncStorage.getItem('lastReadMessageTimestamp');
-      if (lastReadTimestamp && messages.length > 0) {
-        const lastRead = new Date(lastReadTimestamp);
-        const unread = messages.filter((m: any) => {
-          const msgDate = new Date(m.created_at);
-          return msgDate > lastRead && m.sender_id !== user?.user_id;
-        }).length;
-        setUnreadMessages(unread);
-      } else if (messages.length > 0) {
-        // If no last read timestamp, count messages from last 24 hours
-        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-        const unread = messages.filter((m: any) => {
-          const msgDate = new Date(m.created_at);
-          return msgDate > oneDayAgo && m.sender_id !== user?.user_id;
-        }).length;
-        setUnreadMessages(unread);
-      }
     } catch (error) {
       console.error('Error loading data:', error);
     }
