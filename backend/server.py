@@ -10,6 +10,14 @@ from pydantic import BaseModel, Field
 from typing import List, Optional
 import uuid
 from datetime import datetime, timezone, timedelta
+from zoneinfo import ZoneInfo
+
+# Poland timezone
+WARSAW_TZ = ZoneInfo("Europe/Warsaw")
+
+def get_warsaw_now():
+    """Get current datetime in Warsaw timezone"""
+    return datetime.now(WARSAW_TZ)
 import openpyxl
 from io import BytesIO
 import base64
