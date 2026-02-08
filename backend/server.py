@@ -1856,6 +1856,8 @@ async def add_bulk_returns(request: Request, admin: dict = Depends(require_admin
         await db.device_returns.insert_one(return_entry)
         
         # Remove device from employee's account (change status to 'zwrocony' or delete assignment)
+        device = await db.devices.find_one({"numer_seryjny": serial})
+        
         await db.devices.update_one(
             {"numer_seryjny": serial},
             {"$set": {
@@ -1865,6 +1867,21 @@ async def add_bulk_returns(request: Request, admin: dict = Depends(require_admin
                 "returned_by": admin["user_id"]
             }}
         )
+        
+        # Log return activity
+        if device:
+            await log_activity(
+                user_id=admin["user_id"],
+                user_name=admin["name"],
+                user_role="admin",
+                action_type="device_return",
+                action_description=f"Zwrócono urządzenie {device.get('nazwa', 'Nieznane')} ({serial}) do magazynu",
+                device_serial=serial,
+                device_name=device.get("nazwa"),
+                device_id=device.get("device_id"),
+                details={"return_reason": device_status}
+            )
+        
         added += 1
     
     message = f"Dodano {added} urządzeń do zwrotów"
