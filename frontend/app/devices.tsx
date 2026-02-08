@@ -705,9 +705,18 @@ export default function Devices() {
           
           <View style={styles.categoryInfo}>
             <Text style={styles.categoryName} numberOfLines={1}>{category.name}</Text>
-            <Text style={styles.categoryCount}>
-              {category.count} szt.
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text style={styles.categoryCount}>
+                {category.count} szt.
+              </Text>
+              {/* Low stock warning for employees (< 4 items) */}
+              {!isAdmin && category.count < 4 && (
+                <View style={styles.lowStockBadge}>
+                  <Ionicons name="warning" size={12} color="#fff" />
+                  <Text style={styles.lowStockText}>Niski stan</Text>
+                </View>
+              )}
+            </View>
           </View>
           
           {selectionMode && selectedInCategory > 0 && (
