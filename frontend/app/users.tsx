@@ -749,14 +749,26 @@ export default function Users() {
                         <Text style={styles.activityTime}>
                           {format(new Date(item.timestamp), 'd MMM yyyy, HH:mm', { locale: pl })}
                         </Text>
-                        {item.device_serial && (
-                          <>
-                            <Ionicons name="barcode-outline" size={12} color="#888" style={{ marginLeft: 8 }} />
-                            <Text style={styles.activitySerial}>{item.device_serial}</Text>
-                          </>
-                        )}
                       </View>
-                      {item.ip_address && (
+                      {item.device_serial && (
+                        <View style={styles.activityMeta}>
+                          <Ionicons name="barcode-outline" size={12} color="#3b82f6" />
+                          <Text style={styles.activitySerial}>{item.device_serial}</Text>
+                        </View>
+                      )}
+                      {item.details?.adres_klienta && (
+                        <View style={styles.activityMeta}>
+                          <Ionicons name="location-outline" size={12} color="#10b981" />
+                          <Text style={styles.activityAddress} numberOfLines={2}>{item.details.adres_klienta}</Text>
+                        </View>
+                      )}
+                      {item.target_user_name && (
+                        <View style={styles.activityMeta}>
+                          <Ionicons name="person-outline" size={12} color="#f59e0b" />
+                          <Text style={styles.activityTarget}>Przypisano do: {item.target_user_name}</Text>
+                        </View>
+                      )}
+                      {item.ip_address && item.action_type === 'login' && (
                         <View style={styles.activityMeta}>
                           <Ionicons name="globe-outline" size={12} color="#888" />
                           <Text style={styles.activityIp}>{item.ip_address}</Text>
