@@ -2329,12 +2329,67 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   historyAddress: {
-    color: '#888',
+    color: '#10b981',
     fontSize: 11,
     flex: 1,
   },
   historyTarget: {
     color: '#f59e0b',
     fontSize: 12,
+  },
+  // Import date section styles
+  importDateSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    borderBottomWidth: 1,
+    borderBottomColor: '#2a2a2a',
+    gap: 12,
+  },
+  importDateContent: {
+    flex: 1,
+  },
+  importDateLabel: {
+    color: '#888',
+    fontSize: 12,
+    textTransform: 'uppercase',
+  },
+  importDateValue: {
+    color: '#10b981',
+    fontSize: 14,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  // Timeline styles
+  historyTimelineHeader: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2a2a2a',
+  },
+  historyTimelineTitle: {
+    color: '#888',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  timelineLine: {
+    width: 24,
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  timelineDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#3b82f6',
+    marginTop: 4,
+  },
+  timelineConnector: {
+    width: 2,
+    flex: 1,
+    backgroundColor: '#333',
+    marginTop: 4,
+    minHeight: 40,
   },
 });
