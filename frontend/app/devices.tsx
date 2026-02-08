@@ -1663,29 +1663,30 @@ const styles = StyleSheet.create({
   categoryInfo: {
     flex: 1,
     marginLeft: 12,
+    minWidth: 0,
   },
   categoryName: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
   },
   categoryCount: {
     color: '#888',
-    fontSize: 13,
+    fontSize: 12,
     marginTop: 2,
   },
   lowStockBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#ef4444',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 10,
-    gap: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+    gap: 3,
   },
   lowStockText: {
     color: '#fff',
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '600',
   },
   selectedBadge: {
