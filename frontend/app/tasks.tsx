@@ -518,7 +518,7 @@ export default function Tasks() {
       </View>
 
       <FlatList
-        data={filteredTasks}
+        data={sortedTasks}
         renderItem={renderTask}
         keyExtractor={(item) => item.task_id}
         contentContainerStyle={styles.listContainer}
