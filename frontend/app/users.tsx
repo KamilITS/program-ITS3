@@ -711,7 +711,7 @@ export default function Users() {
         }}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { maxHeight: '90%' }]}>
+          <View style={[styles.modalContent, { maxHeight: '85%', flex: 0 }]}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Historia aktywności</Text>
               <TouchableOpacity onPress={() => {
@@ -740,54 +740,59 @@ export default function Users() {
                 <Text style={styles.emptyText}>Brak zarejestrowanych aktywności</Text>
               </View>
             ) : (
-              <FlatList
-                data={activityLogs}
-                keyExtractor={(item) => item.log_id}
-                style={styles.activityList}
-                renderItem={({ item }) => (
-                  <View style={styles.activityItem}>
-                    <View style={[styles.activityIcon, { backgroundColor: getActionTypeColor(item.action_type) + '20' }]}>
-                      <Ionicons 
-                        name={getActionTypeIcon(item.action_type) as any} 
-                        size={20} 
-                        color={getActionTypeColor(item.action_type)} 
-                      />
-                    </View>
-                    <View style={styles.activityContent}>
-                      <Text style={styles.activityDescription}>{item.action_description}</Text>
-                      <View style={styles.activityMeta}>
-                        <Ionicons name="time-outline" size={12} color="#888" />
-                        <Text style={styles.activityTime}>
-                          {format(new Date(item.timestamp), 'd MMM yyyy, HH:mm', { locale: pl })}
-                        </Text>
+              <View style={{ flex: 1, minHeight: 300 }}>
+                <View style={styles.historyTimelineHeader}>
+                  <Text style={styles.historyTimelineTitle}>Oś czasu ({activityLogs.length} zdarzeń)</Text>
+                </View>
+                <ScrollView 
+                  style={{ flex: 1 }} 
+                  contentContainerStyle={{ paddingBottom: 20 }}
+                  showsVerticalScrollIndicator={true}
+                >
+                  {activityLogs.map((item, index) => (
+                    <View key={item.log_id} style={styles.activityItem}>
+                      <View style={styles.timelineLine}>
+                        <View style={[styles.timelineDot, { backgroundColor: getActionTypeColor(item.action_type) }]} />
+                        {index < activityLogs.length - 1 && <View style={styles.timelineConnector} />}
                       </View>
-                      {item.device_serial && (
+                      <View style={styles.activityContent}>
+                        <Text style={styles.activityDescription}>{item.action_description}</Text>
                         <View style={styles.activityMeta}>
-                          <Ionicons name="barcode-outline" size={12} color="#3b82f6" />
-                          <Text style={styles.activitySerial}>{item.device_serial}</Text>
+                          <Ionicons name="time-outline" size={12} color="#888" />
+                          <Text style={styles.activityTime}>
+                            {format(new Date(item.timestamp), 'd MMM yyyy, HH:mm', { locale: pl })}
+                          </Text>
                         </View>
-                      )}
-                      {item.details?.adres_klienta && (
-                        <View style={styles.activityMeta}>
-                          <Ionicons name="location-outline" size={12} color="#10b981" />
-                          <Text style={styles.activityAddress} numberOfLines={2}>{item.details.adres_klienta}</Text>
-                        </View>
-                      )}
-                      {item.target_user_name && (
-                        <View style={styles.activityMeta}>
-                          <Ionicons name="person-outline" size={12} color="#f59e0b" />
-                          <Text style={styles.activityTarget}>Przypisano do: {item.target_user_name}</Text>
-                        </View>
-                      )}
-                      {item.ip_address && item.action_type === 'login' && (
-                        <View style={styles.activityMeta}>
-                          <Ionicons name="globe-outline" size={12} color="#888" />
-                          <Text style={styles.activityIp}>{item.ip_address}</Text>
-                        </View>
-                      )}
+                        {item.device_serial && (
+                          <View style={styles.activityMeta}>
+                            <Ionicons name="barcode-outline" size={12} color="#3b82f6" />
+                            <Text style={styles.activitySerial}>{item.device_serial}</Text>
+                          </View>
+                        )}
+                        {item.details?.adres_klienta && (
+                          <View style={styles.activityMeta}>
+                            <Ionicons name="location-outline" size={12} color="#10b981" />
+                            <Text style={styles.activityAddress} numberOfLines={2}>{item.details.adres_klienta}</Text>
+                          </View>
+                        )}
+                        {item.target_user_name && (
+                          <View style={styles.activityMeta}>
+                            <Ionicons name="person-outline" size={12} color="#f59e0b" />
+                            <Text style={styles.activityTarget}>Przypisano do: {item.target_user_name}</Text>
+                          </View>
+                        )}
+                        {item.ip_address && item.action_type === 'login' && (
+                          <View style={styles.activityMeta}>
+                            <Ionicons name="globe-outline" size={12} color="#888" />
+                            <Text style={styles.activityIp}>{item.ip_address}</Text>
+                          </View>
+                        )}
+                      </View>
                     </View>
-                  </View>
-                )}
+                  ))}
+                </ScrollView>
+              </View>
+            )}
               />
             )}
           </View>
