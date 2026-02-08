@@ -58,6 +58,8 @@ export default function Chat() {
   useEffect(() => {
     if (isAuthenticated) {
       loadMessages();
+      // Mark chat as read when entering chat screen
+      markChatAsRead();
       // Poll for new messages every 5 seconds
       const interval = setInterval(loadMessages, 5000);
       return () => clearInterval(interval);
