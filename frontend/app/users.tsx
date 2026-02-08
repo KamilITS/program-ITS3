@@ -1167,4 +1167,13 @@ const styles = StyleSheet.create({
     color: '#888',
     fontSize: 11,
   },
+  activityAddress: {
+    color: '#10b981',
+    fontSize: 12,
+    flex: 1,
+  },
+  activityTarget: {
+    color: '#f59e0b',
+    fontSize: 12,
+  },
 });
