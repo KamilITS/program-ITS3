@@ -2282,11 +2282,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  emptyText: {
-    color: '#666',
-    fontSize: 14,
-    textAlign: 'center',
-  },
   emptySubtext: {
     color: '#555',
     fontSize: 12,
