@@ -892,7 +892,7 @@ export default function Tasks() {
               )}
             </TouchableOpacity>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Photos Viewing Modal */}
@@ -915,7 +915,7 @@ export default function Tasks() {
               <View style={styles.photosGrid}>
                 {viewingPhotos.map((photo, index) => (
                   <View key={index} style={styles.fullPhotoContainer}>
-                    <Image source={{ uri: photo }} style={styles.fullPhoto} />
+                    <Image source={{ uri: photo }} style={styles.fullPhoto} resizeMode="contain" />
                   </View>
                 ))}
               </View>
