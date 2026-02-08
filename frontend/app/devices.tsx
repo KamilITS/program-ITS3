@@ -174,9 +174,12 @@ export default function Devices() {
       case 'device_install': return 'hardware-chip-outline';
       case 'device_assign': return 'arrow-forward-circle-outline';
       case 'device_add': return 'add-circle-outline';
+      case 'device_import': return 'cloud-download-outline';
       case 'device_scan': return 'scan-outline';
       case 'device_return': return 'return-down-back-outline';
       case 'device_damage': return 'warning-outline';
+      case 'device_restore': return 'refresh-outline';
+      case 'device_transfer': return 'swap-horizontal-outline';
       default: return 'ellipse-outline';
     }
   };
@@ -188,9 +191,12 @@ export default function Devices() {
       case 'device_install': return '#3b82f6';
       case 'device_assign': return '#f59e0b';
       case 'device_add': return '#10b981';
+      case 'device_import': return '#10b981';
       case 'device_scan': return '#8b5cf6';
       case 'device_return': return '#ef4444';
       case 'device_damage': return '#ef4444';
+      case 'device_restore': return '#3b82f6';
+      case 'device_transfer': return '#8b5cf6';
       default: return '#888';
     }
   };
