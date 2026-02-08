@@ -79,55 +79,6 @@ export default function Dashboard() {
     setNewTasksAlert(null);
   };
 
-  const checkForNewMessages = async (messages: ChatMessage[]) => {
-    if (messages.length === 0) return;
-    
-    const lastChatCheckTimestamp = await AsyncStorage.getItem(`lastChatCheck_${user?.user_id}`);
-    
-    // Filter messages from others (not from current user)
-    const messagesFromOthers = messages.filter((m: ChatMessage) => m.sender_id !== user?.user_id);
-    
-    if (messagesFromOthers.length === 0) return;
-    
-    if (lastChatCheckTimestamp) {
-      const lastCheck = new Date(lastChatCheckTimestamp);
-      const newMessages = messagesFromOthers.filter((m: ChatMessage) => {
-        const msgDate = new Date(m.created_at);
-        return msgDate > lastCheck;
-      });
-      
-      if (newMessages.length > 0) {
-        const lastMsg = newMessages[0]; // Most recent
-        setNewChatAlert({
-          count: newMessages.length,
-          lastSender: lastMsg.sender_name,
-          preview: lastMsg.content?.substring(0, 50) || '[załącznik]'
-        });
-      }
-    } else {
-      // First time - check messages from last hour
-      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-      const recentMessages = messagesFromOthers.filter((m: ChatMessage) => {
-        const msgDate = new Date(m.created_at);
-        return msgDate > oneHourAgo;
-      });
-      
-      if (recentMessages.length > 0) {
-        const lastMsg = recentMessages[0];
-        setNewChatAlert({
-          count: recentMessages.length,
-          lastSender: lastMsg.sender_name,
-          preview: lastMsg.content?.substring(0, 50) || '[załącznik]'
-        });
-      }
-    }
-  };
-
-  const dismissChatAlert = async () => {
-    await AsyncStorage.setItem(`lastChatCheck_${user?.user_id}`, new Date().toISOString());
-    setNewChatAlert(null);
-  };
-
   const loadData = async () => {
     try {
       const [statsData, devices, tasks, messages] = await Promise.all([
