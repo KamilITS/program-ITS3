@@ -148,10 +148,13 @@ export default function Devices() {
     setHistoryLoading(true);
     try {
       const data = await apiFetch(`/api/activity-logs/device/${encodeURIComponent(deviceSerial)}?limit=100`);
-      setDeviceHistory(data);
+      // API returns { device, installation, logs, total_events }
+      setDeviceFullInfo(data.device || null);
+      setDeviceHistory(data.logs || []);
     } catch (error) {
       console.error('Error loading device history:', error);
       setDeviceHistory([]);
+      setDeviceFullInfo(null);
     } finally {
       setHistoryLoading(false);
     }
@@ -159,6 +162,7 @@ export default function Devices() {
 
   const openDeviceHistory = (device: Device) => {
     setHistoryDevice(device);
+    setDeviceFullInfo(null);
     setHistoryModalVisible(true);
     loadDeviceHistory(device.numer_seryjny);
   };
