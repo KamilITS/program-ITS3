@@ -1,7 +1,11 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Alert, AppState } from 'react-native';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
+
+// Session timeout for workers (30 minutes in milliseconds)
+const WORKER_SESSION_TIMEOUT = 30 * 60 * 1000;
 
 interface User {
   user_id: string;
@@ -25,6 +29,62 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const sessionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const loginTimeRef = useRef<number | null>(null);
+
+  // Clear any existing session timeout
+  const clearSessionTimeout = () => {
+    if (sessionTimeoutRef.current) {
+      clearTimeout(sessionTimeoutRef.current);
+      sessionTimeoutRef.current = null;
+    }
+  };
+
+  // Setup session timeout for workers
+  const setupSessionTimeout = async (userData: User) => {
+    clearSessionTimeout();
+    
+    // Only apply timeout for workers (pracownik), not admins
+    if (userData.role !== 'admin') {
+      const storedLoginTime = await AsyncStorage.getItem('login_time');
+      const loginTime = storedLoginTime ? parseInt(storedLoginTime, 10) : Date.now();
+      loginTimeRef.current = loginTime;
+      
+      const elapsed = Date.now() - loginTime;
+      const remaining = WORKER_SESSION_TIMEOUT - elapsed;
+      
+      if (remaining <= 0) {
+        // Session already expired
+        Alert.alert(
+          'Sesja wygasła',
+          'Twoja sesja wygasła. Zaloguj się ponownie.',
+          [{ text: 'OK' }]
+        );
+        await performLogout();
+      } else {
+        // Set timeout for remaining time
+        sessionTimeoutRef.current = setTimeout(async () => {
+          Alert.alert(
+            'Sesja wygasła',
+            'Twoja sesja wygasła po 30 minutach nieaktywności. Zaloguj się ponownie.',
+            [{ text: 'OK' }]
+          );
+          await performLogout();
+        }, remaining);
+        
+        console.log(`Session will expire in ${Math.round(remaining / 60000)} minutes`);
+      }
+    }
+  };
+
+  // Perform logout without API call (for session expiry)
+  const performLogout = async () => {
+    clearSessionTimeout();
+    await AsyncStorage.removeItem('session_token');
+    await AsyncStorage.removeItem('login_time');
+    loginTimeRef.current = null;
+    setUser(null);
+  };
 
   const checkAuth = async () => {
     try {
@@ -43,8 +103,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (response.ok) {
         const userData = await response.json();
         setUser(userData);
+        await setupSessionTimeout(userData);
       } else {
         await AsyncStorage.removeItem('session_token');
+        await AsyncStorage.removeItem('login_time');
         setUser(null);
       }
     } catch (error) {
@@ -55,8 +117,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Handle app state changes (background/foreground)
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', async (nextAppState) => {
+      if (nextAppState === 'active' && user && user.role !== 'admin') {
+        // Check if session has expired while app was in background
+        const storedLoginTime = await AsyncStorage.getItem('login_time');
+        if (storedLoginTime) {
+          const loginTime = parseInt(storedLoginTime, 10);
+          const elapsed = Date.now() - loginTime;
+          
+          if (elapsed >= WORKER_SESSION_TIMEOUT) {
+            Alert.alert(
+              'Sesja wygasła',
+              'Twoja sesja wygasła. Zaloguj się ponownie.',
+              [{ text: 'OK' }]
+            );
+            await performLogout();
+          } else {
+            // Reset timeout for remaining time
+            await setupSessionTimeout(user);
+          }
+        }
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [user]);
+
   useEffect(() => {
     checkAuth();
+    
+    return () => {
+      clearSessionTimeout();
+    };
   }, []);
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
@@ -73,13 +169,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await response.json();
 
       if (response.ok) {
+        const loginTime = Date.now();
         await AsyncStorage.setItem('session_token', data.session_token);
-        setUser({
+        await AsyncStorage.setItem('login_time', loginTime.toString());
+        
+        const userData = {
           user_id: data.user_id,
           email: data.email,
           name: data.name,
           role: data.role,
-        });
+        };
+        
+        setUser(userData);
+        await setupSessionTimeout(userData);
+        
         return { success: true };
       } else {
         return { success: false, error: data.detail || 'Błąd logowania' };
