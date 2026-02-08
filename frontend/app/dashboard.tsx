@@ -290,6 +290,35 @@ export default function Dashboard() {
           </TouchableOpacity>
         )}
 
+        {/* New Chat Messages Alert - for everyone */}
+        {newChatAlert && (
+          <TouchableOpacity 
+            style={styles.newChatAlert}
+            onPress={() => {
+              dismissChatAlert();
+              router.push('/chat');
+            }}
+          >
+            <View style={styles.newChatAlertIcon}>
+              <Ionicons name="chatbubbles" size={24} color="#fff" />
+            </View>
+            <View style={styles.newChatAlertContent}>
+              <Text style={styles.newChatAlertTitle}>
+                💬 {newChatAlert.count} {newChatAlert.count === 1 ? 'nowa wiadomość' : 'nowe wiadomości'} w czacie
+              </Text>
+              <Text style={styles.newChatAlertSubtitle} numberOfLines={1}>
+                {newChatAlert.lastSender}: {newChatAlert.preview}
+              </Text>
+            </View>
+            <TouchableOpacity 
+              style={styles.newChatAlertClose}
+              onPress={dismissChatAlert}
+            >
+              <Ionicons name="close" size={20} color="#fff" />
+            </TouchableOpacity>
+          </TouchableOpacity>
+        )}
+
         {/* Installation Types - only for admin */}
         {isAdmin && stats && Object.keys(stats.by_type).length > 0 && (
           <View style={styles.section}>
