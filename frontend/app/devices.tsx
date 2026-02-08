@@ -279,7 +279,16 @@ export default function Devices() {
       .sort((a, b) => a[0].localeCompare(b[0]))
       .map(([name, devs]) => ({
         name,
-        devices: devs.sort((a, b) => a.numer_seryjny.localeCompare(b.numer_seryjny)),
+        devices: devs.sort((a, b) => {
+          // For installed devices, sort by installation date (newest first)
+          if (statusFilter === 'zainstalowany') {
+            const dateA = a.instalacja?.data_instalacji ? new Date(a.instalacja.data_instalacji).getTime() : 0;
+            const dateB = b.instalacja?.data_instalacji ? new Date(b.instalacja.data_instalacji).getTime() : 0;
+            return dateB - dateA; // Descending order (newest first)
+          }
+          // For other statuses, sort by serial number
+          return a.numer_seryjny.localeCompare(b.numer_seryjny);
+        }),
         count: devs.length,
         availableCount: devs.filter(d => d.status === 'dostepny').length,
       }));
