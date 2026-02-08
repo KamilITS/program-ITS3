@@ -1353,6 +1353,7 @@ export default function Devices() {
           setHistoryModalVisible(false);
           setDeviceHistory([]);
           setHistoryDevice(null);
+          setDeviceFullInfo(null);
         }}
       >
         <View style={styles.modalOverlay}>
@@ -1363,6 +1364,7 @@ export default function Devices() {
                 setHistoryModalVisible(false);
                 setDeviceHistory([]);
                 setHistoryDevice(null);
+                setDeviceFullInfo(null);
               }}>
                 <Ionicons name="close" size={24} color="#fff" />
               </TouchableOpacity>
@@ -1387,6 +1389,19 @@ export default function Devices() {
               </View>
             )}
             
+            {/* Import Date Section */}
+            {deviceFullInfo && (deviceFullInfo.created_at || deviceFullInfo.imported_at) && (
+              <View style={styles.importDateSection}>
+                <Ionicons name="calendar-outline" size={18} color="#10b981" />
+                <View style={styles.importDateContent}>
+                  <Text style={styles.importDateLabel}>Data importu do magazynu</Text>
+                  <Text style={styles.importDateValue}>
+                    {formatHistoryDate(deviceFullInfo.created_at || deviceFullInfo.imported_at)}
+                  </Text>
+                </View>
+              </View>
+            )}
+            
             {historyLoading ? (
               <View style={styles.historyLoading}>
                 <Text style={styles.loadingText}>Ładowanie historii...</Text>
@@ -1398,45 +1413,53 @@ export default function Devices() {
                 <Text style={styles.emptySubtext}>Historia będzie rejestrowana od teraz</Text>
               </View>
             ) : (
-              <FlatList
-                data={deviceHistory}
-                keyExtractor={(item) => item.log_id}
-                style={styles.historyList}
-                renderItem={({ item }) => (
-                  <View style={styles.historyItem}>
-                    <View style={[styles.historyIcon, { backgroundColor: getActionTypeColor(item.action_type) + '20' }]}>
-                      <Ionicons 
-                        name={getActionTypeIcon(item.action_type) as any} 
-                        size={20} 
-                        color={getActionTypeColor(item.action_type)} 
-                      />
-                    </View>
-                    <View style={styles.historyContent}>
-                      <Text style={styles.historyDescription}>{item.action_description}</Text>
-                      <View style={styles.historyMeta}>
-                        <Ionicons name="time-outline" size={12} color="#888" />
-                        <Text style={styles.historyTime}>{formatHistoryDate(item.timestamp)}</Text>
+              <>
+                <View style={styles.historyTimelineHeader}>
+                  <Text style={styles.historyTimelineTitle}>Oś czasu ({deviceHistory.length} zdarzeń)</Text>
+                </View>
+                <FlatList
+                  data={deviceHistory}
+                  keyExtractor={(item) => item.log_id}
+                  style={styles.historyList}
+                  renderItem={({ item, index }) => (
+                    <View style={styles.historyItem}>
+                      {/* Timeline line */}
+                      <View style={styles.timelineLine}>
+                        <View style={[
+                          styles.timelineDot, 
+                          { backgroundColor: getActionTypeColor(item.action_type) }
+                        ]} />
+                        {index < deviceHistory.length - 1 && (
+                          <View style={styles.timelineConnector} />
+                        )}
                       </View>
-                      <View style={styles.historyMeta}>
-                        <Ionicons name="person-outline" size={12} color="#888" />
-                        <Text style={styles.historyUser}>{item.user_name}</Text>
+                      <View style={styles.historyContent}>
+                        <Text style={styles.historyDescription}>{item.action_description}</Text>
+                        <View style={styles.historyMeta}>
+                          <Ionicons name="time-outline" size={12} color="#888" />
+                          <Text style={styles.historyTime}>{formatHistoryDate(item.timestamp)}</Text>
+                        </View>
+                        <View style={styles.historyMeta}>
+                          <Ionicons name="person-outline" size={12} color="#888" />
+                          <Text style={styles.historyUser}>{item.user_name}</Text>
+                        </View>
+                        {item.details?.adres_klienta && (
+                          <View style={styles.historyMeta}>
+                            <Ionicons name="location-outline" size={12} color="#10b981" />
+                            <Text style={styles.historyAddress} numberOfLines={2}>{item.details.adres_klienta}</Text>
+                          </View>
+                        )}
+                        {item.target_user_name && (
+                          <View style={styles.historyMeta}>
+                            <Ionicons name="arrow-forward" size={12} color="#f59e0b" />
+                            <Text style={styles.historyTarget}>Do: {item.target_user_name}</Text>
+                          </View>
+                        )}
                       </View>
-                      {item.details?.adres_klienta && (
-                        <View style={styles.historyMeta}>
-                          <Ionicons name="location-outline" size={12} color="#888" />
-                          <Text style={styles.historyAddress} numberOfLines={1}>{item.details.adres_klienta}</Text>
-                        </View>
-                      )}
-                      {item.target_user_name && (
-                        <View style={styles.historyMeta}>
-                          <Ionicons name="arrow-forward" size={12} color="#888" />
-                          <Text style={styles.historyTarget}>Do: {item.target_user_name}</Text>
-                        </View>
-                      )}
                     </View>
-                  </View>
-                )}
-              />
+                  )}
+                />
+              </>
             )}
           </View>
         </View>
