@@ -77,6 +77,8 @@ export default function BackupScreen() {
   const [savingSettings, setSavingSettings] = useState(false);
   const [creatingBackup, setCreatingBackup] = useState(false);
   const [downloadingBackup, setDownloadingBackup] = useState(false);
+  const [downloadingExcel, setDownloadingExcel] = useState(false);
+  const [importingBackup, setImportingBackup] = useState(false);
   const [testingEmail, setTestingEmail] = useState(false);
   const [testingFtp, setTestingFtp] = useState(false);
   const [activeTab, setActiveTab] = useState<'manual' | 'email' | 'ftp' | 'schedule'>('manual');
