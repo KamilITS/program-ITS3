@@ -157,7 +157,7 @@ export default function Chat() {
           styles.messageTime,
           isOwnMessage && styles.ownMessageTime,
         ]}>
-          {format(messageDate, 'HH:mm', { locale: pl })}
+          {formatInWarsaw(item.created_at, 'HH:mm')}
         </Text>
       </View>
     );
@@ -166,7 +166,7 @@ export default function Chat() {
   const renderDateSeparator = (date: Date) => (
     <View style={styles.dateSeparator}>
       <Text style={styles.dateSeparatorText}>
-        {format(date, 'd MMMM yyyy', { locale: pl })}
+        {format(toZonedTime(date, WARSAW_TZ), 'd MMMM yyyy', { locale: pl })}
       </Text>
     </View>
   );
