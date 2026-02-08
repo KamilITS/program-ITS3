@@ -343,10 +343,11 @@ export default function Tasks() {
 
   const getDateLabel = (dateString: string) => {
     const date = new Date(dateString);
-    const timeStr = format(date, 'HH:mm');
+    const warsawDate = toZonedTime(date, WARSAW_TZ);
+    const timeStr = format(warsawDate, 'HH:mm');
     if (isToday(date)) return `Dzisiaj, ${timeStr}`;
     if (isTomorrow(date)) return `Jutro, ${timeStr}`;
-    return format(date, 'd MMM, HH:mm', { locale: pl });
+    return formatInWarsaw(date, 'd MMM, HH:mm');
   };
 
   const renderTask = ({ item }: { item: Task }) => {
