@@ -309,6 +309,22 @@ export default function Dashboard() {
                 <Text style={styles.actionText}>Zamów</Text>
               </TouchableOpacity>
             )}
+            
+            {/* Vehicle & Equipment button for employees */}
+            {!isAdmin && (
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => router.push('/vehicles')}
+              >
+                <View style={styles.actionIconContainer}>
+                  <Ionicons name="car" size={28} color="#06b6d4" />
+                  <View style={{ position: 'absolute', bottom: -2, right: -2 }}>
+                    <Ionicons name="construct" size={14} color="#f59e0b" />
+                  </View>
+                </View>
+                <Text style={[styles.actionText, { fontSize: 11 }]}>Samochód</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
