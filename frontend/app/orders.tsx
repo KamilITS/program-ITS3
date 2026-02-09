@@ -467,7 +467,12 @@ export default function Orders() {
           
           {/* Additional Items Management */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Dodatkowe pozycje</Text>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Dodatkowe pozycje</Text>
+              <TouchableOpacity onPress={() => setAddItemModalVisible(true)} style={styles.addSectionButton}>
+                <Ionicons name="add-circle" size={26} color="#10b981" />
+              </TouchableOpacity>
+            </View>
             <Text style={styles.sectionDescription}>
               Pozycje dodane przez admina będą widoczne dla pracowników w formularzu zamówienia.
             </Text>
