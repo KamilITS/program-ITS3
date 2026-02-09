@@ -235,7 +235,7 @@ export default function Orders() {
     try {
       await apiFetch('/api/orders', {
         method: 'POST',
-        body: JSON.stringify({ items: itemsToOrder }),
+        body: { items: itemsToOrder },
       });
       
       Alert.alert('Sukces', 'Zamówienie zostało wysłane do administratora.');
