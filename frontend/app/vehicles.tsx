@@ -76,6 +76,11 @@ export default function Vehicles() {
   const [equipmentModalVisible, setEquipmentModalVisible] = useState(false);
   const [typeModalVisible, setTypeModalVisible] = useState(false);
   const [assignModalVisible, setAssignModalVisible] = useState(false);
+  const [historyModalVisible, setHistoryModalVisible] = useState(false);
+  
+  // History
+  const [historyLogs, setHistoryLogs] = useState<HistoryLog[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
   
   // Forms
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
