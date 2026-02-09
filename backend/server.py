@@ -2481,6 +2481,205 @@ async def get_recent_activity_logs(
     
     return logs
 
+# ==================== ORDERS / REQUISITIONS ====================
+
+class OrderItem(BaseModel):
+    id: str
+    name: str
+    category: str
+    autoStock: bool
+    currentStock: str
+    orderQuantity: str
+    isCustom: Optional[bool] = False
+
+class OrderCreate(BaseModel):
+    items: List[dict]
+
+@api_router.post("/orders")
+async def create_order(request: Request, user: dict = Depends(require_user)):
+    """Create a new order/requisition (employee submits order)"""
+    body = await request.json()
+    items = body.get("items", [])
+    
+    if not items:
+        raise HTTPException(status_code=400, detail="Zamówienie musi zawierać co najmniej jedną pozycję")
+    
+    # Filter items with quantity > 0
+    valid_items = [item for item in items if item.get("orderQuantity") and int(item.get("orderQuantity", 0)) > 0]
+    
+    if not valid_items:
+        raise HTTPException(status_code=400, detail="Zamówienie musi zawierać co najmniej jedną pozycję z ilością > 0")
+    
+    order = {
+        "order_id": f"order_{uuid.uuid4().hex[:12]}",
+        "user_id": user["user_id"],
+        "user_name": user["name"],
+        "items": valid_items,
+        "status": "pending",  # pending, completed
+        "created_at": get_warsaw_now(),
+        "processed_at": None,
+        "processed_by": None,
+        "processed_by_name": None
+    }
+    
+    await db.orders.insert_one(order)
+    order.pop("_id", None)
+    
+    # Log activity
+    await log_activity(
+        user_id=user["user_id"],
+        user_name=user["name"],
+        user_role=user.get("role", "pracownik"),
+        action_type="order_create",
+        action_description=f"Złożono zamówienie na {len(valid_items)} pozycji",
+        details={"order_id": order["order_id"], "items_count": len(valid_items)}
+    )
+    
+    return order
+
+@api_router.get("/orders")
+async def get_orders(
+    status: Optional[str] = None,
+    user_id: Optional[str] = None,
+    current_user: dict = Depends(require_user)
+):
+    """Get orders - admins see all, workers see only their own"""
+    query = {}
+    
+    if current_user.get("role") != "admin":
+        # Workers can only see their own orders
+        query["user_id"] = current_user["user_id"]
+    else:
+        # Admin can filter by user
+        if user_id:
+            query["user_id"] = user_id
+    
+    if status:
+        query["status"] = status
+    
+    orders = await db.orders.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    
+    # Format dates
+    for order in orders:
+        if "created_at" in order and isinstance(order["created_at"], datetime):
+            order["created_at"] = order["created_at"].isoformat()
+        if "processed_at" in order and isinstance(order["processed_at"], datetime):
+            order["processed_at"] = order["processed_at"].isoformat()
+    
+    return orders
+
+@api_router.get("/orders/pending/count")
+async def get_pending_orders_count(admin: dict = Depends(require_admin)):
+    """Get count of pending orders (for admin badge)"""
+    count = await db.orders.count_documents({"status": "pending"})
+    return {"count": count}
+
+@api_router.get("/orders/{order_id}")
+async def get_order(order_id: str, user: dict = Depends(require_user)):
+    """Get single order details"""
+    order = await db.orders.find_one({"order_id": order_id}, {"_id": 0})
+    if not order:
+        raise HTTPException(status_code=404, detail="Nie znaleziono zamówienia")
+    
+    # Workers can only see their own orders
+    if user.get("role") != "admin" and order.get("user_id") != user["user_id"]:
+        raise HTTPException(status_code=403, detail="Brak uprawnień do tego zamówienia")
+    
+    # Format dates
+    if "created_at" in order and isinstance(order["created_at"], datetime):
+        order["created_at"] = order["created_at"].isoformat()
+    if "processed_at" in order and isinstance(order["processed_at"], datetime):
+        order["processed_at"] = order["processed_at"].isoformat()
+    
+    return order
+
+@api_router.post("/orders/{order_id}/process")
+async def process_order(order_id: str, request: Request, admin: dict = Depends(require_admin)):
+    """Process (complete or reject) an order (admin only)"""
+    body = await request.json()
+    new_status = body.get("status")
+    
+    if new_status not in ["completed", "rejected"]:
+        raise HTTPException(status_code=400, detail="Status musi być 'completed' lub 'rejected'")
+    
+    order = await db.orders.find_one({"order_id": order_id})
+    if not order:
+        raise HTTPException(status_code=404, detail="Nie znaleziono zamówienia")
+    
+    if order.get("status") != "pending":
+        raise HTTPException(status_code=400, detail="Zamówienie zostało już przetworzone")
+    
+    result = await db.orders.update_one(
+        {"order_id": order_id},
+        {"$set": {
+            "status": new_status,
+            "processed_at": get_warsaw_now(),
+            "processed_by": admin["user_id"],
+            "processed_by_name": admin["name"]
+        }}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=500, detail="Nie udało się zaktualizować zamówienia")
+    
+    status_pl = "zrealizowane" if new_status == "completed" else "odrzucone"
+    
+    # Log activity
+    await log_activity(
+        user_id=admin["user_id"],
+        user_name=admin["name"],
+        user_role="admin",
+        action_type="order_process",
+        action_description=f"Zamówienie od {order.get('user_name', 'Nieznany')} zostało {status_pl}",
+        target_user_id=order.get("user_id"),
+        target_user_name=order.get("user_name"),
+        details={"order_id": order_id, "status": new_status}
+    )
+    
+    return {"message": f"Zamówienie zostało {status_pl}"}
+
+# ==================== ORDERABLE ITEMS (for admin to manage) ====================
+
+@api_router.get("/orders/items")
+async def get_orderable_items(user: dict = Depends(require_user)):
+    """Get additional orderable items (added by admin)"""
+    items = await db.orderable_items.find({}, {"_id": 0}).to_list(100)
+    return items
+
+@api_router.post("/orders/items")
+async def add_orderable_item(request: Request, admin: dict = Depends(require_admin)):
+    """Add a new orderable item (admin only)"""
+    body = await request.json()
+    name = body.get("name", "").strip()
+    
+    if not name:
+        raise HTTPException(status_code=400, detail="Nazwa pozycji jest wymagana")
+    
+    # Check if item already exists
+    existing = await db.orderable_items.find_one({"name": {"$regex": f"^{name}$", "$options": "i"}})
+    if existing:
+        raise HTTPException(status_code=400, detail="Pozycja o takiej nazwie już istnieje")
+    
+    item = {
+        "id": f"item_{uuid.uuid4().hex[:12]}",
+        "name": name,
+        "created_at": get_warsaw_now(),
+        "created_by": admin["user_id"]
+    }
+    
+    await db.orderable_items.insert_one(item)
+    item.pop("_id", None)
+    
+    return item
+
+@api_router.delete("/orders/items/{item_id}")
+async def delete_orderable_item(item_id: str, admin: dict = Depends(require_admin)):
+    """Delete an orderable item (admin only)"""
+    result = await db.orderable_items.delete_one({"id": item_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Nie znaleziono pozycji")
+    return {"message": "Pozycja została usunięta"}
+
 # ==================== HEALTH CHECK ====================
 
 @api_router.get("/")
