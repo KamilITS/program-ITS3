@@ -494,12 +494,17 @@ export default function Vehicles() {
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Pojazdy i wyposażenie</Text>
-        <TouchableOpacity 
-          onPress={() => activeTab === 'vehicles' ? openVehicleModal() : openEquipmentModal()} 
-          style={styles.addButton}
-        >
-          <Ionicons name="add-circle" size={28} color="#10b981" />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity onPress={openHistoryModal} style={styles.headerActionButton}>
+            <Ionicons name="time-outline" size={24} color="#f59e0b" />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            onPress={() => activeTab === 'vehicles' ? openVehicleModal() : openEquipmentModal()} 
+            style={styles.headerActionButton}
+          >
+            <Ionicons name="add-circle" size={28} color="#10b981" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Tabs */}
