@@ -3010,6 +3010,29 @@ async def get_worker_assets(worker_id: str, user: dict = Depends(require_user)):
         "equipment": equipment
     }
 
+@api_router.get("/vehicles-equipment/history")
+async def get_vehicles_equipment_history(
+    limit: int = 100,
+    admin: dict = Depends(require_admin)
+):
+    """Get history of vehicles and equipment actions"""
+    action_types = [
+        "vehicle_create", "vehicle_delete", "vehicle_assign", "vehicle_unassign",
+        "equipment_create", "equipment_delete", "equipment_assign", "equipment_unassign"
+    ]
+    
+    logs = await db.activity_logs.find(
+        {"action_type": {"$in": action_types}},
+        {"_id": 0}
+    ).sort("timestamp", -1).limit(limit).to_list(limit)
+    
+    # Format dates
+    for log in logs:
+        if "timestamp" in log and isinstance(log["timestamp"], datetime):
+            log["timestamp"] = log["timestamp"].isoformat()
+    
+    return logs
+
 # ==================== HEALTH CHECK ====================
 
 @api_router.get("/")
