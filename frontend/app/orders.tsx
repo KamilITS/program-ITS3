@@ -606,88 +606,99 @@ export default function Orders() {
   // Employee View
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Zamów urządzenia</Text>
-        <View style={{ width: 40 }} />
-      </View>
-
-      <ScrollView style={styles.content}>
-        <View style={styles.infoBox}>
-          <Ionicons name="information-circle" size={20} color="#3b82f6" />
-          <Text style={styles.infoText}>
-            Zaznacz pozycje, które chcesz zamówić, wpisując ilość w kolumnie "Zamawiam".
-          </Text>
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color="#fff" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Zamów urządzenia</Text>
+          <View style={{ width: 40 }} />
         </View>
 
-        {/* Table Header */}
-        <View style={styles.tableHeader}>
-          <View style={styles.checkboxCell}>
-            <Ionicons name="checkbox-outline" size={16} color="#888" />
-          </View>
-          <View style={styles.nameCell}>
-            <Text style={styles.tableHeaderText}>Urządzenia/Materiały</Text>
-          </View>
-          <View style={styles.stockCell}>
-            <Text style={styles.tableHeaderText}>Stan</Text>
-          </View>
-          <View style={styles.orderCell}>
-            <Text style={styles.tableHeaderText}>Zamawiam</Text>
-          </View>
-        </View>
-
-        {/* Order Items */}
-        {orderItems.map((item, index) => renderOrderRow(item, index))}
-        
-        {/* Additional Items from Admin */}
-        {additionalItems.map((item, index) => {
-          const orderItem: OrderItem = {
-            id: item.id,
-            name: item.name,
-            category: 'additional',
-            autoStock: false,
-            currentStock: orderItems.find(o => o.id === item.id)?.currentStock || '',
-            orderQuantity: orderItems.find(o => o.id === item.id)?.orderQuantity || '',
-          };
-          return renderOrderRow(orderItem, index);
-        })}
-
-        {/* Custom Items Section */}
-        <View style={styles.customSection}>
-          <Text style={styles.customSectionTitle}>INNE - pozycje własne</Text>
-          <Text style={styles.customSectionHint}>
-            Tutaj możesz wpisać zapotrzebowanie na elementy, które nie zostały wymienione powyżej.
-          </Text>
-          
-          {customItems.map((item, index) => renderOrderRow(item, index, true))}
-          
-          <View style={styles.addCustomRow}>
-            <TextInput
-              style={styles.customInput}
-              value={customItemText}
-              onChangeText={setCustomItemText}
-              placeholder="Nazwa pozycji..."
-              placeholderTextColor="#666"
-            />
-            <TouchableOpacity style={styles.addCustomButton} onPress={addCustomItem}>
-              <Ionicons name="add" size={24} color="#fff" />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Submit Button */}
-        <TouchableOpacity 
-          style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
-          onPress={submitOrder}
-          disabled={submitting}
+        <ScrollView 
+          style={styles.content}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ paddingBottom: 100 }}
         >
-          {submitting ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <>
-              <Ionicons name="paper-plane" size={24} color="#fff" />
+          <View style={styles.infoBox}>
+            <Ionicons name="information-circle" size={20} color="#3b82f6" />
+            <Text style={styles.infoText}>
+              Zaznacz pozycje, które chcesz zamówić, wpisując ilość w kolumnie "Zamawiam".
+            </Text>
+          </View>
+
+          {/* Table Header */}
+          <View style={styles.tableHeader}>
+            <View style={styles.checkboxCell}>
+              <Ionicons name="checkbox-outline" size={16} color="#888" />
+            </View>
+            <View style={styles.nameCell}>
+              <Text style={styles.tableHeaderText}>Urządzenia/Materiały</Text>
+            </View>
+            <View style={styles.stockCell}>
+              <Text style={styles.tableHeaderText}>Stan</Text>
+            </View>
+            <View style={styles.orderCell}>
+              <Text style={styles.tableHeaderText}>Zamawiam</Text>
+            </View>
+          </View>
+
+          {/* Order Items */}
+          {orderItems.map((item, index) => renderOrderRow(item, index))}
+          
+          {/* Additional Items from Admin */}
+          {additionalItems.map((item, index) => {
+            const orderItem: OrderItem = {
+              id: item.id,
+              name: item.name,
+              category: 'additional',
+              autoStock: false,
+              currentStock: orderItems.find(o => o.id === item.id)?.currentStock || '',
+              orderQuantity: orderItems.find(o => o.id === item.id)?.orderQuantity || '',
+            };
+            return renderOrderRow(orderItem, index);
+          })}
+
+          {/* Custom Items Section */}
+          <View style={styles.customSection}>
+            <Text style={styles.customSectionTitle}>INNE - pozycje własne</Text>
+            <Text style={styles.customSectionHint}>
+              Tutaj możesz wpisać nazwę i ilość elementów, które nie zostały wymienione powyżej.
+            </Text>
+            
+            {customItems.map((item, index) => renderOrderRow(item, index, true))}
+            
+            <View style={styles.addCustomRow}>
+              <TextInput
+                style={styles.customInput}
+                value={customItemText}
+                onChangeText={setCustomItemText}
+                placeholder="Wpisz nazwę pozycji..."
+                placeholderTextColor="#666"
+                returnKeyType="done"
+                onSubmitEditing={addCustomItem}
+              />
+              <TouchableOpacity style={styles.addCustomButton} onPress={addCustomItem}>
+                <Ionicons name="add" size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Submit Button */}
+          <TouchableOpacity 
+            style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
+            onPress={submitOrder}
+            disabled={submitting}
+          >
+            {submitting ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <>
+                <Ionicons name="paper-plane" size={24} color="#fff" />
               <Text style={styles.submitButtonText}>Wyślij zamówienie</Text>
             </>
           )}
