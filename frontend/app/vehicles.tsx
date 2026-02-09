@@ -886,6 +886,65 @@ export default function Vehicles() {
           </View>
         </View>
       </Modal>
+
+      {/* History Modal */}
+      <Modal visible={historyModalVisible} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { maxHeight: '90%' }]}>
+            <View style={styles.modalHeader}>
+              <View style={styles.historyTitleRow}>
+                <Ionicons name="time" size={24} color="#f59e0b" />
+                <Text style={styles.modalTitle}>Historia zmian</Text>
+              </View>
+              <TouchableOpacity onPress={() => setHistoryModalVisible(false)}>
+                <Ionicons name="close" size={24} color="#888" />
+              </TouchableOpacity>
+            </View>
+            
+            {historyLoading ? (
+              <View style={styles.historyLoading}>
+                <ActivityIndicator size="large" color="#3b82f6" />
+                <Text style={styles.loadingText}>Ładowanie historii...</Text>
+              </View>
+            ) : (
+              <ScrollView style={styles.historyList}>
+                {historyLogs.length === 0 ? (
+                  <View style={styles.historyEmpty}>
+                    <Ionicons name="document-text-outline" size={48} color="#444" />
+                    <Text style={styles.historyEmptyText}>Brak historii zmian</Text>
+                  </View>
+                ) : (
+                  historyLogs.map((log, index) => {
+                    const { icon, color } = getActionIcon(log.action_type);
+                    return (
+                      <View key={log.log_id || index} style={styles.historyItem}>
+                        <View style={styles.timelineLine}>
+                          <View style={[styles.timelineDot, { backgroundColor: color }]}>
+                            <Ionicons name={icon as any} size={14} color="#fff" />
+                          </View>
+                          {index < historyLogs.length - 1 && <View style={styles.timelineConnector} />}
+                        </View>
+                        <View style={styles.historyContent}>
+                          <Text style={styles.historyDescription}>{log.action_description}</Text>
+                          <View style={styles.historyMeta}>
+                            <Text style={styles.historyUser}>
+                              <Ionicons name="person-outline" size={12} color="#888" /> {log.user_name}
+                            </Text>
+                            <Text style={styles.historyDate}>
+                              {formatInWarsaw(log.timestamp, 'd MMM yyyy, HH:mm')}
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+                    );
+                  })
+                )}
+                <View style={{ height: 20 }} />
+              </ScrollView>
+            )}
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
