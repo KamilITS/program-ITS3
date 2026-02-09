@@ -1348,4 +1348,79 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 15,
   },
+  // History styles
+  historyTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  historyLoading: {
+    padding: 40,
+    alignItems: 'center',
+  },
+  historyList: {
+    padding: 16,
+    maxHeight: 500,
+  },
+  historyEmpty: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  historyEmptyText: {
+    color: '#666',
+    fontSize: 14,
+    marginTop: 12,
+  },
+  historyItem: {
+    flexDirection: 'row',
+    marginBottom: 4,
+  },
+  timelineLine: {
+    width: 40,
+    alignItems: 'center',
+  },
+  timelineDot: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+  timelineConnector: {
+    width: 2,
+    flex: 1,
+    backgroundColor: '#333',
+    marginTop: -2,
+    marginBottom: -2,
+  },
+  historyContent: {
+    flex: 1,
+    backgroundColor: '#1a1a1a',
+    borderRadius: 10,
+    padding: 12,
+    marginLeft: 8,
+    marginBottom: 12,
+  },
+  historyDescription: {
+    color: '#fff',
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  historyMeta: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#333',
+  },
+  historyUser: {
+    color: '#888',
+    fontSize: 12,
+  },
+  historyDate: {
+    color: '#666',
+    fontSize: 11,
+  },
 });
