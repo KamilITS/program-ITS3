@@ -196,7 +196,7 @@ export default function Orders() {
     ));
   };
 
-  const updateCustomItem = (index: number, field: 'currentStock' | 'orderQuantity', value: string) => {
+  const updateCustomItem = (index: number, field: 'orderQuantity', value: string) => {
     setCustomItems(prev => {
       const updated = [...prev];
       updated[index] = { ...updated[index], [field]: value };
