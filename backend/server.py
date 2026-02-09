@@ -2678,6 +2678,338 @@ async def process_order(order_id: str, request: Request, admin: dict = Depends(r
     
     return {"message": f"Zamówienie zostało {status_pl}"}
 
+# ==================== VEHICLES & EQUIPMENT ====================
+
+@api_router.get("/vehicles")
+async def get_vehicles(user: dict = Depends(require_user)):
+    """Get all vehicles"""
+    vehicles = await db.vehicles.find({}, {"_id": 0}).to_list(100)
+    return vehicles
+
+@api_router.post("/vehicles")
+async def create_vehicle(request: Request, admin: dict = Depends(require_admin)):
+    """Create a new vehicle"""
+    body = await request.json()
+    
+    vehicle = {
+        "vehicle_id": f"vehicle_{uuid.uuid4().hex[:12]}",
+        "plate_number": body.get("plate_number", "").strip().upper(),
+        "brand": body.get("brand", "").strip(),
+        "model": body.get("model", "").strip(),
+        "year": body.get("year", ""),
+        "assigned_to": None,
+        "assigned_to_name": None,
+        "created_at": get_warsaw_now(),
+        "created_by": admin["user_id"]
+    }
+    
+    if not vehicle["plate_number"]:
+        raise HTTPException(status_code=400, detail="Numer rejestracyjny jest wymagany")
+    
+    # Check if plate already exists
+    existing = await db.vehicles.find_one({"plate_number": vehicle["plate_number"]})
+    if existing:
+        raise HTTPException(status_code=400, detail="Pojazd o tym numerze rejestracyjnym już istnieje")
+    
+    await db.vehicles.insert_one(vehicle)
+    vehicle.pop("_id", None)
+    
+    await log_activity(
+        user_id=admin["user_id"],
+        user_name=admin["name"],
+        user_role="admin",
+        action_type="vehicle_create",
+        action_description=f"Dodano pojazd {vehicle['plate_number']}",
+        details={"vehicle_id": vehicle["vehicle_id"], "plate_number": vehicle["plate_number"]}
+    )
+    
+    return vehicle
+
+@api_router.put("/vehicles/{vehicle_id}")
+async def update_vehicle(vehicle_id: str, request: Request, admin: dict = Depends(require_admin)):
+    """Update a vehicle"""
+    body = await request.json()
+    
+    update_data = {}
+    if "plate_number" in body:
+        update_data["plate_number"] = body["plate_number"].strip().upper()
+    if "brand" in body:
+        update_data["brand"] = body["brand"].strip()
+    if "model" in body:
+        update_data["model"] = body["model"].strip()
+    if "year" in body:
+        update_data["year"] = body["year"]
+    
+    if update_data:
+        result = await db.vehicles.update_one(
+            {"vehicle_id": vehicle_id},
+            {"$set": update_data}
+        )
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Nie znaleziono pojazdu")
+    
+    return {"message": "Pojazd zaktualizowany"}
+
+@api_router.delete("/vehicles/{vehicle_id}")
+async def delete_vehicle(vehicle_id: str, admin: dict = Depends(require_admin)):
+    """Delete a vehicle"""
+    vehicle = await db.vehicles.find_one({"vehicle_id": vehicle_id})
+    if not vehicle:
+        raise HTTPException(status_code=404, detail="Nie znaleziono pojazdu")
+    
+    await db.vehicles.delete_one({"vehicle_id": vehicle_id})
+    
+    await log_activity(
+        user_id=admin["user_id"],
+        user_name=admin["name"],
+        user_role="admin",
+        action_type="vehicle_delete",
+        action_description=f"Usunięto pojazd {vehicle.get('plate_number', 'N/A')}",
+        details={"vehicle_id": vehicle_id}
+    )
+    
+    return {"message": "Pojazd usunięty"}
+
+@api_router.post("/vehicles/{vehicle_id}/assign")
+async def assign_vehicle(vehicle_id: str, request: Request, admin: dict = Depends(require_admin)):
+    """Assign a vehicle to a worker"""
+    body = await request.json()
+    worker_id = body.get("worker_id")
+    
+    vehicle = await db.vehicles.find_one({"vehicle_id": vehicle_id})
+    if not vehicle:
+        raise HTTPException(status_code=404, detail="Nie znaleziono pojazdu")
+    
+    if worker_id:
+        worker = await db.users.find_one({"user_id": worker_id})
+        if not worker:
+            raise HTTPException(status_code=404, detail="Nie znaleziono pracownika")
+        
+        await db.vehicles.update_one(
+            {"vehicle_id": vehicle_id},
+            {"$set": {"assigned_to": worker_id, "assigned_to_name": worker["name"]}}
+        )
+        
+        await log_activity(
+            user_id=admin["user_id"],
+            user_name=admin["name"],
+            user_role="admin",
+            action_type="vehicle_assign",
+            action_description=f"Przypisano pojazd {vehicle.get('plate_number')} do {worker['name']}",
+            target_user_id=worker_id,
+            target_user_name=worker["name"],
+            details={"vehicle_id": vehicle_id}
+        )
+    else:
+        # Unassign
+        old_assigned = vehicle.get("assigned_to_name", "")
+        await db.vehicles.update_one(
+            {"vehicle_id": vehicle_id},
+            {"$set": {"assigned_to": None, "assigned_to_name": None}}
+        )
+        
+        if old_assigned:
+            await log_activity(
+                user_id=admin["user_id"],
+                user_name=admin["name"],
+                user_role="admin",
+                action_type="vehicle_unassign",
+                action_description=f"Odpisano pojazd {vehicle.get('plate_number')} od {old_assigned}",
+                details={"vehicle_id": vehicle_id}
+            )
+    
+    return {"message": "Pojazd przypisany"}
+
+# ==================== EQUIPMENT ====================
+
+@api_router.get("/equipment")
+async def get_equipment(user: dict = Depends(require_user)):
+    """Get all equipment items"""
+    equipment = await db.equipment.find({}, {"_id": 0}).to_list(500)
+    return equipment
+
+@api_router.get("/equipment/types")
+async def get_equipment_types(user: dict = Depends(require_user)):
+    """Get equipment types (for configuration)"""
+    types = await db.equipment_types.find({}, {"_id": 0}).to_list(100)
+    return types
+
+@api_router.post("/equipment/types")
+async def create_equipment_type(request: Request, admin: dict = Depends(require_admin)):
+    """Create a new equipment type"""
+    body = await request.json()
+    name = body.get("name", "").strip()
+    
+    if not name:
+        raise HTTPException(status_code=400, detail="Nazwa typu wyposażenia jest wymagana")
+    
+    existing = await db.equipment_types.find_one({"name": {"$regex": f"^{name}$", "$options": "i"}})
+    if existing:
+        raise HTTPException(status_code=400, detail="Typ wyposażenia o tej nazwie już istnieje")
+    
+    eq_type = {
+        "type_id": f"eqtype_{uuid.uuid4().hex[:12]}",
+        "name": name,
+        "created_at": get_warsaw_now()
+    }
+    
+    await db.equipment_types.insert_one(eq_type)
+    eq_type.pop("_id", None)
+    
+    return eq_type
+
+@api_router.delete("/equipment/types/{type_id}")
+async def delete_equipment_type(type_id: str, admin: dict = Depends(require_admin)):
+    """Delete an equipment type"""
+    result = await db.equipment_types.delete_one({"type_id": type_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Nie znaleziono typu wyposażenia")
+    return {"message": "Typ wyposażenia usunięty"}
+
+@api_router.post("/equipment")
+async def create_equipment(request: Request, admin: dict = Depends(require_admin)):
+    """Create a new equipment item"""
+    body = await request.json()
+    
+    equipment = {
+        "equipment_id": f"eq_{uuid.uuid4().hex[:12]}",
+        "name": body.get("name", "").strip(),
+        "type": body.get("type", "").strip(),
+        "serial_number": body.get("serial_number", "").strip(),
+        "description": body.get("description", "").strip(),
+        "assigned_to": None,
+        "assigned_to_name": None,
+        "created_at": get_warsaw_now(),
+        "created_by": admin["user_id"]
+    }
+    
+    if not equipment["name"]:
+        raise HTTPException(status_code=400, detail="Nazwa wyposażenia jest wymagana")
+    
+    await db.equipment.insert_one(equipment)
+    equipment.pop("_id", None)
+    
+    await log_activity(
+        user_id=admin["user_id"],
+        user_name=admin["name"],
+        user_role="admin",
+        action_type="equipment_create",
+        action_description=f"Dodano wyposażenie: {equipment['name']}",
+        details={"equipment_id": equipment["equipment_id"]}
+    )
+    
+    return equipment
+
+@api_router.put("/equipment/{equipment_id}")
+async def update_equipment(equipment_id: str, request: Request, admin: dict = Depends(require_admin)):
+    """Update equipment"""
+    body = await request.json()
+    
+    update_data = {}
+    if "name" in body:
+        update_data["name"] = body["name"].strip()
+    if "type" in body:
+        update_data["type"] = body["type"].strip()
+    if "serial_number" in body:
+        update_data["serial_number"] = body["serial_number"].strip()
+    if "description" in body:
+        update_data["description"] = body["description"].strip()
+    
+    if update_data:
+        result = await db.equipment.update_one(
+            {"equipment_id": equipment_id},
+            {"$set": update_data}
+        )
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Nie znaleziono wyposażenia")
+    
+    return {"message": "Wyposażenie zaktualizowane"}
+
+@api_router.delete("/equipment/{equipment_id}")
+async def delete_equipment(equipment_id: str, admin: dict = Depends(require_admin)):
+    """Delete equipment"""
+    equipment = await db.equipment.find_one({"equipment_id": equipment_id})
+    if not equipment:
+        raise HTTPException(status_code=404, detail="Nie znaleziono wyposażenia")
+    
+    await db.equipment.delete_one({"equipment_id": equipment_id})
+    
+    await log_activity(
+        user_id=admin["user_id"],
+        user_name=admin["name"],
+        user_role="admin",
+        action_type="equipment_delete",
+        action_description=f"Usunięto wyposażenie: {equipment.get('name', 'N/A')}",
+        details={"equipment_id": equipment_id}
+    )
+    
+    return {"message": "Wyposażenie usunięte"}
+
+@api_router.post("/equipment/{equipment_id}/assign")
+async def assign_equipment(equipment_id: str, request: Request, admin: dict = Depends(require_admin)):
+    """Assign equipment to a worker"""
+    body = await request.json()
+    worker_id = body.get("worker_id")
+    
+    equipment = await db.equipment.find_one({"equipment_id": equipment_id})
+    if not equipment:
+        raise HTTPException(status_code=404, detail="Nie znaleziono wyposażenia")
+    
+    if worker_id:
+        worker = await db.users.find_one({"user_id": worker_id})
+        if not worker:
+            raise HTTPException(status_code=404, detail="Nie znaleziono pracownika")
+        
+        await db.equipment.update_one(
+            {"equipment_id": equipment_id},
+            {"$set": {"assigned_to": worker_id, "assigned_to_name": worker["name"]}}
+        )
+        
+        await log_activity(
+            user_id=admin["user_id"],
+            user_name=admin["name"],
+            user_role="admin",
+            action_type="equipment_assign",
+            action_description=f"Przypisano {equipment.get('name')} do {worker['name']}",
+            target_user_id=worker_id,
+            target_user_name=worker["name"],
+            details={"equipment_id": equipment_id}
+        )
+    else:
+        # Unassign
+        old_assigned = equipment.get("assigned_to_name", "")
+        await db.equipment.update_one(
+            {"equipment_id": equipment_id},
+            {"$set": {"assigned_to": None, "assigned_to_name": None}}
+        )
+        
+        if old_assigned:
+            await log_activity(
+                user_id=admin["user_id"],
+                user_name=admin["name"],
+                user_role="admin",
+                action_type="equipment_unassign",
+                action_description=f"Odpisano {equipment.get('name')} od {old_assigned}",
+                details={"equipment_id": equipment_id}
+            )
+    
+    return {"message": "Wyposażenie przypisane"}
+
+@api_router.get("/workers/{worker_id}/assets")
+async def get_worker_assets(worker_id: str, user: dict = Depends(require_user)):
+    """Get vehicles and equipment assigned to a worker"""
+    # Workers can only see their own assets, admins can see all
+    if user.get("role") != "admin" and user["user_id"] != worker_id:
+        raise HTTPException(status_code=403, detail="Brak uprawnień")
+    
+    vehicles = await db.vehicles.find({"assigned_to": worker_id}, {"_id": 0}).to_list(100)
+    equipment = await db.equipment.find({"assigned_to": worker_id}, {"_id": 0}).to_list(500)
+    
+    return {
+        "vehicles": vehicles,
+        "equipment": equipment
+    }
+
 # ==================== HEALTH CHECK ====================
 
 @api_router.get("/")
