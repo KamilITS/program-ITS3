@@ -158,6 +158,59 @@ export default function Vehicles() {
     loadData();
   };
 
+  // Format date to Warsaw timezone
+  const formatInWarsaw = (dateStr: string, formatStr: string) => {
+    try {
+      const date = new Date(dateStr);
+      const warsawDate = toZonedTime(date, 'Europe/Warsaw');
+      return format(warsawDate, formatStr, { locale: pl });
+    } catch {
+      return dateStr;
+    }
+  };
+
+  // Load history
+  const loadHistory = async () => {
+    setHistoryLoading(true);
+    try {
+      const logs = await apiFetch('/api/vehicles-equipment/history');
+      setHistoryLogs(logs);
+    } catch (error) {
+      console.error('Error loading history:', error);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const openHistoryModal = () => {
+    loadHistory();
+    setHistoryModalVisible(true);
+  };
+
+  // Get icon and color for action type
+  const getActionIcon = (actionType: string) => {
+    switch (actionType) {
+      case 'vehicle_create':
+        return { icon: 'car', color: '#10b981' };
+      case 'vehicle_delete':
+        return { icon: 'car', color: '#ef4444' };
+      case 'vehicle_assign':
+        return { icon: 'person-add', color: '#3b82f6' };
+      case 'vehicle_unassign':
+        return { icon: 'person-remove', color: '#f59e0b' };
+      case 'equipment_create':
+        return { icon: 'construct', color: '#10b981' };
+      case 'equipment_delete':
+        return { icon: 'construct', color: '#ef4444' };
+      case 'equipment_assign':
+        return { icon: 'person-add', color: '#3b82f6' };
+      case 'equipment_unassign':
+        return { icon: 'person-remove', color: '#f59e0b' };
+      default:
+        return { icon: 'ellipse', color: '#888' };
+    }
+  };
+
   // Vehicle CRUD
   const openVehicleModal = (vehicle?: Vehicle) => {
     if (vehicle) {
