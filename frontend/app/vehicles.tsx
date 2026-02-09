@@ -18,6 +18,9 @@ import { router } from 'expo-router';
 import { useAuth } from '../src/context/AuthContext';
 import { apiFetch } from '../src/utils/api';
 import { Ionicons } from '@expo/vector-icons';
+import { format } from 'date-fns';
+import { pl } from 'date-fns/locale';
+import { toZonedTime } from 'date-fns-tz';
 
 interface Vehicle {
   vehicle_id: string;
@@ -47,6 +50,15 @@ interface EquipmentType {
 interface Worker {
   user_id: string;
   name: string;
+}
+
+interface HistoryLog {
+  log_id: string;
+  user_name: string;
+  action_type: string;
+  action_description: string;
+  timestamp: string;
+  target_user_name?: string;
 }
 
 export default function Vehicles() {
