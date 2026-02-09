@@ -591,4 +591,18 @@ const styles = StyleSheet.create({
   newTasksAlertClose: {
     padding: 8,
   },
+  versionFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    gap: 6,
+    marginTop: 10,
+  },
+  versionText: {
+    color: '#444',
+    fontSize: 11,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+  },
 });
