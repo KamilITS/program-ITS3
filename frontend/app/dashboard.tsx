@@ -298,6 +298,17 @@ export default function Dashboard() {
               </View>
               <Text style={styles.actionText}>Zadania</Text>
             </TouchableOpacity>
+            
+            {/* Order button for employees */}
+            {!isAdmin && (
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => router.push('/orders')}
+              >
+                <Ionicons name="cart-outline" size={32} color="#ef4444" />
+                <Text style={styles.actionText}>Zamów</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
