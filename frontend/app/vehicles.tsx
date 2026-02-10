@@ -1414,11 +1414,11 @@ export default function Vehicles() {
                     <Text style={styles.refuelingDate}>{formatRefuelingDate(record.timestamp)}</Text>
                   </View>
                   
-                  {(record.latitude && record.longitude) && (
+                  {(record.location_name || (record.latitude && record.longitude)) && (
                     <View style={styles.refuelingLocationRow}>
-                      <Ionicons name="location" size={14} color="#666" />
+                      <Ionicons name="location" size={14} color="#10b981" />
                       <Text style={styles.refuelingLocation}>
-                        GPS: {record.latitude.toFixed(4)}, {record.longitude.toFixed(4)}
+                        {record.location_name || `${record.latitude?.toFixed(4)}, ${record.longitude?.toFixed(4)}`}
                       </Text>
                     </View>
                   )}
