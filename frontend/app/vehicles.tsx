@@ -776,6 +776,33 @@ export default function Vehicles() {
     }
   };
 
+  // Unassign equipment from worker (take back)
+  const unassignEquipment = (eq: Equipment) => {
+    Alert.alert(
+      'Zabierz wyposażenie',
+      `Czy na pewno chcesz zabrać "${eq.name}" od ${eq.assigned_to_name || 'pracownika'}?`,
+      [
+        { text: 'Anuluj', style: 'cancel' },
+        {
+          text: 'Zabierz',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await apiFetch(`/api/equipment/${eq.equipment_id}/assign`, {
+                method: 'POST',
+                body: { worker_id: null },
+              });
+              Alert.alert('Sukces', 'Wyposażenie zostało odebrane');
+              loadData();
+            } catch (error: any) {
+              Alert.alert('Błąd', error.message);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   // Generate PDF report for assignment
   const generateAssignmentPdf = async () => {
     if (!lastAssignment) return;
