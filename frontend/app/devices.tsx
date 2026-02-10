@@ -2111,6 +2111,26 @@ const styles = StyleSheet.create({
   assignedInfo: {
     marginTop: 4,
   },
+  assignedActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 6,
+  },
+  unassignButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+    gap: 4,
+  },
+  unassignButtonText: {
+    color: '#f59e0b',
+    fontSize: 12,
+    fontWeight: '500',
+  },
   transferButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -2118,7 +2138,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 6,
-    marginTop: 6,
     gap: 4,
   },
   transferButtonText: {
