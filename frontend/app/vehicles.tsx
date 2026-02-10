@@ -691,7 +691,7 @@ export default function Vehicles() {
               ))
             )}
           </>
-        ) : (
+        ) : activeTab === 'equipment' ? (
           <>
             {/* Equipment Types Management */}
             <TouchableOpacity 
