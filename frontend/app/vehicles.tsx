@@ -191,23 +191,29 @@ export default function Vehicles() {
       setLoading(true);
       
       if (isAdmin) {
-        const [vehiclesData, equipmentData, typesData, workersData, servicesData] = await Promise.all([
+        const [vehiclesData, equipmentData, typesData, workersData, servicesData, refuelingData] = await Promise.all([
           apiFetch('/api/vehicles'),
           apiFetch('/api/equipment'),
           apiFetch('/api/equipment/types'),
           apiFetch('/api/workers'),
           apiFetch('/api/services'),
+          apiFetch('/api/refueling'),
         ]);
         setVehicles(vehiclesData);
         setEquipment(equipmentData);
         setEquipmentTypes(typesData);
         setWorkers(workersData);
         setServices(servicesData);
+        setRefuelingRecords(refuelingData);
       } else {
-        // Employee - load only their assets
-        const assets = await apiFetch(`/api/workers/${user?.user_id}/assets`);
+        // Employee - load only their assets and their refueling records
+        const [assets, refuelingData] = await Promise.all([
+          apiFetch(`/api/workers/${user?.user_id}/assets`),
+          apiFetch('/api/refueling'),
+        ]);
         setMyVehicles(assets.vehicles || []);
         setMyEquipment(assets.equipment || []);
+        setRefuelingRecords(refuelingData);
       }
     } catch (error) {
       console.error('Error loading data:', error);
