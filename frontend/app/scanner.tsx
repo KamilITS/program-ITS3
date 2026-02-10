@@ -144,7 +144,7 @@ export default function Scanner() {
     return data;
   };
 
-  const handleBarCodeScanned = async ({ type, data }: { type: string; data: string }) => {
+  const handleBarCodeScanned = async ({ type, data, bounds }: { type: string; data: string; bounds?: any }) => {
     const parsedCode = parseScannedData(data);
     const now = Date.now();
     
@@ -155,20 +155,21 @@ export default function Scanner() {
     
     if (existingCode) return;
     
-    const newCode: ScannedCode = { type, data: parsedCode, timestamp: now };
-    const updatedCodes = [...scannedCodes.filter(c => now - c.timestamp < 3000), newCode];
+    // Extract bounds for overlay positioning
+    const codeBounds = bounds?.origin ? {
+      x: bounds.origin.x,
+      y: bounds.origin.y,
+      width: bounds.size?.width || 100,
+      height: bounds.size?.height || 50,
+    } : undefined;
+    
+    const newCode: ScannedCode = { type, data: parsedCode, timestamp: now, bounds: codeBounds };
+    const updatedCodes = [...scannedCodes.filter(c => now - c.timestamp < 5000), newCode];
     setScannedCodes(updatedCodes);
     
-    // If multiple codes detected, show selection modal
+    // Show selection immediately when multiple codes detected
     if (updatedCodes.length > 1) {
       setShowCodeSelection(true);
-    } else {
-      // Single code - process immediately after a short delay
-      setTimeout(() => {
-        if (scannedCodes.length <= 1) {
-          selectCode(parsedCode);
-        }
-      }, 500);
     }
   };
 
