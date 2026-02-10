@@ -543,15 +543,6 @@ export default function Import() {
                   <Ionicons name="scan" size={24} color="#fff" />
                 </TouchableOpacity>
               </View>
-
-              <Text style={styles.inputLabel}>Kod kreskowy (opcjonalne)</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Zostaw puste aby użyć numeru seryjnego"
-                placeholderTextColor="#666"
-                value={barcode}
-                onChangeText={setBarcode}
-              />
             </ScrollView>
 
             <TouchableOpacity
