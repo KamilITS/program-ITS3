@@ -3293,6 +3293,84 @@ async def delete_refueling(refueling_id: str, admin: dict = Depends(require_admi
     
     return {"message": "Wpis tankowania usunięty"}
 
+@api_router.get("/refueling/stats")
+async def get_refueling_stats(admin: dict = Depends(require_admin)):
+    """Get refueling statistics per vehicle (admin only)"""
+    # Get all vehicles
+    vehicles = await db.vehicles.find({}, {"_id": 0}).to_list(100)
+    
+    stats = []
+    
+    for vehicle in vehicles:
+        vehicle_id = vehicle.get("vehicle_id")
+        
+        # Get all refueling records for this vehicle, sorted by odometer
+        records = await db.refueling.find(
+            {"vehicle_id": vehicle_id}
+        ).sort("odometer", 1).to_list(500)
+        
+        if not records:
+            stats.append({
+                "vehicle_id": vehicle_id,
+                "plate": vehicle.get("registration_number", ""),
+                "brand": vehicle.get("brand", ""),
+                "model": vehicle.get("model", ""),
+                "refueling_count": 0,
+                "total_liters": 0,
+                "total_amount": 0,
+                "total_distance": 0,
+                "avg_consumption": None,
+                "last_odometer": None,
+                "first_odometer": None,
+            })
+            continue
+        
+        # Calculate statistics
+        total_liters = sum(r.get("liters", 0) for r in records)
+        total_amount = sum(r.get("amount", 0) for r in records)
+        refueling_count = len(records)
+        
+        # Get odometer readings
+        odometer_readings = [r.get("odometer", 0) for r in records if r.get("odometer")]
+        
+        if len(odometer_readings) >= 2:
+            first_odometer = min(odometer_readings)
+            last_odometer = max(odometer_readings)
+            total_distance = last_odometer - first_odometer
+            
+            # Calculate average consumption (liters per 100km)
+            # We use total liters minus the first refueling (as first fill doesn't count for distance)
+            if total_distance > 0 and len(records) > 1:
+                # Sum liters from all refuelings except the first one
+                liters_for_calculation = sum(r.get("liters", 0) for r in records[1:])
+                avg_consumption = (liters_for_calculation / total_distance) * 100
+            else:
+                avg_consumption = None
+        else:
+            first_odometer = odometer_readings[0] if odometer_readings else None
+            last_odometer = odometer_readings[0] if odometer_readings else None
+            total_distance = 0
+            avg_consumption = None
+        
+        stats.append({
+            "vehicle_id": vehicle_id,
+            "plate": vehicle.get("registration_number", ""),
+            "brand": vehicle.get("brand", ""),
+            "model": vehicle.get("model", ""),
+            "refueling_count": refueling_count,
+            "total_liters": round(total_liters, 2),
+            "total_amount": round(total_amount, 2),
+            "total_distance": total_distance,
+            "avg_consumption": round(avg_consumption, 2) if avg_consumption else None,
+            "last_odometer": last_odometer,
+            "first_odometer": first_odometer,
+        })
+    
+    # Sort by refueling count (most active first)
+    stats.sort(key=lambda x: x["refueling_count"], reverse=True)
+    
+    return stats
+
 # ==================== HEALTH CHECK ====================
 
 @api_router.get("/")
