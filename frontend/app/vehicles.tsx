@@ -403,7 +403,8 @@ export default function Vehicles() {
       }
     }
     
-    setRefuelingForm({ liters: '', amount: '', odometer: '' });
+    setRefuelingForm({ liters: '', amount: '', odometer: '', vehicle_id: '' });
+    setShowRefuelingVehiclePicker(false);
     setRefuelingModalVisible(true);
   };
 
@@ -421,9 +422,14 @@ export default function Vehicles() {
       return;
     }
     
-    // Get vehicle - for employee it's their assigned vehicle
-    const vehicleId = isAdmin ? null : myVehicles[0]?.vehicle_id;
-    if (!isAdmin && !vehicleId) {
+    // Admin must select a vehicle
+    if (isAdmin && !refuelingForm.vehicle_id) {
+      Alert.alert('Błąd', 'Wybierz pojazd z listy');
+      return;
+    }
+    
+    // Employee must have assigned vehicle
+    if (!isAdmin && myVehicles.length === 0) {
       Alert.alert('Błąd', 'Nie masz przypisanego pojazdu');
       return;
     }
@@ -431,14 +437,38 @@ export default function Vehicles() {
     setIsSubmittingRefueling(true);
     
     try {
-      // Get current location
+      // Get current location and address
       let location = null;
-      try {
-        location = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Balanced,
-        });
-      } catch (locError) {
-        console.warn('Could not get location:', locError);
+      let locationName = '';
+      
+      if (Platform.OS !== 'web') {
+        try {
+          location = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced,
+          });
+          
+          // Reverse geocode to get address
+          if (location) {
+            try {
+              const [address] = await Location.reverseGeocodeAsync({
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude,
+              });
+              if (address) {
+                const parts = [];
+                if (address.street) parts.push(address.street);
+                if (address.streetNumber) parts[parts.length - 1] += ` ${address.streetNumber}`;
+                if (address.city) parts.push(address.city);
+                if (address.region && address.region !== address.city) parts.push(address.region);
+                locationName = parts.join(', ') || '';
+              }
+            } catch (geocodeError) {
+              console.warn('Reverse geocode failed:', geocodeError);
+            }
+          }
+        } catch (locError) {
+          console.warn('Could not get location:', locError);
+        }
       }
       
       const body: any = {
@@ -447,9 +477,15 @@ export default function Vehicles() {
         odometer: parseInt(refuelingForm.odometer),
       };
       
+      // Admin sends selected vehicle_id
+      if (isAdmin && refuelingForm.vehicle_id) {
+        body.vehicle_id = refuelingForm.vehicle_id;
+      }
+      
       if (location) {
         body.latitude = location.coords.latitude;
         body.longitude = location.coords.longitude;
+        body.location_name = locationName;
       }
       
       await apiFetch('/api/refueling', {
