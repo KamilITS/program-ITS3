@@ -385,18 +385,20 @@ export default function Vehicles() {
       return;
     }
     
-    // Request location permissions
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert(
-          'Brak uprawnień GPS',
-          'Aby dodać tankowanie, musisz zezwolić na dostęp do lokalizacji.'
-        );
-        return;
+    // Request location permissions (skip on web)
+    if (Platform.OS !== 'web') {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert(
+            'Brak uprawnień GPS',
+            'Aby dodać tankowanie, musisz zezwolić na dostęp do lokalizacji.'
+          );
+          return;
+        }
+      } catch (error) {
+        console.error('Location permission error:', error);
       }
-    } catch (error) {
-      console.error('Location permission error:', error);
     }
     
     setRefuelingForm({ liters: '', amount: '', odometer: '' });
