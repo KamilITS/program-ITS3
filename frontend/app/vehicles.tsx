@@ -1673,6 +1673,93 @@ export default function Vehicles() {
               )}
             </View>
 
+            {/* Statistics Toggle Button */}
+            {isAdmin && (
+              <TouchableOpacity 
+                style={[styles.statsToggleButton, showRefuelingStats && styles.statsToggleButtonActive]}
+                onPress={() => setShowRefuelingStats(!showRefuelingStats)}
+              >
+                <Ionicons 
+                  name={showRefuelingStats ? 'stats-chart' : 'stats-chart-outline'} 
+                  size={20} 
+                  color={showRefuelingStats ? '#fff' : '#10b981'} 
+                />
+                <Text style={[styles.statsToggleButtonText, showRefuelingStats && styles.statsToggleButtonTextActive]}>
+                  {showRefuelingStats ? 'Ukryj statystyki' : 'Pokaż statystyki'}
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            {/* Refueling Statistics Panel */}
+            {isAdmin && showRefuelingStats && (
+              <View style={styles.statsContainer}>
+                <View style={styles.statsHeader}>
+                  <Ionicons name="bar-chart" size={24} color="#10b981" />
+                  <Text style={styles.statsTitle}>Statystyki tankowań</Text>
+                </View>
+                
+                {refuelingStats.length === 0 ? (
+                  <Text style={styles.statsEmpty}>Brak danych do wyświetlenia</Text>
+                ) : (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.statsScroll}>
+                    {refuelingStats.map((stat, index) => (
+                      <View key={stat.vehicle_id || index} style={styles.statsCard}>
+                        <View style={styles.statsCardHeader}>
+                          <Ionicons name="car" size={20} color="#3b82f6" />
+                          <Text style={styles.statsCardPlate}>{stat.plate}</Text>
+                        </View>
+                        <Text style={styles.statsCardModel}>{stat.brand} {stat.model}</Text>
+                        
+                        <View style={styles.statsCardDivider} />
+                        
+                        <View style={styles.statsRow}>
+                          <View style={styles.statItem}>
+                            <Ionicons name="water" size={16} color="#10b981" />
+                            <Text style={styles.statLabel}>Tankowania</Text>
+                            <Text style={styles.statValue}>{stat.refueling_count}</Text>
+                          </View>
+                          <View style={styles.statItem}>
+                            <Ionicons name="flask" size={16} color="#f59e0b" />
+                            <Text style={styles.statLabel}>Litry</Text>
+                            <Text style={styles.statValue}>{stat.total_liters} L</Text>
+                          </View>
+                        </View>
+                        
+                        <View style={styles.statsRow}>
+                          <View style={styles.statItem}>
+                            <Ionicons name="speedometer" size={16} color="#8b5cf6" />
+                            <Text style={styles.statLabel}>Dystans</Text>
+                            <Text style={styles.statValue}>{stat.total_distance.toLocaleString()} km</Text>
+                          </View>
+                          <View style={styles.statItem}>
+                            <Ionicons name="flame" size={16} color="#ef4444" />
+                            <Text style={styles.statLabel}>Śr. spalanie</Text>
+                            <Text style={styles.statValue}>
+                              {stat.avg_consumption ? `${stat.avg_consumption} L/100km` : '-'}
+                            </Text>
+                          </View>
+                        </View>
+                        
+                        <View style={styles.statsCardDivider} />
+                        
+                        <View style={styles.statsOdometer}>
+                          <Text style={styles.statsOdometerLabel}>Licznik:</Text>
+                          <Text style={styles.statsOdometerValue}>
+                            {stat.first_odometer ? `${stat.first_odometer.toLocaleString()}` : '-'} → {stat.last_odometer ? `${stat.last_odometer.toLocaleString()} km` : '-'}
+                          </Text>
+                        </View>
+                        
+                        <View style={styles.statsTotalCost}>
+                          <Text style={styles.statsTotalCostLabel}>Łączny koszt:</Text>
+                          <Text style={styles.statsTotalCostValue}>{stat.total_amount.toFixed(2)} zł</Text>
+                        </View>
+                      </View>
+                    ))}
+                  </ScrollView>
+                )}
+              </View>
+            )}
+
             {getFilteredRefuelings().length === 0 ? (
               <View style={styles.emptyState}>
                 <Ionicons name="water-outline" size={64} color="#333" />
