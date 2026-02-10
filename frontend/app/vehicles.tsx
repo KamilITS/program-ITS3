@@ -3291,4 +3291,90 @@ const styles = StyleSheet.create({
     padding: 14,
     textAlign: 'center',
   },
+  // Assignment Report Modal styles
+  reportModalContent: {
+    backgroundColor: '#1a1a1a',
+    marginHorizontal: 20,
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  reportModalHeader: {
+    alignItems: 'center',
+    padding: 30,
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+  },
+  reportModalTitle: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: '700',
+    marginTop: 16,
+  },
+  reportModalSubtitle: {
+    color: '#10b981',
+    fontSize: 15,
+    marginTop: 8,
+  },
+  reportModalBody: {
+    padding: 20,
+  },
+  reportModalQuestion: {
+    color: '#fff',
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  reportModalInfo: {
+    backgroundColor: '#0a0a0a',
+    borderRadius: 12,
+    padding: 16,
+  },
+  reportModalInfoTitle: {
+    color: '#888',
+    fontSize: 13,
+    marginBottom: 12,
+  },
+  reportModalInfoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 8,
+  },
+  reportModalInfoText: {
+    color: '#ccc',
+    fontSize: 14,
+  },
+  reportModalButtons: {
+    flexDirection: 'row',
+    padding: 20,
+    gap: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#333',
+  },
+  reportModalButtonSecondary: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 10,
+    backgroundColor: '#333',
+    alignItems: 'center',
+  },
+  reportModalButtonSecondaryText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  reportModalButtonPrimary: {
+    flex: 1,
+    flexDirection: 'row',
+    paddingVertical: 14,
+    borderRadius: 10,
+    backgroundColor: '#10b981',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  reportModalButtonPrimaryText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+  },
 });
