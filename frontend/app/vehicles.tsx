@@ -171,6 +171,13 @@ export default function Vehicles() {
   
   // Assign
   const [assignTarget, setAssignTarget] = useState<{ type: 'vehicle' | 'equipment', id: string, name: string } | null>(null);
+  const [lastAssignment, setLastAssignment] = useState<{
+    workerName: string;
+    items: Array<{ name: string; serialNumber: string; type: string }>;
+    date: Date;
+  } | null>(null);
+  const [showAssignmentReportModal, setShowAssignmentReportModal] = useState(false);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
   
   // Worker assets (for employee view)
   const [myVehicles, setMyVehicles] = useState<Vehicle[]>([]);
