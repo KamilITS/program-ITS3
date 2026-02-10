@@ -580,12 +580,6 @@ export default function Scanner() {
                   <Text style={styles.serialNumber}>{device.numer_seryjny}</Text>
                 </View>
                 
-                {device.kod_kreskowy && (
-                  <Text style={styles.deviceCode}>Kod kreskowy: {device.kod_kreskowy}</Text>
-                )}
-                {device.kod_qr && (
-                  <Text style={styles.deviceCode}>Kod QR: {device.kod_qr}</Text>
-                )}
                 <View style={[
                   styles.statusBadge,
                   device.status === 'dostepny' && { backgroundColor: '#10b981' },
