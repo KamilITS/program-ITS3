@@ -817,7 +817,7 @@ export default function Vehicles() {
               ))
             )}
           </>
-        ) : null}
+        )}
 
         <View style={{ height: 40 }} />
       </ScrollView>
