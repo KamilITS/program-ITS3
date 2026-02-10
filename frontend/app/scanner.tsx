@@ -148,9 +148,9 @@ export default function Scanner() {
     const parsedCode = parseScannedData(data);
     const now = Date.now();
     
-    // Check if this code was already scanned recently (within 2 seconds)
+    // Check if this code was already scanned recently (within 3 seconds)
     const existingCode = scannedCodes.find(
-      c => c.data === parsedCode && now - c.timestamp < 2000
+      c => c.data === parsedCode && now - c.timestamp < 3000
     );
     
     if (existingCode) return;
@@ -164,13 +164,11 @@ export default function Scanner() {
     } : undefined;
     
     const newCode: ScannedCode = { type, data: parsedCode, timestamp: now, bounds: codeBounds };
-    const updatedCodes = [...scannedCodes.filter(c => now - c.timestamp < 5000), newCode];
+    // Keep codes for longer (10 seconds) so user has time to choose
+    const updatedCodes = [...scannedCodes.filter(c => now - c.timestamp < 10000), newCode];
     setScannedCodes(updatedCodes);
     
-    // Show selection immediately when multiple codes detected
-    if (updatedCodes.length > 1) {
-      setShowCodeSelection(true);
-    }
+    // NEVER auto-select - always wait for user to tap on the code they want
   };
 
   const selectCode = async (code: string) => {
