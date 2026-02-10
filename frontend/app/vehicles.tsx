@@ -100,6 +100,8 @@ export default function Vehicles() {
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [services, setServices] = useState<VehicleService[]>([]);
   const [refuelingRecords, setRefuelingRecords] = useState<Refueling[]>([]);
+  const [refuelingStats, setRefuelingStats] = useState<any[]>([]);
+  const [showRefuelingStats, setShowRefuelingStats] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<'vehicles' | 'equipment' | 'service' | 'refueling'>('vehicles');
