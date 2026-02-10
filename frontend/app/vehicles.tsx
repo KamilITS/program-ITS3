@@ -605,18 +605,27 @@ export default function Vehicles() {
           style={[styles.tab, activeTab === 'vehicles' && styles.activeTab]}
           onPress={() => setActiveTab('vehicles')}
         >
-          <Ionicons name="car" size={20} color={activeTab === 'vehicles' ? '#3b82f6' : '#888'} />
+          <Ionicons name="car" size={18} color={activeTab === 'vehicles' ? '#3b82f6' : '#888'} />
           <Text style={[styles.tabText, activeTab === 'vehicles' && styles.activeTabText]}>
-            Pojazdy ({vehicles.length})
+            Pojazdy
           </Text>
         </TouchableOpacity>
         <TouchableOpacity 
           style={[styles.tab, activeTab === 'equipment' && styles.activeTab]}
           onPress={() => setActiveTab('equipment')}
         >
-          <Ionicons name="construct" size={20} color={activeTab === 'equipment' ? '#f59e0b' : '#888'} />
+          <Ionicons name="construct" size={18} color={activeTab === 'equipment' ? '#f59e0b' : '#888'} />
           <Text style={[styles.tabText, activeTab === 'equipment' && styles.activeTabText]}>
-            Wyposażenie ({equipment.length})
+            Wyposażenie
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.tab, activeTab === 'service' && styles.activeTab]}
+          onPress={() => setActiveTab('service')}
+        >
+          <Ionicons name="build" size={18} color={activeTab === 'service' ? '#8b5cf6' : '#888'} />
+          <Text style={[styles.tabText, activeTab === 'service' && styles.activeTabText]}>
+            Serwis
           </Text>
         </TouchableOpacity>
       </View>
