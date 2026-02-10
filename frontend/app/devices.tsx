@@ -1813,6 +1813,85 @@ export default function Devices() {
           </View>
         </View>
       </Modal>
+
+      {/* PDF Report Modal */}
+      <Modal visible={showReportModal} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.reportModalContent}>
+            <View style={styles.reportModalHeader}>
+              <Ionicons name="document-text" size={40} color="#10b981" />
+              <Text style={styles.reportModalTitle}>
+                {lastAssignment?.items.length === 1 ? 'Urządzenie przypisane!' : 'Urządzenia przypisane!'}
+              </Text>
+              <Text style={styles.reportModalSubtitle}>
+                Przypisano do: {lastAssignment?.workerName}
+              </Text>
+            </View>
+            
+            <View style={styles.reportModalBody}>
+              <Text style={styles.reportModalQuestion}>
+                Czy chcesz wygenerować protokół przekazania urządzeń (PDF)?
+              </Text>
+              
+              <View style={styles.reportModalInfo}>
+                <Text style={styles.reportModalInfoTitle}>Raport będzie zawierał:</Text>
+                <View style={styles.reportModalInfoItem}>
+                  <Ionicons name="checkmark-circle" size={16} color="#10b981" />
+                  <Text style={styles.reportModalInfoText}>Datę przypisania</Text>
+                </View>
+                <View style={styles.reportModalInfoItem}>
+                  <Ionicons name="checkmark-circle" size={16} color="#10b981" />
+                  <Text style={styles.reportModalInfoText}>Dane pracownika</Text>
+                </View>
+                <View style={styles.reportModalInfoItem}>
+                  <Ionicons name="checkmark-circle" size={16} color="#10b981" />
+                  <Text style={styles.reportModalInfoText}>
+                    {lastAssignment?.items.length === 1 
+                      ? 'Urządzenie z numerem seryjnym'
+                      : `Listę ${lastAssignment?.items.length} urządzeń z numerami seryjnymi`
+                    }
+                  </Text>
+                </View>
+                <View style={styles.reportModalInfoItem}>
+                  <Ionicons name="checkmark-circle" size={16} color="#10b981" />
+                  <Text style={styles.reportModalInfoText}>Miejsce na podpis pracownika</Text>
+                </View>
+              </View>
+            </View>
+            
+            <View style={styles.reportModalButtons}>
+              <TouchableOpacity 
+                style={styles.reportModalButtonSecondary}
+                onPress={() => {
+                  setShowReportModal(false);
+                  if (Platform.OS === 'web') {
+                    window.alert('Przypisano urządzenia do pracownika');
+                  } else {
+                    Alert.alert('Sukces', 'Przypisano urządzenia do pracownika');
+                  }
+                }}
+              >
+                <Text style={styles.reportModalButtonSecondaryText}>Pomiń</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[styles.reportModalButtonPrimary, generatingPdf && styles.disabledButton]}
+                onPress={generateAssignmentPdf}
+                disabled={generatingPdf}
+              >
+                {generatingPdf ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <>
+                    <Ionicons name="print" size={20} color="#fff" />
+                    <Text style={styles.reportModalButtonPrimaryText}>Generuj PDF</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
