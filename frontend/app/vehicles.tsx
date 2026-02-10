@@ -230,8 +230,76 @@ export default function Vehicles() {
         return { icon: 'person-add', color: '#3b82f6' };
       case 'equipment_unassign':
         return { icon: 'person-remove', color: '#f59e0b' };
+      case 'service_create':
+        return { icon: 'build', color: '#8b5cf6' };
+      case 'service_delete':
+        return { icon: 'build', color: '#ef4444' };
       default:
         return { icon: 'ellipse', color: '#888' };
+    }
+  };
+
+  // Service CRUD
+  const openServiceModal = () => {
+    setServiceForm({ vehicle_id: '', service_type: '', service_date: '', notes: '' });
+    setServiceModalVisible(true);
+  };
+
+  const saveService = async () => {
+    if (!serviceForm.vehicle_id) {
+      Alert.alert('Błąd', 'Wybierz pojazd');
+      return;
+    }
+    if (!serviceForm.service_type.trim()) {
+      Alert.alert('Błąd', 'Wpisz rodzaj serwisu');
+      return;
+    }
+    if (!serviceForm.service_date) {
+      Alert.alert('Błąd', 'Wpisz datę serwisu');
+      return;
+    }
+
+    try {
+      await apiFetch('/api/services', {
+        method: 'POST',
+        body: serviceForm,
+      });
+      Alert.alert('Sukces', 'Wpis serwisowy dodany');
+      setServiceModalVisible(false);
+      loadData();
+    } catch (error: any) {
+      Alert.alert('Błąd', error.message || 'Nie udało się dodać wpisu');
+    }
+  };
+
+  const deleteService = (service: VehicleService) => {
+    Alert.alert(
+      'Usuń wpis serwisowy',
+      `Czy na pewno chcesz usunąć wpis "${service.service_type}" dla ${service.vehicle_plate}?`,
+      [
+        { text: 'Anuluj', style: 'cancel' },
+        {
+          text: 'Usuń',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await apiFetch(`/api/services/${service.service_id}`, { method: 'DELETE' });
+              loadData();
+            } catch (error: any) {
+              Alert.alert('Błąd', error.message);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const formatServiceDate = (dateStr: string) => {
+    try {
+      const [year, month, day] = dateStr.split('-');
+      return `${day}.${month}.${year}`;
+    } catch {
+      return dateStr;
     }
   };
 
