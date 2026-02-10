@@ -761,9 +761,9 @@ export default function Vehicles() {
               ))
             )}
           </>
-        ) : activeTab === 'service' ? (
+        ) : (
           <>
-            {/* Add Service Button */}
+            {/* Service Tab - Add Service Button */}
             <TouchableOpacity 
               style={styles.addServiceButton}
               onPress={openServiceModal}
