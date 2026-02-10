@@ -262,7 +262,7 @@ export default function Vehicles() {
       return;
     }
     if (!serviceForm.service_date) {
-      Alert.alert('Błąd', 'Wpisz datę serwisu');
+      Alert.alert('Błąd', 'Wybierz datę serwisu');
       return;
     }
 
@@ -276,6 +276,17 @@ export default function Vehicles() {
       loadData();
     } catch (error: any) {
       Alert.alert('Błąd', error.message || 'Nie udało się dodać wpisu');
+    }
+  };
+
+  const onDateChange = (event: any, date?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+    }
+    if (date) {
+      setSelectedDate(date);
+      const formattedDate = format(date, 'yyyy-MM-dd');
+      setServiceForm(prev => ({ ...prev, service_date: formattedDate }));
     }
   };
 
@@ -299,6 +310,23 @@ export default function Vehicles() {
         },
       ]
     );
+  };
+
+  // Get filtered and sorted services
+  const getFilteredServices = () => {
+    let filtered = [...services];
+    
+    // Filter by vehicle
+    if (serviceFilterVehicle !== 'all') {
+      filtered = filtered.filter(s => s.vehicle_id === serviceFilterVehicle);
+    }
+    
+    // Sort by date descending (newest first)
+    filtered.sort((a, b) => {
+      return new Date(b.service_date).getTime() - new Date(a.service_date).getTime();
+    });
+    
+    return filtered;
   };
 
   const formatServiceDate = (dateStr: string) => {
