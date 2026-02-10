@@ -103,6 +103,9 @@ export default function Vehicles() {
   const [refuelingStats, setRefuelingStats] = useState<any[]>([]);
   const [showRefuelingStats, setShowRefuelingStats] = useState(false);
   const [statsPeriod, setStatsPeriod] = useState<'all' | 'week' | 'month' | 'year'>('all');
+  const [statsWeek, setStatsWeek] = useState<string>(''); // ISO date of Monday
+  const [statsMonth, setStatsMonth] = useState<number>(new Date().getMonth() + 1);
+  const [statsYear, setStatsYear] = useState<number>(new Date().getFullYear());
   const [loadingStats, setLoadingStats] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
