@@ -2906,9 +2906,61 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    flex: 1,
+    justifyContent: 'flex-end',
   },
   refuelingGpsTextEmployee: {
-    color: '#666',
+    color: '#10b981',
     fontSize: 11,
+    flexShrink: 1,
+  },
+  // Vehicle picker styles for refueling modal
+  selectInput: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#0a0a0a',
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  selectInputText: {
+    color: '#fff',
+    fontSize: 15,
+  },
+  selectInputPlaceholder: {
+    color: '#666',
+    fontSize: 15,
+  },
+  vehiclePickerList: {
+    backgroundColor: '#0a0a0a',
+    borderRadius: 10,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#333',
+    maxHeight: 200,
+  },
+  vehiclePickerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#222',
+    gap: 10,
+  },
+  vehiclePickerItemSelected: {
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+  },
+  vehiclePickerItemText: {
+    color: '#ccc',
+    fontSize: 14,
+  },
+  noVehiclesText: {
+    color: '#888',
+    fontSize: 13,
+    padding: 14,
+    textAlign: 'center',
   },
 });
