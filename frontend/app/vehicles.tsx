@@ -22,6 +22,7 @@ import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { toZonedTime } from 'date-fns-tz';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import * as Location from 'expo-location';
 
 interface Vehicle {
   vehicle_id: string;
