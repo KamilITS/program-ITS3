@@ -2852,4 +2852,98 @@ const styles = StyleSheet.create({
     marginTop: 4,
     minHeight: 40,
   },
+  // PDF Report Modal Styles
+  reportModalContent: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 20,
+    margin: 20,
+    padding: 24,
+    maxWidth: 400,
+    alignSelf: 'center',
+    width: '90%',
+  },
+  reportModalHeader: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  reportModalTitle: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginTop: 12,
+    textAlign: 'center',
+  },
+  reportModalSubtitle: {
+    color: '#10b981',
+    fontSize: 16,
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  reportModalBody: {
+    marginBottom: 24,
+  },
+  reportModalQuestion: {
+    color: '#fff',
+    fontSize: 15,
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 22,
+  },
+  reportModalInfo: {
+    backgroundColor: '#0a0a0a',
+    borderRadius: 12,
+    padding: 16,
+  },
+  reportModalInfoTitle: {
+    color: '#888',
+    fontSize: 12,
+    marginBottom: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  reportModalInfoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+    gap: 10,
+  },
+  reportModalInfoText: {
+    color: '#fff',
+    fontSize: 14,
+    flex: 1,
+  },
+  reportModalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  reportModalButtonSecondary: {
+    flex: 1,
+    backgroundColor: '#333',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  reportModalButtonSecondaryText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  reportModalButtonPrimary: {
+    flex: 1,
+    backgroundColor: '#10b981',
+    paddingVertical: 14,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  reportModalButtonPrimaryText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  disabledButton: {
+    opacity: 0.6,
+  },
 });
