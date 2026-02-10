@@ -3812,6 +3812,39 @@ const styles = StyleSheet.create({
   periodFilterTextActive: {
     color: '#fff',
   },
+  // Period value selector styles
+  periodValueContainer: {
+    marginBottom: 16,
+  },
+  periodValueLabel: {
+    color: '#888',
+    fontSize: 13,
+    marginBottom: 10,
+  },
+  periodValueScroll: {
+    marginHorizontal: -4,
+  },
+  periodValueButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    backgroundColor: '#0a0a0a',
+    borderRadius: 8,
+    marginHorizontal: 4,
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  periodValueButtonActive: {
+    backgroundColor: '#10b981',
+    borderColor: '#10b981',
+  },
+  periodValueText: {
+    color: '#888',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  periodValueTextActive: {
+    color: '#fff',
+  },
   statsLoadingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
