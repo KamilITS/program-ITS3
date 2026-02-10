@@ -835,6 +835,15 @@ export default function Vehicles() {
             Serwis
           </Text>
         </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.tab, activeTab === 'refueling' && styles.activeTab]}
+          onPress={() => setActiveTab('refueling')}
+        >
+          <Ionicons name="water" size={18} color={activeTab === 'refueling' ? '#10b981' : '#888'} />
+          <Text style={[styles.tabText, activeTab === 'refueling' && styles.activeTabText]}>
+            Tankowanie
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView 
