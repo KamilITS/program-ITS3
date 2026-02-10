@@ -752,6 +752,57 @@ export default function Vehicles() {
             )}
           </View>
 
+          {/* Refueling Section for Employee */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="water" size={24} color="#10b981" />
+              <Text style={styles.sectionTitle}>Tankowanie</Text>
+            </View>
+            
+            {myVehicles.length > 0 && (
+              <TouchableOpacity 
+                style={styles.addRefuelingButtonEmployee}
+                onPress={openRefuelingModal}
+              >
+                <Ionicons name="add-circle" size={24} color="#10b981" />
+                <Text style={styles.addRefuelingButtonTextEmployee}>Dodaj tankowanie</Text>
+              </TouchableOpacity>
+            )}
+            
+            {myVehicles.length === 0 ? (
+              <View style={styles.emptyBox}>
+                <Ionicons name="water-outline" size={40} color="#444" />
+                <Text style={styles.emptyText}>Przypisz pojazd, aby dodawać tankowania</Text>
+              </View>
+            ) : refuelingRecords.length === 0 ? (
+              <View style={styles.emptyBox}>
+                <Ionicons name="water-outline" size={40} color="#444" />
+                <Text style={styles.emptyText}>Brak wpisów tankowania</Text>
+              </View>
+            ) : (
+              refuelingRecords.map(record => (
+                <View key={record.refueling_id} style={styles.refuelingCardEmployee}>
+                  <View style={styles.refuelingRowTop}>
+                    <View style={styles.refuelingMainInfo}>
+                      <Text style={styles.refuelingLitersEmployee}>{record.liters} L</Text>
+                      <Text style={styles.refuelingAmountEmployee}>{record.amount.toFixed(2)} PLN</Text>
+                    </View>
+                    <Text style={styles.refuelingOdometerEmployee}>{record.odometer.toLocaleString()} km</Text>
+                  </View>
+                  <View style={styles.refuelingRowBottom}>
+                    <Text style={styles.refuelingDateEmployee}>{formatRefuelingDate(record.timestamp)}</Text>
+                    {record.latitude && record.longitude && (
+                      <View style={styles.refuelingGpsEmployee}>
+                        <Ionicons name="location" size={12} color="#666" />
+                        <Text style={styles.refuelingGpsTextEmployee}>GPS</Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+              ))
+            )}
+          </View>
+
           {/* My Equipment */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
@@ -781,6 +832,92 @@ export default function Vehicles() {
 
           <View style={{ height: 40 }} />
         </ScrollView>
+
+        {/* Refueling Modal for Employee */}
+        <Modal visible={refuelingModalVisible} transparent animationType="slide">
+          <KeyboardAvoidingView 
+            style={{ flex: 1 }} 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <View style={styles.modalHeader}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <Ionicons name="water" size={24} color="#10b981" />
+                    <Text style={styles.modalTitle}>Dodaj tankowanie</Text>
+                  </View>
+                  <TouchableOpacity onPress={() => setRefuelingModalVisible(false)}>
+                    <Ionicons name="close" size={24} color="#888" />
+                  </TouchableOpacity>
+                </View>
+                
+                <ScrollView 
+                  style={styles.modalBody}
+                  keyboardShouldPersistTaps="handled"
+                  contentContainerStyle={{ paddingBottom: 40 }}
+                >
+                  {myVehicles.length > 0 && (
+                    <View style={styles.refuelingVehicleInfo}>
+                      <Ionicons name="car" size={20} color="#10b981" />
+                      <Text style={styles.refuelingVehicleInfoText}>
+                        Pojazd: {myVehicles[0].plate_number} ({myVehicles[0].brand} {myVehicles[0].model})
+                      </Text>
+                    </View>
+                  )}
+
+                  <Text style={styles.inputLabel}>Ilość litrów *</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={refuelingForm.liters}
+                    onChangeText={(text) => setRefuelingForm(prev => ({ ...prev, liters: text }))}
+                    placeholder="np. 45.5"
+                    placeholderTextColor="#666"
+                    keyboardType="decimal-pad"
+                  />
+                  
+                  <Text style={styles.inputLabel}>Kwota (PLN) *</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={refuelingForm.amount}
+                    onChangeText={(text) => setRefuelingForm(prev => ({ ...prev, amount: text }))}
+                    placeholder="np. 285.00"
+                    placeholderTextColor="#666"
+                    keyboardType="decimal-pad"
+                  />
+                  
+                  <Text style={styles.inputLabel}>Przebieg (km) *</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={refuelingForm.odometer}
+                    onChangeText={(text) => setRefuelingForm(prev => ({ ...prev, odometer: text }))}
+                    placeholder="np. 125000"
+                    placeholderTextColor="#666"
+                    keyboardType="numeric"
+                  />
+                  
+                  <View style={styles.refuelingNote}>
+                    <Ionicons name="information-circle" size={18} color="#888" />
+                    <Text style={styles.refuelingNoteText}>
+                      Data, godzina i lokalizacja GPS zostaną zapisane automatycznie.
+                    </Text>
+                  </View>
+                  
+                  <TouchableOpacity 
+                    style={[styles.saveButton, { backgroundColor: '#10b981' }, isSubmittingRefueling && styles.disabledButton]} 
+                    onPress={addRefueling}
+                    disabled={isSubmittingRefueling}
+                  >
+                    {isSubmittingRefueling ? (
+                      <ActivityIndicator color="#fff" />
+                    ) : (
+                      <Text style={styles.saveButtonText}>Zapisz tankowanie</Text>
+                    )}
+                  </TouchableOpacity>
+                </ScrollView>
+              </View>
+            </View>
+          </KeyboardAvoidingView>
+        </Modal>
       </SafeAreaView>
     );
   }
