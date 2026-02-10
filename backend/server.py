@@ -3321,21 +3321,38 @@ async def get_last_odometer(vehicle_id: str, user: dict = Depends(require_user))
 @api_router.get("/refueling/stats")
 async def get_refueling_stats(
     period: str = "all",  # all, week, month, year
+    week_start: str = None,  # ISO date string for week start (Monday)
+    month: int = None,  # Month number (1-12)
+    year: int = None,  # Year number
     admin: dict = Depends(require_admin)
 ):
     """Get refueling statistics per vehicle (admin only) with time period filter"""
     from datetime import timedelta
     
-    # Calculate date range based on period
     now = get_warsaw_now()
-    date_filter = None
+    date_start = None
+    date_end = None
     
-    if period == "week":
-        date_filter = now - timedelta(days=7)
-    elif period == "month":
-        date_filter = now - timedelta(days=30)
-    elif period == "year":
-        date_filter = now - timedelta(days=365)
+    if period == "week" and week_start:
+        # Parse week start date (Monday)
+        try:
+            date_start = datetime.fromisoformat(week_start.replace('Z', '+00:00'))
+            if date_start.tzinfo is None:
+                date_start = date_start.replace(tzinfo=timezone.utc)
+            date_end = date_start + timedelta(days=7)
+        except:
+            pass
+    elif period == "month" and month and year:
+        # Get start and end of specific month
+        date_start = datetime(year, month, 1, tzinfo=timezone.utc)
+        if month == 12:
+            date_end = datetime(year + 1, 1, 1, tzinfo=timezone.utc)
+        else:
+            date_end = datetime(year, month + 1, 1, tzinfo=timezone.utc)
+    elif period == "year" and year:
+        # Get start and end of specific year
+        date_start = datetime(year, 1, 1, tzinfo=timezone.utc)
+        date_end = datetime(year + 1, 1, 1, tzinfo=timezone.utc)
     
     # Get all vehicles
     vehicles = await db.vehicles.find({}, {"_id": 0}).to_list(100)
@@ -3347,8 +3364,8 @@ async def get_refueling_stats(
         
         # Build query with optional date filter
         query = {"vehicle_id": vehicle_id}
-        if date_filter:
-            query["timestamp"] = {"$gte": date_filter}
+        if date_start and date_end:
+            query["timestamp"] = {"$gte": date_start, "$lt": date_end}
         
         # Get all refueling records for this vehicle, sorted by odometer
         records = await db.refueling.find(query).sort("odometer", 1).to_list(500)
