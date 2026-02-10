@@ -23,6 +23,8 @@ import { pl } from 'date-fns/locale';
 import { toZonedTime } from 'date-fns-tz';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Location from 'expo-location';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
 
 interface Vehicle {
   vehicle_id: string;
