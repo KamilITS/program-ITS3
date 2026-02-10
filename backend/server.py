@@ -3306,9 +3306,37 @@ async def delete_refueling(refueling_id: str, admin: dict = Depends(require_admi
     
     return {"message": "Wpis tankowania usunięty"}
 
+@api_router.get("/refueling/last-odometer/{vehicle_id}")
+async def get_last_odometer(vehicle_id: str, user: dict = Depends(require_user)):
+    """Get last recorded odometer for a vehicle"""
+    last_refueling = await db.refueling.find_one(
+        {"vehicle_id": vehicle_id},
+        sort=[("odometer", -1)]
+    )
+    
+    if last_refueling:
+        return {"last_odometer": last_refueling.get("odometer", 0)}
+    return {"last_odometer": None}
+
 @api_router.get("/refueling/stats")
-async def get_refueling_stats(admin: dict = Depends(require_admin)):
-    """Get refueling statistics per vehicle (admin only)"""
+async def get_refueling_stats(
+    period: str = "all",  # all, week, month, year
+    admin: dict = Depends(require_admin)
+):
+    """Get refueling statistics per vehicle (admin only) with time period filter"""
+    from datetime import timedelta
+    
+    # Calculate date range based on period
+    now = get_warsaw_now()
+    date_filter = None
+    
+    if period == "week":
+        date_filter = now - timedelta(days=7)
+    elif period == "month":
+        date_filter = now - timedelta(days=30)
+    elif period == "year":
+        date_filter = now - timedelta(days=365)
+    
     # Get all vehicles
     vehicles = await db.vehicles.find({}, {"_id": 0}).to_list(100)
     
@@ -3317,15 +3345,18 @@ async def get_refueling_stats(admin: dict = Depends(require_admin)):
     for vehicle in vehicles:
         vehicle_id = vehicle.get("vehicle_id")
         
+        # Build query with optional date filter
+        query = {"vehicle_id": vehicle_id}
+        if date_filter:
+            query["timestamp"] = {"$gte": date_filter}
+        
         # Get all refueling records for this vehicle, sorted by odometer
-        records = await db.refueling.find(
-            {"vehicle_id": vehicle_id}
-        ).sort("odometer", 1).to_list(500)
+        records = await db.refueling.find(query).sort("odometer", 1).to_list(500)
         
         if not records:
             stats.append({
                 "vehicle_id": vehicle_id,
-                "plate": vehicle.get("registration_number", ""),
+                "plate": vehicle.get("registration_number", "") or vehicle.get("plate_number", ""),
                 "brand": vehicle.get("brand", ""),
                 "model": vehicle.get("model", ""),
                 "refueling_count": 0,
@@ -3352,9 +3383,7 @@ async def get_refueling_stats(admin: dict = Depends(require_admin)):
             total_distance = last_odometer - first_odometer
             
             # Calculate average consumption (liters per 100km)
-            # We use total liters minus the first refueling (as first fill doesn't count for distance)
             if total_distance > 0 and len(records) > 1:
-                # Sum liters from all refuelings except the first one
                 liters_for_calculation = sum(r.get("liters", 0) for r in records[1:])
                 avg_consumption = (liters_for_calculation / total_distance) * 100
             else:
@@ -3367,7 +3396,7 @@ async def get_refueling_stats(admin: dict = Depends(require_admin)):
         
         stats.append({
             "vehicle_id": vehicle_id,
-            "plate": vehicle.get("registration_number", ""),
+            "plate": vehicle.get("registration_number", "") or vehicle.get("plate_number", ""),
             "brand": vehicle.get("brand", ""),
             "model": vehicle.get("model", ""),
             "refueling_count": refueling_count,
