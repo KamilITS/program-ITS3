@@ -612,6 +612,221 @@ export default function Devices() {
     }
   };
 
+  // Generate PDF report for device assignment
+  const generateAssignmentPdf = async () => {
+    if (!lastAssignment) return;
+    
+    setGeneratingPdf(true);
+    
+    try {
+      const formattedDate = format(lastAssignment.date, "d MMMM yyyy, HH:mm", { locale: pl });
+      
+      const itemsRows = lastAssignment.items.map((item, index) => `
+        <tr>
+          <td style="border: 1px solid #333; padding: 10px; text-align: center;">${index + 1}</td>
+          <td style="border: 1px solid #333; padding: 10px;">${item.type}</td>
+          <td style="border: 1px solid #333; padding: 10px;">${item.name}</td>
+          <td style="border: 1px solid #333; padding: 10px; text-align: center; font-family: monospace;">${item.serialNumber}</td>
+        </tr>
+      `).join('');
+      
+      const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Protokół przekazania urządzeń</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              padding: 40px;
+              max-width: 800px;
+              margin: 0 auto;
+              color: #333;
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 40px;
+              border-bottom: 2px solid #3b82f6;
+              padding-bottom: 20px;
+            }
+            .header h1 {
+              color: #1e3a5f;
+              margin: 0;
+              font-size: 24px;
+            }
+            .header p {
+              color: #666;
+              margin: 10px 0 0 0;
+            }
+            .info-section {
+              margin-bottom: 30px;
+              background: #f8f9fa;
+              padding: 20px;
+              border-radius: 8px;
+            }
+            .info-row {
+              display: flex;
+              margin-bottom: 10px;
+            }
+            .info-label {
+              font-weight: bold;
+              width: 200px;
+              color: #555;
+            }
+            .info-value {
+              flex: 1;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 30px;
+            }
+            th {
+              background: #3b82f6;
+              color: white;
+              padding: 12px;
+              text-align: left;
+              border: 1px solid #3b82f6;
+            }
+            td {
+              padding: 10px;
+              border: 1px solid #ddd;
+            }
+            tr:nth-child(even) {
+              background: #f8f9fa;
+            }
+            .summary {
+              background: #e8f4fd;
+              padding: 15px;
+              border-radius: 8px;
+              margin-bottom: 30px;
+              text-align: center;
+            }
+            .signature-section {
+              margin-top: 50px;
+            }
+            .signature-note {
+              text-align: center;
+              font-style: italic;
+              color: #666;
+              margin-bottom: 40px;
+            }
+            .signature-box {
+              display: flex;
+              justify-content: space-between;
+              gap: 40px;
+            }
+            .signature-field {
+              flex: 1;
+              text-align: center;
+            }
+            .signature-line {
+              border-top: 1px solid #333;
+              padding-top: 10px;
+              margin-top: 60px;
+              font-size: 12px;
+              color: #666;
+            }
+            .footer {
+              margin-top: 50px;
+              text-align: center;
+              font-size: 10px;
+              color: #999;
+              border-top: 1px solid #ddd;
+              padding-top: 20px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>PROTOKÓŁ PRZEKAZANIA URZĄDZEŃ</h1>
+            <p>Magazyn ITS Kielce</p>
+          </div>
+          
+          <div class="info-section">
+            <div class="info-row">
+              <span class="info-label">Data przekazania:</span>
+              <span class="info-value">${formattedDate}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Przekazano dla:</span>
+              <span class="info-value"><strong>${lastAssignment.workerName}</strong></span>
+            </div>
+          </div>
+          
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 50px;">Lp.</th>
+                <th style="width: 120px;">Typ</th>
+                <th>Nazwa</th>
+                <th style="width: 180px;">Numer seryjny</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsRows}
+            </tbody>
+          </table>
+          
+          <div class="summary">
+            <strong>Łącznie przekazano: ${lastAssignment.items.length} ${lastAssignment.items.length === 1 ? 'urządzenie' : lastAssignment.items.length < 5 ? 'urządzenia' : 'urządzeń'}</strong>
+          </div>
+          
+          <div class="signature-section">
+            <p class="signature-note">„Potwierdzam odbiór wyżej wymienionych urządzeń"</p>
+            
+            <div class="signature-box">
+              <div class="signature-field">
+                <div class="signature-line">Data i podpis przekazującego</div>
+              </div>
+              <div class="signature-field">
+                <div class="signature-line">Data i podpis odbierającego (${lastAssignment.workerName})</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="footer">
+            Dokument wygenerowany automatycznie przez system Magazyn ITS Kielce<br>
+            ${formattedDate}
+          </div>
+        </body>
+        </html>
+      `;
+      
+      if (Platform.OS === 'web') {
+        // On web, open print dialog
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+          printWindow.document.write(html);
+          printWindow.document.close();
+          printWindow.print();
+        }
+      } else {
+        // On mobile, generate PDF and share
+        const { uri } = await Print.printToFileAsync({ html });
+        
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(uri, {
+            mimeType: 'application/pdf',
+            dialogTitle: 'Protokół przekazania urządzeń',
+            UTI: 'com.adobe.pdf'
+          });
+        } else {
+          // Fallback to print preview
+          await Print.printAsync({ uri });
+        }
+      }
+      
+      setShowReportModal(false);
+    } catch (error: any) {
+      console.error('PDF generation error:', error);
+      Alert.alert('Błąd', 'Nie udało się wygenerować raportu PDF');
+    } finally {
+      setGeneratingPdf(false);
+    }
+  };
+
   const activeFiltersCount = (workerFilter ? 1 : 0) + (nameFilter ? 1 : 0);
 
   const statusFilters = [
