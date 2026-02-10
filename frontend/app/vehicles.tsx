@@ -1938,4 +1938,97 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     padding: 16,
   },
+  // Filter styles
+  filterContainer: {
+    marginHorizontal: 16,
+    marginTop: 12,
+    marginBottom: 4,
+  },
+  filterLabel: {
+    color: '#888',
+    fontSize: 12,
+    marginBottom: 6,
+  },
+  filterSelect: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#1a1a1a',
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  filterSelectText: {
+    color: '#fff',
+    fontSize: 14,
+  },
+  filterPickerList: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#333',
+    marginTop: 8,
+    maxHeight: 200,
+  },
+  filterPickerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#222',
+    gap: 10,
+  },
+  filterPickerItemSelected: {
+    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+  },
+  filterPickerItemText: {
+    color: '#ccc',
+    fontSize: 14,
+  },
+  filterPickerItemTextSelected: {
+    color: '#8b5cf6',
+    fontWeight: '600',
+  },
+  // Date picker styles
+  datePickerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#0a0a0a',
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#333',
+    gap: 10,
+  },
+  datePickerText: {
+    color: '#fff',
+    fontSize: 15,
+  },
+  datePickerPlaceholder: {
+    color: '#666',
+    fontSize: 15,
+  },
+  datePickerContainer: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 12,
+    marginTop: 8,
+    padding: 8,
+    overflow: 'hidden',
+  },
+  datePickerDoneButton: {
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#333',
+    marginTop: 8,
+  },
+  datePickerDoneText: {
+    color: '#8b5cf6',
+    fontSize: 16,
+    fontWeight: '600',
+  },
 });
