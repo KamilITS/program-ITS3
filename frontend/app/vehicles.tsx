@@ -761,7 +761,63 @@ export default function Vehicles() {
               ))
             )}
           </>
-        )}
+        ) : activeTab === 'service' ? (
+          <>
+            {/* Add Service Button */}
+            <TouchableOpacity 
+              style={styles.addServiceButton}
+              onPress={openServiceModal}
+            >
+              <Ionicons name="add-circle" size={24} color="#8b5cf6" />
+              <Text style={styles.addServiceButtonText}>Dodaj wpis serwisowy</Text>
+            </TouchableOpacity>
+
+            {services.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Ionicons name="build-outline" size={64} color="#333" />
+                <Text style={styles.emptyStateText}>Brak wpisów serwisowych</Text>
+                <Text style={styles.emptyStateHint}>Dodaj wpis klikając przycisk powyżej</Text>
+              </View>
+            ) : (
+              services.map(service => (
+                <View key={service.service_id} style={styles.serviceCard}>
+                  <View style={styles.serviceHeader}>
+                    <View style={[styles.cardIconContainer, { backgroundColor: 'rgba(139, 92, 246, 0.15)' }]}>
+                      <Ionicons name="build" size={24} color="#8b5cf6" />
+                    </View>
+                    <View style={styles.serviceInfo}>
+                      <Text style={styles.serviceType}>{service.service_type}</Text>
+                      <Text style={styles.serviceVehicle}>
+                        <Ionicons name="car" size={14} color="#888" /> {service.vehicle_plate} {service.vehicle_info && `(${service.vehicle_info})`}
+                      </Text>
+                    </View>
+                  </View>
+                  
+                  <View style={styles.serviceDateRow}>
+                    <Ionicons name="calendar" size={16} color="#8b5cf6" />
+                    <Text style={styles.serviceDate}>{formatServiceDate(service.service_date)}</Text>
+                  </View>
+                  
+                  {service.notes && (
+                    <View style={styles.serviceNotesRow}>
+                      <Text style={styles.serviceNotesLabel}>Uwagi:</Text>
+                      <Text style={styles.serviceNotes}>{service.notes}</Text>
+                    </View>
+                  )}
+                  
+                  <View style={styles.serviceFooter}>
+                    <Text style={styles.serviceCreatedBy}>
+                      Dodał: {service.created_by_name}
+                    </Text>
+                    <TouchableOpacity onPress={() => deleteService(service)}>
+                      <Ionicons name="trash-outline" size={20} color="#ef4444" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))
+            )}
+          </>
+        ) : null}
 
         <View style={{ height: 40 }} />
       </ScrollView>
