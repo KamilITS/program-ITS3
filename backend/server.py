@@ -3242,6 +3242,19 @@ async def create_refueling(request: Request, user: dict = Depends(require_user))
             else:
                 raise HTTPException(status_code=400, detail="Nie masz przypisanego pojazdu. Skontaktuj się z administratorem.")
     
+    # Validate odometer - must be greater than last recorded value for this vehicle
+    last_refueling = await db.refueling.find_one(
+        {"vehicle_id": vehicle["vehicle_id"]},
+        sort=[("odometer", -1)]
+    )
+    
+    if last_refueling and int(odometer) < last_refueling.get("odometer", 0):
+        last_odometer = last_refueling.get("odometer", 0)
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Stan licznika ({odometer} km) nie może być mniejszy niż ostatnio wpisany ({last_odometer} km) dla tego pojazdu"
+        )
+    
     record = {
         "refueling_id": f"fuel_{uuid.uuid4().hex[:12]}",
         "vehicle_id": vehicle["vehicle_id"],
