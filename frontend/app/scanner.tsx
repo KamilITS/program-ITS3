@@ -351,30 +351,58 @@ export default function Scanner() {
             >
               <Ionicons name="close" size={24} color="#fff" />
             </TouchableOpacity>
+            
+            {/* Scan hint - updated based on detected codes */}
             <View style={styles.scanHint}>
               <Text style={styles.scanHintText}>
-                {scannedCodes.length > 0 
-                  ? `Wykryto ${scannedCodes.length} kod(y) - dotknij aby wybrać`
-                  : 'Skieruj kamerę na kod QR lub kreskowy'
+                {scannedCodes.length === 0 
+                  ? 'Skieruj kamerę na kod QR lub kreskowy'
+                  : scannedCodes.length === 1
+                    ? 'Wykryto 1 kod - dotknij aby wybrać'
+                    : `Wykryto ${scannedCodes.length} kodów - wybierz właściwy`
                 }
               </Text>
             </View>
             
-            {/* Scanned codes preview */}
+            {/* Detected codes list - prominent buttons at bottom */}
             {scannedCodes.length > 0 && (
-              <View style={styles.scannedCodesPreview}>
-                {scannedCodes.map((code, index) => (
-                  <TouchableOpacity
-                    key={`${code.data}-${index}`}
-                    style={styles.scannedCodeItem}
-                    onPress={() => selectCode(code.data)}
-                  >
-                    <Ionicons name="barcode-outline" size={16} color="#3b82f6" />
-                    <Text style={styles.scannedCodeText} numberOfLines={1}>
-                      {code.data}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+              <View style={styles.detectedCodesContainer}>
+                <Text style={styles.detectedCodesTitle}>
+                  <Ionicons name="scan" size={14} color="#fff" /> Wykryte kody ({scannedCodes.length}):
+                </Text>
+                <ScrollView 
+                  horizontal 
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.detectedCodesList}
+                >
+                  {scannedCodes.map((code, index) => (
+                    <TouchableOpacity
+                      key={`${code.data}-${index}`}
+                      style={[
+                        styles.detectedCodeButton,
+                        index === 0 && styles.detectedCodeButtonFirst,
+                      ]}
+                      onPress={() => selectCode(code.data)}
+                    >
+                      <View style={styles.detectedCodeIcon}>
+                        <Ionicons 
+                          name={code.type.includes('qr') ? 'qr-code' : 'barcode-outline'} 
+                          size={20} 
+                          color="#fff" 
+                        />
+                      </View>
+                      <View style={styles.detectedCodeInfo}>
+                        <Text style={styles.detectedCodeType}>
+                          {code.type.includes('qr') ? 'QR' : 'Kod'}
+                        </Text>
+                        <Text style={styles.detectedCodeData} numberOfLines={1}>
+                          {code.data}
+                        </Text>
+                      </View>
+                      <Ionicons name="checkmark-circle" size={24} color="#10b981" />
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
               </View>
             )}
           </View>
