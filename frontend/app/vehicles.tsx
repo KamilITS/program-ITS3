@@ -1397,6 +1397,15 @@ export default function Vehicles() {
                       <Ionicons name="person-add" size={18} color="#10b981" />
                       <Text style={[styles.cardActionText, { color: '#10b981' }]}>Przypisz</Text>
                     </TouchableOpacity>
+                    {eq.assigned_to && (
+                      <TouchableOpacity 
+                        style={styles.cardAction}
+                        onPress={() => unassignEquipment(eq)}
+                      >
+                        <Ionicons name="person-remove" size={18} color="#f59e0b" />
+                        <Text style={[styles.cardActionText, { color: '#f59e0b' }]}>Zabierz</Text>
+                      </TouchableOpacity>
+                    )}
                     <TouchableOpacity 
                       style={styles.cardAction}
                       onPress={() => openEquipmentModal(eq)}
