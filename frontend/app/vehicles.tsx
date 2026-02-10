@@ -1719,7 +1719,40 @@ export default function Vehicles() {
                   <Text style={styles.statsTitle}>Statystyki tankowań</Text>
                 </View>
                 
-                {refuelingStats.length === 0 ? (
+                {/* Period Filter Buttons */}
+                <View style={styles.periodFilterContainer}>
+                  <TouchableOpacity 
+                    style={[styles.periodFilterButton, statsPeriod === 'all' && styles.periodFilterButtonActive]}
+                    onPress={() => handlePeriodChange('all')}
+                  >
+                    <Text style={[styles.periodFilterText, statsPeriod === 'all' && styles.periodFilterTextActive]}>Wszystko</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.periodFilterButton, statsPeriod === 'week' && styles.periodFilterButtonActive]}
+                    onPress={() => handlePeriodChange('week')}
+                  >
+                    <Text style={[styles.periodFilterText, statsPeriod === 'week' && styles.periodFilterTextActive]}>Tydzień</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.periodFilterButton, statsPeriod === 'month' && styles.periodFilterButtonActive]}
+                    onPress={() => handlePeriodChange('month')}
+                  >
+                    <Text style={[styles.periodFilterText, statsPeriod === 'month' && styles.periodFilterTextActive]}>Miesiąc</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.periodFilterButton, statsPeriod === 'year' && styles.periodFilterButtonActive]}
+                    onPress={() => handlePeriodChange('year')}
+                  >
+                    <Text style={[styles.periodFilterText, statsPeriod === 'year' && styles.periodFilterTextActive]}>Rok</Text>
+                  </TouchableOpacity>
+                </View>
+                
+                {loadingStats ? (
+                  <View style={styles.statsLoadingContainer}>
+                    <ActivityIndicator size="small" color="#10b981" />
+                    <Text style={styles.statsLoadingText}>Ładowanie statystyk...</Text>
+                  </View>
+                ) : refuelingStats.length === 0 ? (
                   <Text style={styles.statsEmpty}>Brak danych do wyświetlenia</Text>
                 ) : (
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.statsScroll}>
