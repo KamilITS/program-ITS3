@@ -327,111 +327,26 @@ export default function Scanner() {
           style={styles.content}
           keyboardShouldPersistTaps="handled"
         >
-        {/* Camera Scanner - shown as full screen overlay */}
-        {!showCamera && (
-          <View style={styles.cameraContainer}>
-            <CameraView
-              style={styles.camera}
-              onBarcodeScanned={handleBarCodeScanned}
-              barcodeScannerSettings={{
-                barcodeTypes: ['qr', 'ean13', 'ean8', 'code128', 'code39', 'code93', 'codabar', 'itf14', 'upc_a', 'upc_e', 'pdf417', 'aztec', 'datamatrix'],
-              }}
-            />
-            <View style={styles.scanOverlay}>
-              <View style={styles.scanFrame} />
-            </View>
-            <TouchableOpacity
-              style={styles.closeCameraButton}
-              onPress={() => {
-                setShowCamera(false);
-                setScannedCodes([]);
-              }}
-            >
-              <Ionicons name="close" size={24} color="#fff" />
-            </TouchableOpacity>
-            
-            {/* Scan hint - updated based on detected codes */}
-            <View style={styles.scanHint}>
-              <Text style={styles.scanHintText}>
-                {scannedCodes.length === 0 
-                  ? '📷 Skieruj kamerę na kod kreskowy'
-                  : '👆 DOTKNIJ KOD KTÓRY CHCESZ WYBRAĆ'
-                }
-              </Text>
-            </View>
-            
-            {/* Detected codes list - prominent buttons at bottom */}
-            {scannedCodes.length > 0 && (
-              <View style={styles.detectedCodesContainer}>
-                <View style={styles.detectedCodesHeader}>
-                  <View style={styles.detectedCodesHeaderIcon}>
-                    <Ionicons name="checkmark-done" size={20} color="#10b981" />
-                  </View>
-                  <Text style={styles.detectedCodesTitle}>
-                    Wykryto {scannedCodes.length} {scannedCodes.length === 1 ? 'kod' : 'kodów'} - wybierz właściwy:
-                  </Text>
-                </View>
-                <ScrollView 
-                  horizontal 
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.detectedCodesList}
-                >
-                  {scannedCodes.map((code, index) => (
-                    <TouchableOpacity
-                      key={`${code.data}-${index}`}
-                      style={styles.detectedCodeButton}
-                      onPress={() => selectCode(code.data)}
-                      activeOpacity={0.7}
-                    >
-                      <View style={styles.detectedCodeIconLarge}>
-                        <Ionicons 
-                          name={code.type.includes('qr') ? 'qr-code' : 'barcode-outline'} 
-                          size={28} 
-                          color="#fff" 
-                        />
-                      </View>
-                      <View style={styles.detectedCodeInfo}>
-                        <Text style={styles.detectedCodeLabel}>
-                          {code.type.includes('qr') ? 'Kod QR' : 'Kod kreskowy'}
-                        </Text>
-                        <Text style={styles.detectedCodeData} numberOfLines={1}>
-                          {code.data}
-                        </Text>
-                      </View>
-                      <View style={styles.selectCodeButton}>
-                        <Text style={styles.selectCodeButtonText}>WYBIERZ</Text>
-                        <Ionicons name="arrow-forward" size={16} color="#fff" />
-                      </View>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-                <Text style={styles.detectedCodesHint}>
-                  ← Przewiń żeby zobaczyć więcej kodów →
-                </Text>
-              </View>
-            )}
-          </View>
-        ) : (
-          <TouchableOpacity
-            style={styles.scanButton}
-            onPress={() => {
-              setScanned(false);
-              setScannedCodes([]);
-              setShowCamera(true);
-            }}
-            disabled={!hasPermission}
-          >
-            <Ionicons name="scan" size={48} color="#3b82f6" />
-            <Text style={styles.scanButtonText}>
-              {hasPermission === false
-                ? 'Brak dostępu do kamery'
-                : 'Dotknij aby skanować'}
-            </Text>
-            <Text style={styles.scanButtonSubtext}>
-              Skanuj kod QR lub kreskowy urządzenia
-            </Text>
-          </TouchableOpacity>
-        )}
+        {/* Scan button - opens camera modal */}
+        <TouchableOpacity
+          style={styles.scanButton}
+          onPress={() => {
+            setScanned(false);
+            setScannedCodes([]);
+            setShowCamera(true);
+          }}
+          disabled={!hasPermission}
+        >
+          <Ionicons name="scan" size={48} color="#3b82f6" />
+          <Text style={styles.scanButtonText}>
+            {hasPermission === false
+              ? 'Brak dostępu do kamery'
+              : 'Dotknij aby skanować'}
+          </Text>
+          <Text style={styles.scanButtonSubtext}>
+            Skanuj kod QR lub kreskowy urządzenia
+          </Text>
+        </TouchableOpacity>
 
         {/* Manual Input */}
         <View style={styles.manualSection}>
