@@ -12,7 +12,7 @@
       "supportsTablet": true,
       "infoPlist": {
         "NSCameraUsageDescription": "Skanuj kody urządzeń",
-        "NSLocationWhenInUseUsageDescription": "Zapisz lokalizację instalacji",
+        "NSLocationWhenInUseUsageDescription": "Zapisz lokalizację tankowania",
         "NSPhotoLibraryUsageDescription": "Załącz zdjęcia w czacie"
       }
     },
