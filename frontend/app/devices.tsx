@@ -399,20 +399,18 @@ export default function Devices() {
       // Find worker name
       const worker = workers.find(w => w.user_id === workerId);
       
-      // Get all assigned devices info
+      // Get all assigned devices info from the devices list
       const assignedDevicesList: Array<{ name: string; serialNumber: string; type: string }> = [];
       
-      // Find devices in categories
-      categories.forEach(category => {
-        category.devices.forEach(device => {
-          if (selectedDevices.has(device.device_id)) {
-            assignedDevicesList.push({
-              name: device.nazwa,
-              serialNumber: device.numer_seryjny,
-              type: 'Urządzenie'
-            });
-          }
-        });
+      // Find devices in the main devices array
+      devices.forEach(device => {
+        if (selectedDevices.has(device.device_id)) {
+          assignedDevicesList.push({
+            name: device.nazwa,
+            serialNumber: device.numer_seryjny,
+            type: 'Urządzenie'
+          });
+        }
       });
       
       // Prepare data for PDF report
