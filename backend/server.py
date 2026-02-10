@@ -3129,6 +3129,111 @@ async def delete_service(service_id: str, admin: dict = Depends(require_admin)):
     
     return {"message": "Wpis serwisowy usunięty"}
 
+# ==================== REFUELING (TANKOWANIE) ====================
+
+@api_router.get("/refueling")
+async def get_refueling(
+    vehicle_id: Optional[str] = None,
+    user_id: Optional[str] = None,
+    current_user: dict = Depends(require_user)
+):
+    """Get refueling records - workers see only their own, admins see all"""
+    query = {}
+    
+    if current_user.get("role") != "admin":
+        # Workers can only see their own refueling records
+        query["user_id"] = current_user["user_id"]
+    else:
+        # Admin can filter
+        if vehicle_id:
+            query["vehicle_id"] = vehicle_id
+        if user_id:
+            query["user_id"] = user_id
+    
+    records = await db.refueling.find(query, {"_id": 0}).sort("timestamp", -1).to_list(500)
+    
+    # Format dates
+    for record in records:
+        if "timestamp" in record and isinstance(record["timestamp"], datetime):
+            record["timestamp"] = record["timestamp"].isoformat()
+    
+    return records
+
+@api_router.post("/refueling")
+async def create_refueling(request: Request, user: dict = Depends(require_user)):
+    """Create a new refueling record (workers can add for their assigned vehicle)"""
+    body = await request.json()
+    
+    liters = body.get("liters")
+    amount = body.get("amount")
+    odometer = body.get("odometer")
+    latitude = body.get("latitude")
+    longitude = body.get("longitude")
+    location_name = body.get("location_name", "")
+    
+    if not liters or float(liters) <= 0:
+        raise HTTPException(status_code=400, detail="Podaj ilość litrów")
+    if not amount or float(amount) <= 0:
+        raise HTTPException(status_code=400, detail="Podaj kwotę")
+    if not odometer or int(odometer) <= 0:
+        raise HTTPException(status_code=400, detail="Podaj stan licznika")
+    
+    # Get user's assigned vehicle
+    vehicle = await db.vehicles.find_one({"assigned_to": user["user_id"]})
+    if not vehicle:
+        raise HTTPException(status_code=400, detail="Nie masz przypisanego pojazdu. Skontaktuj się z administratorem.")
+    
+    record = {
+        "refueling_id": f"fuel_{uuid.uuid4().hex[:12]}",
+        "vehicle_id": vehicle["vehicle_id"],
+        "vehicle_plate": vehicle.get("plate_number", ""),
+        "vehicle_info": f"{vehicle.get('brand', '')} {vehicle.get('model', '')}".strip(),
+        "user_id": user["user_id"],
+        "user_name": user["name"],
+        "liters": float(liters),
+        "amount": float(amount),
+        "odometer": int(odometer),
+        "latitude": latitude,
+        "longitude": longitude,
+        "location_name": location_name,
+        "timestamp": get_warsaw_now()
+    }
+    
+    await db.refueling.insert_one(record)
+    record.pop("_id", None)
+    record["timestamp"] = record["timestamp"].isoformat()
+    
+    await log_activity(
+        user_id=user["user_id"],
+        user_name=user["name"],
+        user_role=user.get("role", "pracownik"),
+        action_type="refueling_create",
+        action_description=f"Zatankowano {liters}L za {amount} zł (pojazd {vehicle.get('plate_number')})",
+        details={"refueling_id": record["refueling_id"], "vehicle_id": vehicle["vehicle_id"]}
+    )
+    
+    return record
+
+@api_router.delete("/refueling/{refueling_id}")
+async def delete_refueling(refueling_id: str, admin: dict = Depends(require_admin)):
+    """Delete a refueling record (admin only)"""
+    record = await db.refueling.find_one({"refueling_id": refueling_id})
+    if not record:
+        raise HTTPException(status_code=404, detail="Nie znaleziono wpisu tankowania")
+    
+    await db.refueling.delete_one({"refueling_id": refueling_id})
+    
+    await log_activity(
+        user_id=admin["user_id"],
+        user_name=admin["name"],
+        user_role="admin",
+        action_type="refueling_delete",
+        action_description=f"Usunięto wpis tankowania dla pojazdu {record.get('vehicle_plate', '')}",
+        details={"refueling_id": refueling_id}
+    )
+    
+    return {"message": "Wpis tankowania usunięty"}
+
 # ==================== HEALTH CHECK ====================
 
 @api_router.get("/")
