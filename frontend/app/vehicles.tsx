@@ -555,6 +555,25 @@ export default function Vehicles() {
     return filtered;
   };
 
+  // Load stats with period filter
+  const loadRefuelingStats = async (period: 'all' | 'week' | 'month' | 'year') => {
+    setLoadingStats(true);
+    try {
+      const data = await apiFetch(`/api/refueling/stats?period=${period}`);
+      setRefuelingStats(data);
+    } catch (error) {
+      console.error('Error loading stats:', error);
+    } finally {
+      setLoadingStats(false);
+    }
+  };
+
+  // Handle period change
+  const handlePeriodChange = (period: 'all' | 'week' | 'month' | 'year') => {
+    setStatsPeriod(period);
+    loadRefuelingStats(period);
+  };
+
   const formatRefuelingDate = (dateStr: string) => {
     try {
       const date = new Date(dateStr);
