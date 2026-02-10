@@ -1883,6 +1883,55 @@ export default function Vehicles() {
                 keyboardShouldPersistTaps="handled"
                 contentContainerStyle={{ paddingBottom: 40 }}
               >
+                {/* Admin - Vehicle Picker */}
+                {isAdmin && (
+                  <>
+                    <Text style={styles.inputLabel}>Pojazd *</Text>
+                    <TouchableOpacity 
+                      style={styles.selectInput}
+                      onPress={() => setShowRefuelingVehiclePicker(!showRefuelingVehiclePicker)}
+                    >
+                      <Text style={refuelingForm.vehicle_id ? styles.selectInputText : styles.selectInputPlaceholder}>
+                        {refuelingForm.vehicle_id 
+                          ? vehicles.find(v => v.vehicle_id === refuelingForm.vehicle_id)?.plate_number || 'Wybierz pojazd'
+                          : 'Wybierz pojazd z listy'}
+                      </Text>
+                      <Ionicons name={showRefuelingVehiclePicker ? 'chevron-up' : 'chevron-down'} size={20} color="#888" />
+                    </TouchableOpacity>
+                    
+                    {showRefuelingVehiclePicker && (
+                      <View style={styles.vehiclePickerList}>
+                        {vehicles.length === 0 ? (
+                          <Text style={styles.noVehiclesText}>Brak pojazdów - dodaj pojazd w zakładce "Pojazdy"</Text>
+                        ) : (
+                          vehicles.map(vehicle => (
+                            <TouchableOpacity
+                              key={vehicle.vehicle_id}
+                              style={[
+                                styles.vehiclePickerItem,
+                                refuelingForm.vehicle_id === vehicle.vehicle_id && styles.vehiclePickerItemSelected
+                              ]}
+                              onPress={() => {
+                                setRefuelingForm(prev => ({ ...prev, vehicle_id: vehicle.vehicle_id }));
+                                setShowRefuelingVehiclePicker(false);
+                              }}
+                            >
+                              <Ionicons name="car" size={18} color={refuelingForm.vehicle_id === vehicle.vehicle_id ? '#10b981' : '#888'} />
+                              <Text style={[
+                                styles.vehiclePickerItemText,
+                                refuelingForm.vehicle_id === vehicle.vehicle_id && { color: '#10b981', fontWeight: '600' }
+                              ]}>
+                                {vehicle.plate_number} {vehicle.brand && vehicle.model && `- ${vehicle.brand} ${vehicle.model}`}
+                              </Text>
+                            </TouchableOpacity>
+                          ))
+                        )}
+                      </View>
+                    )}
+                  </>
+                )}
+
+                {/* Employee - Show assigned vehicle */}
                 {!isAdmin && myVehicles.length > 0 && (
                   <View style={styles.refuelingVehicleInfo}>
                     <Ionicons name="car" size={20} color="#10b981" />
