@@ -807,14 +807,65 @@ export default function Vehicles() {
               <Text style={styles.addServiceButtonText}>Dodaj wpis serwisowy</Text>
             </TouchableOpacity>
 
-            {services.length === 0 ? (
+            {/* Vehicle Filter */}
+            <View style={styles.filterContainer}>
+              <Text style={styles.filterLabel}>Filtruj po pojeździe:</Text>
+              <TouchableOpacity 
+                style={styles.filterSelect}
+                onPress={() => setShowServiceFilterPicker(!showServiceFilterPicker)}
+              >
+                <Text style={styles.filterSelectText}>
+                  {serviceFilterVehicle === 'all' 
+                    ? 'Wszystkie pojazdy' 
+                    : vehicles.find(v => v.vehicle_id === serviceFilterVehicle)?.plate_number || 'Wybierz'}
+                </Text>
+                <Ionicons name={showServiceFilterPicker ? 'chevron-up' : 'chevron-down'} size={18} color="#888" />
+              </TouchableOpacity>
+              
+              {showServiceFilterPicker && (
+                <View style={styles.filterPickerList}>
+                  <TouchableOpacity
+                    style={[styles.filterPickerItem, serviceFilterVehicle === 'all' && styles.filterPickerItemSelected]}
+                    onPress={() => {
+                      setServiceFilterVehicle('all');
+                      setShowServiceFilterPicker(false);
+                    }}
+                  >
+                    <Text style={[styles.filterPickerItemText, serviceFilterVehicle === 'all' && styles.filterPickerItemTextSelected]}>
+                      Wszystkie pojazdy
+                    </Text>
+                  </TouchableOpacity>
+                  {vehicles.map(vehicle => (
+                    <TouchableOpacity
+                      key={vehicle.vehicle_id}
+                      style={[styles.filterPickerItem, serviceFilterVehicle === vehicle.vehicle_id && styles.filterPickerItemSelected]}
+                      onPress={() => {
+                        setServiceFilterVehicle(vehicle.vehicle_id);
+                        setShowServiceFilterPicker(false);
+                      }}
+                    >
+                      <Ionicons name="car" size={16} color={serviceFilterVehicle === vehicle.vehicle_id ? '#8b5cf6' : '#888'} />
+                      <Text style={[styles.filterPickerItemText, serviceFilterVehicle === vehicle.vehicle_id && styles.filterPickerItemTextSelected]}>
+                        {vehicle.plate_number}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
+
+            {getFilteredServices().length === 0 ? (
               <View style={styles.emptyState}>
                 <Ionicons name="build-outline" size={64} color="#333" />
-                <Text style={styles.emptyStateText}>Brak wpisów serwisowych</Text>
-                <Text style={styles.emptyStateHint}>Dodaj wpis klikając przycisk powyżej</Text>
+                <Text style={styles.emptyStateText}>
+                  {services.length === 0 ? 'Brak wpisów serwisowych' : 'Brak wpisów dla wybranego pojazdu'}
+                </Text>
+                <Text style={styles.emptyStateHint}>
+                  {services.length === 0 ? 'Dodaj wpis klikając przycisk powyżej' : 'Zmień filtr lub dodaj nowy wpis'}
+                </Text>
               </View>
             ) : (
-              services.map(service => (
+              getFilteredServices().map(service => (
                 <View key={service.service_id} style={styles.serviceCard}>
                   <View style={styles.serviceHeader}>
                     <View style={[styles.cardIconContainer, { backgroundColor: 'rgba(139, 92, 246, 0.15)' }]}>
