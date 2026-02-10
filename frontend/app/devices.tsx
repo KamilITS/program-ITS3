@@ -627,9 +627,6 @@ export default function Devices() {
         
         <View style={styles.deviceItemInfo}>
           <Text style={styles.deviceSerial}>{device.numer_seryjny}</Text>
-          {device.kod_kreskowy && (
-            <Text style={styles.deviceCode}>Kod: {device.kod_kreskowy}</Text>
-          )}
           {assignedWorker && !isInstalled && (
             <View style={styles.assignedInfo}>
               <View style={styles.assignedBadge}>
