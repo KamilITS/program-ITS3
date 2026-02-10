@@ -1824,7 +1824,7 @@ export default function Vehicles() {
                   <Text style={styles.statsTitle}>Statystyki tankowań</Text>
                 </View>
                 
-                {/* Period Filter Buttons */}
+                {/* Period Type Selector */}
                 <View style={styles.periodFilterContainer}>
                   <TouchableOpacity 
                     style={[styles.periodFilterButton, statsPeriod === 'all' && styles.periodFilterButtonActive]}
@@ -1852,16 +1852,90 @@ export default function Vehicles() {
                   </TouchableOpacity>
                 </View>
                 
+                {/* Period Value Selector */}
+                {statsPeriod === 'week' && (
+                  <View style={styles.periodValueContainer}>
+                    <Text style={styles.periodValueLabel}>Wybierz tydzień:</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.periodValueScroll}>
+                      {getWeeksInRange().map((week, index) => (
+                        <TouchableOpacity
+                          key={week.value}
+                          style={[styles.periodValueButton, statsWeek === week.value && styles.periodValueButtonActive]}
+                          onPress={() => {
+                            setStatsWeek(week.value);
+                            loadRefuelingStats('week', week.value);
+                          }}
+                        >
+                          <Text style={[styles.periodValueText, statsWeek === week.value && styles.periodValueTextActive]}>
+                            {week.label}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
+                )}
+                
+                {statsPeriod === 'month' && (
+                  <View style={styles.periodValueContainer}>
+                    <Text style={styles.periodValueLabel}>Wybierz miesiąc:</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.periodValueScroll}>
+                      {getMonthsOptions().map((monthOption, index) => (
+                        <TouchableOpacity
+                          key={`${monthOption.value.month}-${monthOption.value.year}`}
+                          style={[
+                            styles.periodValueButton, 
+                            (statsMonth === monthOption.value.month && statsYear === monthOption.value.year) && styles.periodValueButtonActive
+                          ]}
+                          onPress={() => {
+                            setStatsMonth(monthOption.value.month);
+                            setStatsYear(monthOption.value.year);
+                            loadRefuelingStats('month', undefined, monthOption.value.month, monthOption.value.year);
+                          }}
+                        >
+                          <Text style={[
+                            styles.periodValueText, 
+                            (statsMonth === monthOption.value.month && statsYear === monthOption.value.year) && styles.periodValueTextActive
+                          ]}>
+                            {monthOption.label}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
+                )}
+                
+                {statsPeriod === 'year' && (
+                  <View style={styles.periodValueContainer}>
+                    <Text style={styles.periodValueLabel}>Wybierz rok:</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.periodValueScroll}>
+                      {getYearsOptions().map((yearOption) => (
+                        <TouchableOpacity
+                          key={yearOption}
+                          style={[styles.periodValueButton, statsYear === yearOption && styles.periodValueButtonActive]}
+                          onPress={() => {
+                            setStatsYear(yearOption);
+                            loadRefuelingStats('year', undefined, undefined, yearOption);
+                          }}
+                        >
+                          <Text style={[styles.periodValueText, statsYear === yearOption && styles.periodValueTextActive]}>
+                            {yearOption}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
+                )}
+                
                 {loadingStats ? (
                   <View style={styles.statsLoadingContainer}>
                     <ActivityIndicator size="small" color="#10b981" />
                     <Text style={styles.statsLoadingText}>Ładowanie statystyk...</Text>
                   </View>
-                ) : refuelingStats.length === 0 ? (
-                  <Text style={styles.statsEmpty}>Brak danych do wyświetlenia</Text>
+                ) : refuelingStats.length === 0 || refuelingStats.every(s => s.refueling_count === 0) ? (
+                  <Text style={styles.statsEmpty}>Brak danych do wyświetlenia dla wybranego okresu</Text>
                 ) : (
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.statsScroll}>
-                    {refuelingStats.map((stat, index) => (
+                    {refuelingStats.filter(stat => stat.refueling_count > 0).map((stat, index) => (
                       <View key={stat.vehicle_id || index} style={styles.statsCard}>
                         <View style={styles.statsCardHeader}>
                           <Ionicons name="car" size={20} color="#3b82f6" />
