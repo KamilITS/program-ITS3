@@ -278,13 +278,6 @@ export default function AssignDevice() {
                 </View>
               </View>
 
-              {foundDevice.kod_kreskowy && (
-                <View style={styles.deviceDetail}>
-                  <Ionicons name="barcode-outline" size={16} color="#888" />
-                  <Text style={styles.deviceDetailText}>Kod: {foundDevice.kod_kreskowy}</Text>
-                </View>
-              )}
-
               {foundDevice.przypisany_do && (
                 <View style={styles.currentAssignment}>
                   <Ionicons name="person" size={16} color="#f59e0b" />
