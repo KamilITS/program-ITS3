@@ -702,6 +702,98 @@ export default function Scanner() {
           </View>
         </View>
       </Modal>
+
+      {/* Full Screen Camera Scanner Modal */}
+      <Modal visible={showCamera && hasPermission} animationType="slide" statusBarTranslucent>
+        <View style={styles.cameraModalContainer}>
+          <CameraView
+            style={styles.cameraFullScreen}
+            onBarcodeScanned={handleBarCodeScanned}
+            barcodeScannerSettings={{
+              barcodeTypes: ['qr', 'ean13', 'ean8', 'code128', 'code39', 'code93', 'codabar', 'itf14', 'upc_a', 'upc_e', 'pdf417', 'aztec', 'datamatrix'],
+            }}
+          />
+          
+          {/* Close button */}
+          <TouchableOpacity
+            style={styles.cameraCloseButton}
+            onPress={() => {
+              setShowCamera(false);
+              setScannedCodes([]);
+            }}
+          >
+            <Ionicons name="close" size={28} color="#fff" />
+          </TouchableOpacity>
+          
+          {/* Scan frame overlay */}
+          <View style={styles.scanOverlay}>
+            <View style={styles.scanFrame} />
+          </View>
+          
+          {/* Scan hint at top */}
+          <View style={styles.cameraHintTop}>
+            <Text style={styles.cameraHintText}>
+              {scannedCodes.length === 0 
+                ? '📷 Skieruj kamerę na kod kreskowy'
+                : '👆 DOTKNIJ KOD KTÓRY CHCESZ WYBRAĆ'
+              }
+            </Text>
+          </View>
+          
+          {/* Detected codes panel at bottom */}
+          {scannedCodes.length > 0 && (
+            <View style={styles.detectedCodesPanel}>
+              <View style={styles.detectedCodesPanelHeader}>
+                <View style={styles.detectedCodesPanelIcon}>
+                  <Ionicons name="checkmark-done" size={24} color="#10b981" />
+                </View>
+                <View>
+                  <Text style={styles.detectedCodesPanelTitle}>
+                    Wykryto {scannedCodes.length} {scannedCodes.length === 1 ? 'kod' : 'kodów'}
+                  </Text>
+                  <Text style={styles.detectedCodesPanelSubtitle}>
+                    Wybierz kod który chcesz użyć
+                  </Text>
+                </View>
+              </View>
+              
+              <ScrollView 
+                style={styles.detectedCodesScroll}
+                showsVerticalScrollIndicator={true}
+              >
+                {scannedCodes.map((code, index) => (
+                  <TouchableOpacity
+                    key={`${code.data}-${index}`}
+                    style={styles.detectedCodeCard}
+                    onPress={() => selectCode(code.data)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.detectedCodeCardIcon}>
+                      <Ionicons 
+                        name={code.type.includes('qr') ? 'qr-code' : 'barcode-outline'} 
+                        size={24} 
+                        color="#fff" 
+                      />
+                    </View>
+                    <View style={styles.detectedCodeCardInfo}>
+                      <Text style={styles.detectedCodeCardLabel}>
+                        {code.type.includes('qr') ? 'Kod QR' : 'Kod kreskowy'}
+                      </Text>
+                      <Text style={styles.detectedCodeCardData}>
+                        {code.data}
+                      </Text>
+                    </View>
+                    <View style={styles.detectedCodeCardButton}>
+                      <Text style={styles.detectedCodeCardButtonText}>WYBIERZ</Text>
+                      <Ionicons name="arrow-forward" size={18} color="#fff" />
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+        </View>
+      </Modal>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
