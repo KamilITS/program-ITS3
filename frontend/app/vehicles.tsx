@@ -738,10 +738,261 @@ export default function Vehicles() {
       });
       
       setAssignModalVisible(false);
+      
+      // If assigning (not unassigning), show PDF report option
+      if (workerId) {
+        const worker = workers.find(w => w.user_id === workerId);
+        let itemInfo: { name: string; serialNumber: string; type: string };
+        
+        if (assignTarget.type === 'vehicle') {
+          const vehicle = vehicles.find(v => v.vehicle_id === assignTarget.id);
+          itemInfo = {
+            name: `${vehicle?.brand || ''} ${vehicle?.model || ''}`.trim() || assignTarget.name,
+            serialNumber: vehicle?.plate_number || assignTarget.name,
+            type: 'Pojazd'
+          };
+        } else {
+          const eq = equipment.find(e => e.equipment_id === assignTarget.id);
+          itemInfo = {
+            name: eq?.name || assignTarget.name,
+            serialNumber: eq?.serial_number || '-',
+            type: 'Wyposażenie'
+          };
+        }
+        
+        setLastAssignment({
+          workerName: worker?.name || 'Nieznany pracownik',
+          items: [itemInfo],
+          date: new Date()
+        });
+        setShowAssignmentReportModal(true);
+      } else {
+        Alert.alert('Sukces', 'Odpisano od pracownika');
+      }
+      
       loadData();
-      Alert.alert('Sukces', workerId ? 'Przypisano do pracownika' : 'Odpisano od pracownika');
     } catch (error: any) {
       Alert.alert('Błąd', error.message);
+    }
+  };
+
+  // Generate PDF report for assignment
+  const generateAssignmentPdf = async () => {
+    if (!lastAssignment) return;
+    
+    setGeneratingPdf(true);
+    
+    try {
+      const formattedDate = format(lastAssignment.date, "d MMMM yyyy, HH:mm", { locale: pl });
+      
+      const itemsRows = lastAssignment.items.map((item, index) => `
+        <tr>
+          <td style="border: 1px solid #333; padding: 10px; text-align: center;">${index + 1}</td>
+          <td style="border: 1px solid #333; padding: 10px;">${item.type}</td>
+          <td style="border: 1px solid #333; padding: 10px;">${item.name}</td>
+          <td style="border: 1px solid #333; padding: 10px; text-align: center; font-family: monospace;">${item.serialNumber}</td>
+        </tr>
+      `).join('');
+      
+      const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Protokół przekazania urządzeń</title>
+          <style>
+            body {
+              font-family: 'Helvetica Neue', Arial, sans-serif;
+              padding: 40px;
+              color: #333;
+              line-height: 1.6;
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 40px;
+              border-bottom: 2px solid #333;
+              padding-bottom: 20px;
+            }
+            .header h1 {
+              font-size: 24px;
+              margin: 0 0 10px 0;
+              text-transform: uppercase;
+              letter-spacing: 2px;
+            }
+            .header p {
+              font-size: 14px;
+              color: #666;
+              margin: 0;
+            }
+            .info-section {
+              margin-bottom: 30px;
+              background: #f9f9f9;
+              padding: 20px;
+              border-radius: 8px;
+            }
+            .info-row {
+              display: flex;
+              margin-bottom: 10px;
+            }
+            .info-label {
+              font-weight: bold;
+              width: 200px;
+              color: #555;
+            }
+            .info-value {
+              flex: 1;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin: 20px 0;
+            }
+            th {
+              background: #333;
+              color: white;
+              padding: 12px;
+              text-align: left;
+              font-weight: 600;
+            }
+            td {
+              border: 1px solid #ddd;
+              padding: 10px;
+            }
+            tr:nth-child(even) {
+              background: #f9f9f9;
+            }
+            .summary {
+              margin-top: 30px;
+              padding: 15px;
+              background: #e8f5e9;
+              border-radius: 8px;
+              border-left: 4px solid #4caf50;
+            }
+            .summary strong {
+              font-size: 18px;
+            }
+            .signature-section {
+              margin-top: 60px;
+              padding-top: 30px;
+              border-top: 1px solid #ddd;
+            }
+            .signature-note {
+              font-style: italic;
+              color: #666;
+              margin-bottom: 40px;
+              font-size: 14px;
+            }
+            .signature-box {
+              display: flex;
+              justify-content: space-between;
+              margin-top: 20px;
+            }
+            .signature-field {
+              width: 45%;
+              text-align: center;
+            }
+            .signature-line {
+              border-top: 1px solid #333;
+              margin-top: 60px;
+              padding-top: 10px;
+              font-size: 12px;
+              color: #666;
+            }
+            .footer {
+              margin-top: 40px;
+              text-align: center;
+              font-size: 11px;
+              color: #999;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Protokół przekazania urządzeń</h1>
+            <p>ITS Kielce - Magazyn</p>
+          </div>
+          
+          <div class="info-section">
+            <div class="info-row">
+              <span class="info-label">Data przypisania:</span>
+              <span class="info-value">${formattedDate}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Pracownik:</span>
+              <span class="info-value"><strong>${lastAssignment.workerName}</strong></span>
+            </div>
+          </div>
+          
+          <h3>Przekazane urządzenia:</h3>
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 50px;">Lp.</th>
+                <th style="width: 120px;">Typ</th>
+                <th>Nazwa urządzenia</th>
+                <th style="width: 180px;">Numer seryjny / Rejestracja</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsRows}
+            </tbody>
+          </table>
+          
+          <div class="summary">
+            <strong>Podsumowanie:</strong> Łączna liczba przekazanych urządzeń: <strong>${lastAssignment.items.length}</strong>
+          </div>
+          
+          <div class="signature-section">
+            <p class="signature-note">„Potwierdzam odbiór wyżej wymienionych urządzeń i zobowiązuję się do ich właściwego użytkowania oraz zwrotu w stanie niepogorszonym."</p>
+            
+            <div class="signature-box">
+              <div class="signature-field">
+                <div class="signature-line">Data i podpis przekazującego</div>
+              </div>
+              <div class="signature-field">
+                <div class="signature-line">Data i podpis odbierającego (${lastAssignment.workerName})</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="footer">
+            Dokument wygenerowany automatycznie przez system Magazyn ITS Kielce<br>
+            ${formattedDate}
+          </div>
+        </body>
+        </html>
+      `;
+      
+      if (Platform.OS === 'web') {
+        // On web, open print dialog
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+          printWindow.document.write(html);
+          printWindow.document.close();
+          printWindow.print();
+        }
+      } else {
+        // On mobile, generate PDF and share
+        const { uri } = await Print.printToFileAsync({ html });
+        
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(uri, {
+            mimeType: 'application/pdf',
+            dialogTitle: 'Protokół przekazania urządzeń',
+            UTI: 'com.adobe.pdf'
+          });
+        } else {
+          // Fallback to print preview
+          await Print.printAsync({ uri });
+        }
+      }
+      
+      setShowAssignmentReportModal(false);
+    } catch (error: any) {
+      console.error('PDF generation error:', error);
+      Alert.alert('Błąd', 'Nie udało się wygenerować raportu PDF');
+    } finally {
+      setGeneratingPdf(false);
     }
   };
 
