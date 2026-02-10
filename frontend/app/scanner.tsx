@@ -327,8 +327,8 @@ export default function Scanner() {
           style={styles.content}
           keyboardShouldPersistTaps="handled"
         >
-        {/* Camera Scanner */}
-        {showCamera && hasPermission ? (
+        {/* Camera Scanner - shown as full screen overlay */}
+        {!showCamera && (
           <View style={styles.cameraContainer}>
             <CameraView
               style={styles.camera}
