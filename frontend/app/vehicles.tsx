@@ -151,16 +151,18 @@ export default function Vehicles() {
       setLoading(true);
       
       if (isAdmin) {
-        const [vehiclesData, equipmentData, typesData, workersData] = await Promise.all([
+        const [vehiclesData, equipmentData, typesData, workersData, servicesData] = await Promise.all([
           apiFetch('/api/vehicles'),
           apiFetch('/api/equipment'),
           apiFetch('/api/equipment/types'),
           apiFetch('/api/workers'),
+          apiFetch('/api/services'),
         ]);
         setVehicles(vehiclesData);
         setEquipment(equipmentData);
         setEquipmentTypes(typesData);
         setWorkers(workersData);
+        setServices(servicesData);
       } else {
         // Employee - load only their assets
         const assets = await apiFetch(`/api/workers/${user?.user_id}/assets`);
