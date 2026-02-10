@@ -860,10 +860,10 @@ const styles = StyleSheet.create({
   },
   scanHint: {
     position: 'absolute',
-    bottom: 60,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
+    top: 16,
+    left: 16,
+    right: 60,
+    alignItems: 'flex-start',
   },
   scanHintText: {
     color: '#fff',
@@ -873,6 +873,67 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     fontSize: 13,
   },
+  // New detected codes container styles
+  detectedCodesContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    paddingTop: 12,
+    paddingBottom: 16,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+  },
+  detectedCodesTitle: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+    paddingHorizontal: 16,
+    marginBottom: 10,
+  },
+  detectedCodesList: {
+    paddingHorizontal: 12,
+    gap: 10,
+  },
+  detectedCodeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#3b82f6',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 12,
+    minWidth: 180,
+    maxWidth: 280,
+  },
+  detectedCodeButtonFirst: {
+    borderWidth: 2,
+    borderColor: '#10b981',
+  },
+  detectedCodeIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  detectedCodeInfo: {
+    flex: 1,
+  },
+  detectedCodeType: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  detectedCodeData: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  // Keep old styles for modal compatibility
   scannedCodesPreview: {
     position: 'absolute',
     bottom: 10,
