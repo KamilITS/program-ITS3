@@ -156,8 +156,10 @@ export default function Vehicles() {
     liters: '',
     amount: '',
     odometer: '',
+    vehicle_id: '',  // For admin to select vehicle
   });
   const [isSubmittingRefueling, setIsSubmittingRefueling] = useState(false);
+  const [showRefuelingVehiclePicker, setShowRefuelingVehiclePicker] = useState(false);
   
   // Refueling filters (admin)
   const [refuelingFilterVehicle, setRefuelingFilterVehicle] = useState<string>('all');
