@@ -61,15 +61,27 @@ interface HistoryLog {
   target_user_name?: string;
 }
 
+interface VehicleService {
+  service_id: string;
+  vehicle_id: string;
+  vehicle_plate: string;
+  vehicle_info: string;
+  service_type: string;
+  service_date: string;
+  notes: string;
+  created_by_name: string;
+}
+
 export default function Vehicles() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [equipmentTypes, setEquipmentTypes] = useState<EquipmentType[]>([]);
   const [workers, setWorkers] = useState<Worker[]>([]);
+  const [services, setServices] = useState<VehicleService[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState<'vehicles' | 'equipment'>('vehicles');
+  const [activeTab, setActiveTab] = useState<'vehicles' | 'equipment' | 'service'>('vehicles');
   
   // Modals
   const [vehicleModalVisible, setVehicleModalVisible] = useState(false);
@@ -77,6 +89,7 @@ export default function Vehicles() {
   const [typeModalVisible, setTypeModalVisible] = useState(false);
   const [assignModalVisible, setAssignModalVisible] = useState(false);
   const [historyModalVisible, setHistoryModalVisible] = useState(false);
+  const [serviceModalVisible, setServiceModalVisible] = useState(false);
   
   // History
   const [historyLogs, setHistoryLogs] = useState<HistoryLog[]>([]);
@@ -102,6 +115,15 @@ export default function Vehicles() {
     serial_number: '',
     description: '',
   });
+  
+  // Service form
+  const [serviceForm, setServiceForm] = useState({
+    vehicle_id: '',
+    service_type: '',
+    service_date: '',
+    notes: '',
+  });
+  const [showVehiclePicker, setShowVehiclePicker] = useState(false);
   
   // Assign
   const [assignTarget, setAssignTarget] = useState<{ type: 'vehicle' | 'equipment', id: string, name: string } | null>(null);
