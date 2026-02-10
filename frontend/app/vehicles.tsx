@@ -204,13 +204,14 @@ export default function Vehicles() {
       setLoading(true);
       
       if (isAdmin) {
-        const [vehiclesData, equipmentData, typesData, workersData, servicesData, refuelingData] = await Promise.all([
+        const [vehiclesData, equipmentData, typesData, workersData, servicesData, refuelingData, refuelingStatsData] = await Promise.all([
           apiFetch('/api/vehicles'),
           apiFetch('/api/equipment'),
           apiFetch('/api/equipment/types'),
           apiFetch('/api/workers'),
           apiFetch('/api/services'),
           apiFetch('/api/refueling'),
+          apiFetch('/api/refueling/stats'),
         ]);
         setVehicles(vehiclesData);
         setEquipment(equipmentData);
@@ -218,6 +219,7 @@ export default function Vehicles() {
         setWorkers(workersData);
         setServices(servicesData);
         setRefuelingRecords(refuelingData);
+        setRefuelingStats(refuelingStatsData);
       } else {
         // Employee - load only their assets and their refueling records
         const [assets, refuelingData] = await Promise.all([
