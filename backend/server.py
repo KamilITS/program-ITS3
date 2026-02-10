@@ -895,6 +895,53 @@ async def assign_multiple_devices(request: Request, admin: dict = Depends(requir
     
     return {"message": f"Przypisano {result.modified_count} urządzeń"}
 
+@api_router.post("/devices/{device_id}/unassign")
+async def unassign_device(device_id: str, admin: dict = Depends(require_admin)):
+    """Unassign device from worker - return to available pool (admin only)"""
+    # Get device info
+    device = await db.devices.find_one({"device_id": device_id})
+    if not device:
+        raise HTTPException(status_code=404, detail="Nie znaleziono urządzenia")
+    
+    if device.get("status") != "przypisany":
+        raise HTTPException(status_code=400, detail="Urządzenie nie jest przypisane do pracownika")
+    
+    # Get current assigned worker name for logging
+    old_worker_id = device.get("przypisany_do")
+    old_worker_name = "Nieznany"
+    if old_worker_id:
+        old_worker = await db.users.find_one({"user_id": old_worker_id})
+        if old_worker:
+            old_worker_name = old_worker.get("name", "Nieznany")
+    
+    # Unassign device - set to available
+    result = await db.devices.update_one(
+        {"device_id": device_id},
+        {"$set": {"przypisany_do": None, "status": "dostepny"}}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=500, detail="Nie udało się odebrać urządzenia")
+    
+    # Log unassign activity
+    await log_activity(
+        user_id=admin["user_id"],
+        user_name=admin["name"],
+        user_role="admin",
+        action_type="device_unassign",
+        action_description=f"Odebrano urządzenie {device.get('nazwa', 'Nieznane')} ({device.get('numer_seryjny', 'brak SN')}) od {old_worker_name}",
+        device_serial=device.get("numer_seryjny"),
+        device_name=device.get("nazwa"),
+        device_id=device_id,
+        target_user_id=old_worker_id,
+        target_user_name=old_worker_name
+    )
+    
+    return {
+        "message": f"Urządzenie zostało odebrane od: {old_worker_name}",
+        "previous_worker": old_worker_name
+    }
+
 @api_router.post("/devices/{device_id}/restore")
 async def restore_device(device_id: str, admin: dict = Depends(require_admin)):
     """Restore installed device back to available status for the original installer (admin only)"""
