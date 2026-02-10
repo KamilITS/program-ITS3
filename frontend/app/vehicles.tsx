@@ -831,10 +831,12 @@ export default function Vehicles() {
                   </View>
                   <View style={styles.refuelingRowBottom}>
                     <Text style={styles.refuelingDateEmployee}>{formatRefuelingDate(record.timestamp)}</Text>
-                    {record.latitude && record.longitude && (
+                    {(record.location_name || (record.latitude && record.longitude)) && (
                       <View style={styles.refuelingGpsEmployee}>
-                        <Ionicons name="location" size={12} color="#666" />
-                        <Text style={styles.refuelingGpsTextEmployee}>GPS</Text>
+                        <Ionicons name="location" size={12} color="#10b981" />
+                        <Text style={styles.refuelingGpsTextEmployee}>
+                          {record.location_name || `${record.latitude?.toFixed(4)}, ${record.longitude?.toFixed(4)}`}
+                        </Text>
                       </View>
                     )}
                   </View>
