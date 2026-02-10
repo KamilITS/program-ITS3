@@ -1206,13 +1206,38 @@ export default function Vehicles() {
                 />
                 
                 <Text style={styles.inputLabel}>Data *</Text>
-                <TextInput
-                  style={styles.input}
-                  value={serviceForm.service_date}
-                  onChangeText={(text) => setServiceForm(prev => ({ ...prev, service_date: text }))}
-                  placeholder="RRRR-MM-DD (np. 2026-02-15)"
-                  placeholderTextColor="#666"
-                />
+                <TouchableOpacity 
+                  style={styles.datePickerButton}
+                  onPress={() => setShowDatePicker(true)}
+                >
+                  <Ionicons name="calendar" size={20} color="#8b5cf6" />
+                  <Text style={serviceForm.service_date ? styles.datePickerText : styles.datePickerPlaceholder}>
+                    {serviceForm.service_date 
+                      ? formatServiceDate(serviceForm.service_date)
+                      : 'Wybierz datę z kalendarza'}
+                  </Text>
+                </TouchableOpacity>
+                
+                {showDatePicker && (
+                  <View style={styles.datePickerContainer}>
+                    <DateTimePicker
+                      value={selectedDate}
+                      mode="date"
+                      display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                      onChange={onDateChange}
+                      locale="pl-PL"
+                      themeVariant="dark"
+                    />
+                    {Platform.OS === 'ios' && (
+                      <TouchableOpacity 
+                        style={styles.datePickerDoneButton}
+                        onPress={() => setShowDatePicker(false)}
+                      >
+                        <Text style={styles.datePickerDoneText}>Gotowe</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                )}
                 
                 <Text style={styles.inputLabel}>Dodatkowe uwagi</Text>
                 <TextInput
