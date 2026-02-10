@@ -97,9 +97,10 @@ export default function Vehicles() {
   const [equipmentTypes, setEquipmentTypes] = useState<EquipmentType[]>([]);
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [services, setServices] = useState<VehicleService[]>([]);
+  const [refuelingRecords, setRefuelingRecords] = useState<Refueling[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState<'vehicles' | 'equipment' | 'service'>('vehicles');
+  const [activeTab, setActiveTab] = useState<'vehicles' | 'equipment' | 'service' | 'refueling'>('vehicles');
   
   // Modals
   const [vehicleModalVisible, setVehicleModalVisible] = useState(false);
@@ -108,6 +109,7 @@ export default function Vehicles() {
   const [assignModalVisible, setAssignModalVisible] = useState(false);
   const [historyModalVisible, setHistoryModalVisible] = useState(false);
   const [serviceModalVisible, setServiceModalVisible] = useState(false);
+  const [refuelingModalVisible, setRefuelingModalVisible] = useState(false);
   
   // History
   const [historyLogs, setHistoryLogs] = useState<HistoryLog[]>([]);
