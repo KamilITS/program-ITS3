@@ -151,6 +151,20 @@ export default function Vehicles() {
   const [serviceFilterVehicle, setServiceFilterVehicle] = useState<string>('all');
   const [showServiceFilterPicker, setShowServiceFilterPicker] = useState(false);
   
+  // Refueling form
+  const [refuelingForm, setRefuelingForm] = useState({
+    liters: '',
+    amount: '',
+    odometer: '',
+  });
+  const [isSubmittingRefueling, setIsSubmittingRefueling] = useState(false);
+  
+  // Refueling filters (admin)
+  const [refuelingFilterVehicle, setRefuelingFilterVehicle] = useState<string>('all');
+  const [refuelingFilterWorker, setRefuelingFilterWorker] = useState<string>('all');
+  const [showRefuelingVehicleFilter, setShowRefuelingVehicleFilter] = useState(false);
+  const [showRefuelingWorkerFilter, setShowRefuelingWorkerFilter] = useState(false);
+  
   // Assign
   const [assignTarget, setAssignTarget] = useState<{ type: 'vehicle' | 'equipment', id: string, name: string } | null>(null);
   
