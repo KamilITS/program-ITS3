@@ -1218,7 +1218,7 @@ export default function Vehicles() {
                   </Text>
                 </TouchableOpacity>
                 
-                {showDatePicker && (
+                {showDatePicker && Platform.OS !== 'web' && (
                   <View style={styles.datePickerContainer}>
                     <DateTimePicker
                       value={selectedDate}
@@ -1236,6 +1236,28 @@ export default function Vehicles() {
                         <Text style={styles.datePickerDoneText}>Gotowe</Text>
                       </TouchableOpacity>
                     )}
+                  </View>
+                )}
+                
+                {showDatePicker && Platform.OS === 'web' && (
+                  <View style={styles.datePickerContainer}>
+                    <TextInput
+                      style={[styles.input, { textAlign: 'center', fontSize: 18 }]}
+                      value={serviceForm.service_date}
+                      onChangeText={(text) => setServiceForm(prev => ({ ...prev, service_date: text }))}
+                      placeholder="RRRR-MM-DD"
+                      placeholderTextColor="#666"
+                      keyboardType="default"
+                    />
+                    <Text style={{ color: '#888', fontSize: 12, textAlign: 'center', marginTop: 8 }}>
+                      Format: RRRR-MM-DD (np. 2026-02-15)
+                    </Text>
+                    <TouchableOpacity 
+                      style={styles.datePickerDoneButton}
+                      onPress={() => setShowDatePicker(false)}
+                    >
+                      <Text style={styles.datePickerDoneText}>Gotowe</Text>
+                    </TouchableOpacity>
                   </View>
                 )}
                 
