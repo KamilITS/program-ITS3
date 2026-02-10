@@ -1084,6 +1084,178 @@ export default function Vehicles() {
               ))
             )}
           </>
+        ) : (
+          <>
+            {/* Refueling Tab */}
+            <TouchableOpacity 
+              style={styles.addRefuelingButton}
+              onPress={openRefuelingModal}
+            >
+              <Ionicons name="add-circle" size={24} color="#10b981" />
+              <Text style={styles.addRefuelingButtonText}>Dodaj tankowanie</Text>
+            </TouchableOpacity>
+
+            {/* Filters for Admin */}
+            <View style={styles.filterContainer}>
+              <Text style={styles.filterLabel}>Filtruj po pojeździe:</Text>
+              <TouchableOpacity 
+                style={styles.filterSelect}
+                onPress={() => {
+                  setShowRefuelingVehicleFilter(!showRefuelingVehicleFilter);
+                  setShowRefuelingWorkerFilter(false);
+                }}
+              >
+                <Text style={styles.filterSelectText}>
+                  {refuelingFilterVehicle === 'all' 
+                    ? 'Wszystkie pojazdy' 
+                    : vehicles.find(v => v.vehicle_id === refuelingFilterVehicle)?.plate_number || 'Wybierz'}
+                </Text>
+                <Ionicons name={showRefuelingVehicleFilter ? 'chevron-up' : 'chevron-down'} size={18} color="#888" />
+              </TouchableOpacity>
+              
+              {showRefuelingVehicleFilter && (
+                <View style={styles.filterPickerList}>
+                  <TouchableOpacity
+                    style={[styles.filterPickerItem, refuelingFilterVehicle === 'all' && styles.filterPickerItemSelected]}
+                    onPress={() => {
+                      setRefuelingFilterVehicle('all');
+                      setShowRefuelingVehicleFilter(false);
+                    }}
+                  >
+                    <Text style={[styles.filterPickerItemText, refuelingFilterVehicle === 'all' && styles.filterPickerItemTextSelected]}>
+                      Wszystkie pojazdy
+                    </Text>
+                  </TouchableOpacity>
+                  {vehicles.map(vehicle => (
+                    <TouchableOpacity
+                      key={vehicle.vehicle_id}
+                      style={[styles.filterPickerItem, refuelingFilterVehicle === vehicle.vehicle_id && styles.filterPickerItemSelected]}
+                      onPress={() => {
+                        setRefuelingFilterVehicle(vehicle.vehicle_id);
+                        setShowRefuelingVehicleFilter(false);
+                      }}
+                    >
+                      <Ionicons name="car" size={16} color={refuelingFilterVehicle === vehicle.vehicle_id ? '#10b981' : '#888'} />
+                      <Text style={[styles.filterPickerItemText, refuelingFilterVehicle === vehicle.vehicle_id && styles.filterPickerItemTextSelected]}>
+                        {vehicle.plate_number}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
+            
+            <View style={styles.filterContainer}>
+              <Text style={styles.filterLabel}>Filtruj po pracowniku:</Text>
+              <TouchableOpacity 
+                style={styles.filterSelect}
+                onPress={() => {
+                  setShowRefuelingWorkerFilter(!showRefuelingWorkerFilter);
+                  setShowRefuelingVehicleFilter(false);
+                }}
+              >
+                <Text style={styles.filterSelectText}>
+                  {refuelingFilterWorker === 'all' 
+                    ? 'Wszyscy pracownicy' 
+                    : workers.find(w => w.user_id === refuelingFilterWorker)?.name || 'Wybierz'}
+                </Text>
+                <Ionicons name={showRefuelingWorkerFilter ? 'chevron-up' : 'chevron-down'} size={18} color="#888" />
+              </TouchableOpacity>
+              
+              {showRefuelingWorkerFilter && (
+                <View style={styles.filterPickerList}>
+                  <TouchableOpacity
+                    style={[styles.filterPickerItem, refuelingFilterWorker === 'all' && styles.filterPickerItemSelected]}
+                    onPress={() => {
+                      setRefuelingFilterWorker('all');
+                      setShowRefuelingWorkerFilter(false);
+                    }}
+                  >
+                    <Text style={[styles.filterPickerItemText, refuelingFilterWorker === 'all' && styles.filterPickerItemTextSelected]}>
+                      Wszyscy pracownicy
+                    </Text>
+                  </TouchableOpacity>
+                  {workers.map(worker => (
+                    <TouchableOpacity
+                      key={worker.user_id}
+                      style={[styles.filterPickerItem, refuelingFilterWorker === worker.user_id && styles.filterPickerItemSelected]}
+                      onPress={() => {
+                        setRefuelingFilterWorker(worker.user_id);
+                        setShowRefuelingWorkerFilter(false);
+                      }}
+                    >
+                      <Ionicons name="person" size={16} color={refuelingFilterWorker === worker.user_id ? '#10b981' : '#888'} />
+                      <Text style={[styles.filterPickerItemText, refuelingFilterWorker === worker.user_id && styles.filterPickerItemTextSelected]}>
+                        {worker.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
+
+            {getFilteredRefuelings().length === 0 ? (
+              <View style={styles.emptyState}>
+                <Ionicons name="water-outline" size={64} color="#333" />
+                <Text style={styles.emptyStateText}>
+                  {refuelingRecords.length === 0 ? 'Brak wpisów tankowania' : 'Brak wpisów dla wybranych filtrów'}
+                </Text>
+                <Text style={styles.emptyStateHint}>
+                  {refuelingRecords.length === 0 ? 'Dodaj wpis klikając przycisk powyżej' : 'Zmień filtry lub dodaj nowy wpis'}
+                </Text>
+              </View>
+            ) : (
+              getFilteredRefuelings().map(record => (
+                <View key={record.refueling_id} style={styles.refuelingCard}>
+                  <View style={styles.refuelingHeader}>
+                    <View style={[styles.cardIconContainer, { backgroundColor: 'rgba(16, 185, 129, 0.15)' }]}>
+                      <Ionicons name="water" size={24} color="#10b981" />
+                    </View>
+                    <View style={styles.refuelingInfo}>
+                      <Text style={styles.refuelingLiters}>{record.liters} L</Text>
+                      <Text style={styles.refuelingVehicle}>
+                        <Ionicons name="car" size={14} color="#888" /> {record.vehicle_plate} {record.vehicle_info && `(${record.vehicle_info})`}
+                      </Text>
+                    </View>
+                  </View>
+                  
+                  <View style={styles.refuelingDetails}>
+                    <View style={styles.refuelingDetailRow}>
+                      <Ionicons name="cash" size={16} color="#10b981" />
+                      <Text style={styles.refuelingDetailText}>{record.amount.toFixed(2)} PLN</Text>
+                    </View>
+                    <View style={styles.refuelingDetailRow}>
+                      <Ionicons name="speedometer" size={16} color="#10b981" />
+                      <Text style={styles.refuelingDetailText}>{record.odometer.toLocaleString()} km</Text>
+                    </View>
+                  </View>
+                  
+                  <View style={styles.refuelingDateRow}>
+                    <Ionicons name="time" size={16} color="#888" />
+                    <Text style={styles.refuelingDate}>{formatRefuelingDate(record.timestamp)}</Text>
+                  </View>
+                  
+                  {(record.latitude && record.longitude) && (
+                    <View style={styles.refuelingLocationRow}>
+                      <Ionicons name="location" size={14} color="#666" />
+                      <Text style={styles.refuelingLocation}>
+                        GPS: {record.latitude.toFixed(4)}, {record.longitude.toFixed(4)}
+                      </Text>
+                    </View>
+                  )}
+                  
+                  <View style={styles.refuelingFooter}>
+                    <Text style={styles.refuelingCreatedBy}>
+                      Dodał: {record.user_name}
+                    </Text>
+                    <TouchableOpacity onPress={() => deleteRefueling(record)}>
+                      <Ionicons name="trash-outline" size={20} color="#ef4444" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))
+            )}
+          </>
         )}
 
         <View style={{ height: 40 }} />
