@@ -73,6 +73,22 @@ interface VehicleService {
   created_by_name: string;
 }
 
+interface Refueling {
+  refueling_id: string;
+  vehicle_id: string;
+  vehicle_plate: string;
+  vehicle_info: string;
+  user_id: string;
+  user_name: string;
+  liters: number;
+  amount: number;
+  odometer: number;
+  latitude?: number;
+  longitude?: number;
+  location_name?: string;
+  timestamp: string;
+}
+
 export default function Vehicles() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
