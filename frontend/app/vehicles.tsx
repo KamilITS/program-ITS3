@@ -2336,7 +2336,11 @@ export default function Vehicles() {
                 style={styles.reportModalButtonSecondary}
                 onPress={() => {
                   setShowAssignmentReportModal(false);
-                  Alert.alert('Sukces', 'Przypisano do pracownika');
+                  if (Platform.OS === 'web') {
+                    window.alert('Przypisano do pracownika');
+                  } else {
+                    Alert.alert('Sukces', 'Przypisano do pracownika');
+                  }
                 }}
               >
                 <Text style={styles.reportModalButtonSecondaryText}>Pomiń</Text>
