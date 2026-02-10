@@ -3161,7 +3161,7 @@ async def get_refueling(
 
 @api_router.post("/refueling")
 async def create_refueling(request: Request, user: dict = Depends(require_user)):
-    """Create a new refueling record (workers can add for their assigned vehicle)"""
+    """Create a new refueling record (workers can add for their assigned vehicle, admins can select any vehicle)"""
     body = await request.json()
     
     liters = body.get("liters")
@@ -3170,6 +3170,7 @@ async def create_refueling(request: Request, user: dict = Depends(require_user))
     latitude = body.get("latitude")
     longitude = body.get("longitude")
     location_name = body.get("location_name", "")
+    vehicle_id = body.get("vehicle_id")  # Admin can specify vehicle_id
     
     if not liters or float(liters) <= 0:
         raise HTTPException(status_code=400, detail="Podaj ilość litrów")
@@ -3178,10 +3179,21 @@ async def create_refueling(request: Request, user: dict = Depends(require_user))
     if not odometer or int(odometer) <= 0:
         raise HTTPException(status_code=400, detail="Podaj stan licznika")
     
-    # Get user's assigned vehicle
-    vehicle = await db.vehicles.find_one({"assigned_to": user["user_id"]})
-    if not vehicle:
-        raise HTTPException(status_code=400, detail="Nie masz przypisanego pojazdu. Skontaktuj się z administratorem.")
+    is_admin = user.get("role") == "admin"
+    
+    # Admin can select any vehicle, workers use their assigned vehicle
+    if is_admin and vehicle_id:
+        vehicle = await db.vehicles.find_one({"vehicle_id": vehicle_id})
+        if not vehicle:
+            raise HTTPException(status_code=400, detail="Wybrany pojazd nie istnieje")
+    else:
+        # Get user's assigned vehicle
+        vehicle = await db.vehicles.find_one({"assigned_to": user["user_id"]})
+        if not vehicle:
+            if is_admin:
+                raise HTTPException(status_code=400, detail="Wybierz pojazd z listy")
+            else:
+                raise HTTPException(status_code=400, detail="Nie masz przypisanego pojazdu. Skontaktuj się z administratorem.")
     
     record = {
         "refueling_id": f"fuel_{uuid.uuid4().hex[:12]}",
