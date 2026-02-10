@@ -12,12 +12,17 @@ import {
   ScrollView,
   Platform,
   KeyboardAvoidingView,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '../src/context/AuthContext';
 import { apiFetch } from '../src/utils/api';
 import { Ionicons } from '@expo/vector-icons';
+import { format } from 'date-fns';
+import { pl } from 'date-fns/locale';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
 
 interface Device {
   device_id: string;
