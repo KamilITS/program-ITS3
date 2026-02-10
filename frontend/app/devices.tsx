@@ -594,18 +594,30 @@ export default function Devices() {
                 <Ionicons name="person" size={12} color="#3b82f6" />
                 <Text style={styles.assignedName}>{assignedWorker.name}</Text>
               </View>
-              {/* Transfer button for admin on assigned devices */}
+              {/* Action buttons for admin on assigned devices */}
               {isAdmin && device.status === 'przypisany' && (
-                <TouchableOpacity
-                  style={styles.transferButton}
-                  onPress={(e) => {
-                    e.stopPropagation();
-                    openTransferModal(device);
-                  }}
-                >
-                  <Ionicons name="swap-horizontal" size={14} color="#8b5cf6" />
-                  <Text style={styles.transferButtonText}>Przenieś</Text>
-                </TouchableOpacity>
+                <View style={styles.assignedActions}>
+                  <TouchableOpacity
+                    style={styles.unassignButton}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      handleUnassignDevice(device);
+                    }}
+                  >
+                    <Ionicons name="person-remove" size={14} color="#f59e0b" />
+                    <Text style={styles.unassignButtonText}>Zabierz</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.transferButton}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      openTransferModal(device);
+                    }}
+                  >
+                    <Ionicons name="swap-horizontal" size={14} color="#8b5cf6" />
+                    <Text style={styles.transferButtonText}>Przenieś</Text>
+                  </TouchableOpacity>
+                </View>
               )}
             </View>
           )}
