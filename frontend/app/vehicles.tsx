@@ -125,6 +125,12 @@ export default function Vehicles() {
     notes: '',
   });
   const [showVehiclePicker, setShowVehiclePicker] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  
+  // Service filter
+  const [serviceFilterVehicle, setServiceFilterVehicle] = useState<string>('all');
+  const [showServiceFilterPicker, setShowServiceFilterPicker] = useState(false);
   
   // Assign
   const [assignTarget, setAssignTarget] = useState<{ type: 'vehicle' | 'equipment', id: string, name: string } | null>(null);
