@@ -516,6 +516,48 @@ export default function Devices() {
     }
   };
 
+  // Unassign device from worker - return to available pool
+  const handleUnassignDevice = (device: Device) => {
+    const workerName = workers.find(w => w.user_id === device.przypisany_do)?.name || 'pracownika';
+    
+    const performUnassign = async () => {
+      try {
+        const result = await apiFetch(`/api/devices/${device.device_id}/unassign`, {
+          method: 'POST',
+        });
+        
+        if (Platform.OS === 'web') {
+          window.alert(result.message || 'Urządzenie zostało odebrane');
+        } else {
+          Alert.alert('Sukces', result.message || 'Urządzenie zostało odebrane');
+        }
+        
+        loadData();
+      } catch (error: any) {
+        if (Platform.OS === 'web') {
+          window.alert('Błąd: ' + error.message);
+        } else {
+          Alert.alert('Błąd', error.message);
+        }
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm(`Czy na pewno chcesz zabrać urządzenie "${device.numer_seryjny}" od ${workerName}?`)) {
+        performUnassign();
+      }
+    } else {
+      Alert.alert(
+        'Zabierz urządzenie',
+        `Czy na pewno chcesz zabrać urządzenie "${device.numer_seryjny}" od ${workerName}?`,
+        [
+          { text: 'Anuluj', style: 'cancel' },
+          { text: 'Zabierz', style: 'destructive', onPress: performUnassign }
+        ]
+      );
+    }
+  };
+
   const activeFiltersCount = (workerFilter ? 1 : 0) + (nameFilter ? 1 : 0);
 
   const statusFilters = [
