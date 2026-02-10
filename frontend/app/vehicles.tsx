@@ -943,7 +943,7 @@ export default function Vehicles() {
           </div>
           
           <div class="signature-section">
-            <p class="signature-note">„Potwierdzam odbiór wyżej wymienionych urządzeń i zobowiązuję się do ich właściwego użytkowania oraz zwrotu w stanie niepogorszonym."</p>
+            <p class="signature-note">„Potwierdzam odbiór wyżej wymienionych urządzeń"</p>
             
             <div class="signature-box">
               <div class="signature-field">
