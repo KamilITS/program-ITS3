@@ -1206,7 +1206,7 @@ export default function Vehicles() {
                 />
                 
                 <Text style={styles.inputLabel}>Data *</Text>
-                {Platform.OS === 'web' ? (
+                {Platform.OS !== 'ios' && Platform.OS !== 'android' ? (
                   <TextInput
                     style={styles.input}
                     value={serviceForm.service_date}
