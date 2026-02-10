@@ -3018,7 +3018,8 @@ async def get_vehicles_equipment_history(
     """Get history of vehicles and equipment actions"""
     action_types = [
         "vehicle_create", "vehicle_delete", "vehicle_assign", "vehicle_unassign",
-        "equipment_create", "equipment_delete", "equipment_assign", "equipment_unassign"
+        "equipment_create", "equipment_delete", "equipment_assign", "equipment_unassign",
+        "service_create", "service_delete"
     ]
     
     logs = await db.activity_logs.find(
@@ -3032,6 +3033,101 @@ async def get_vehicles_equipment_history(
             log["timestamp"] = log["timestamp"].isoformat()
     
     return logs
+
+# ==================== VEHICLE SERVICES ====================
+
+@api_router.get("/services")
+async def get_services(admin: dict = Depends(require_admin)):
+    """Get all vehicle services (admin only)"""
+    services = await db.vehicle_services.find({}, {"_id": 0}).sort("service_date", -1).to_list(500)
+    
+    # Format dates
+    for service in services:
+        if "service_date" in service and isinstance(service["service_date"], datetime):
+            service["service_date"] = service["service_date"].strftime("%Y-%m-%d")
+        if "created_at" in service and isinstance(service["created_at"], datetime):
+            service["created_at"] = service["created_at"].isoformat()
+    
+    return services
+
+@api_router.post("/services")
+async def create_service(request: Request, admin: dict = Depends(require_admin)):
+    """Create a new vehicle service record (admin only)"""
+    body = await request.json()
+    
+    vehicle_id = body.get("vehicle_id")
+    service_type = body.get("service_type", "").strip()
+    service_date = body.get("service_date")
+    notes = body.get("notes", "").strip()
+    
+    if not vehicle_id:
+        raise HTTPException(status_code=400, detail="Pojazd jest wymagany")
+    if not service_type:
+        raise HTTPException(status_code=400, detail="Typ serwisu jest wymagany")
+    if not service_date:
+        raise HTTPException(status_code=400, detail="Data serwisu jest wymagana")
+    
+    # Get vehicle info
+    vehicle = await db.vehicles.find_one({"vehicle_id": vehicle_id})
+    if not vehicle:
+        raise HTTPException(status_code=404, detail="Nie znaleziono pojazdu")
+    
+    # Parse date
+    try:
+        parsed_date = datetime.strptime(service_date, "%Y-%m-%d")
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Nieprawidłowy format daty (użyj YYYY-MM-DD)")
+    
+    service = {
+        "service_id": f"service_{uuid.uuid4().hex[:12]}",
+        "vehicle_id": vehicle_id,
+        "vehicle_plate": vehicle.get("plate_number", ""),
+        "vehicle_info": f"{vehicle.get('brand', '')} {vehicle.get('model', '')}".strip(),
+        "service_type": service_type,
+        "service_date": parsed_date,
+        "notes": notes,
+        "created_at": get_warsaw_now(),
+        "created_by": admin["user_id"],
+        "created_by_name": admin["name"]
+    }
+    
+    await db.vehicle_services.insert_one(service)
+    service.pop("_id", None)
+    
+    # Format dates for response
+    service["service_date"] = parsed_date.strftime("%Y-%m-%d")
+    service["created_at"] = service["created_at"].isoformat()
+    
+    await log_activity(
+        user_id=admin["user_id"],
+        user_name=admin["name"],
+        user_role="admin",
+        action_type="service_create",
+        action_description=f"Dodano serwis '{service_type}' dla pojazdu {vehicle.get('plate_number')}",
+        details={"service_id": service["service_id"], "vehicle_id": vehicle_id}
+    )
+    
+    return service
+
+@api_router.delete("/services/{service_id}")
+async def delete_service(service_id: str, admin: dict = Depends(require_admin)):
+    """Delete a vehicle service record (admin only)"""
+    service = await db.vehicle_services.find_one({"service_id": service_id})
+    if not service:
+        raise HTTPException(status_code=404, detail="Nie znaleziono wpisu serwisowego")
+    
+    await db.vehicle_services.delete_one({"service_id": service_id})
+    
+    await log_activity(
+        user_id=admin["user_id"],
+        user_name=admin["name"],
+        user_role="admin",
+        action_type="service_delete",
+        action_description=f"Usunięto wpis serwisowy dla pojazdu {service.get('vehicle_plate', '')}",
+        details={"service_id": service_id}
+    )
+    
+    return {"message": "Wpis serwisowy usunięty"}
 
 # ==================== HEALTH CHECK ====================
 
