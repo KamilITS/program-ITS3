@@ -3605,6 +3605,45 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
+  // Period filter styles
+  periodFilterContainer: {
+    flexDirection: 'row',
+    marginBottom: 16,
+    gap: 8,
+  },
+  periodFilterButton: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: '#0a0a0a',
+    borderWidth: 1,
+    borderColor: '#333',
+    alignItems: 'center',
+  },
+  periodFilterButtonActive: {
+    backgroundColor: '#3b82f6',
+    borderColor: '#3b82f6',
+  },
+  periodFilterText: {
+    color: '#888',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  periodFilterTextActive: {
+    color: '#fff',
+  },
+  statsLoadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+    gap: 10,
+  },
+  statsLoadingText: {
+    color: '#888',
+    fontSize: 14,
+  },
   statsEmpty: {
     color: '#666',
     fontSize: 14,
