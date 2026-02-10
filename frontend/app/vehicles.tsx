@@ -977,7 +977,7 @@ export default function Vehicles() {
               ))
             )}
           </>
-        ) : (
+        ) : activeTab === 'service' ? (
           <>
             {/* Service Tab - Add Service Button */}
             <TouchableOpacity 
