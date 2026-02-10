@@ -1044,6 +1044,110 @@ export default function Vehicles() {
         </View>
       </Modal>
 
+      {/* Service Modal */}
+      <Modal visible={serviceModalVisible} transparent animationType="slide">
+        <KeyboardAvoidingView 
+          style={{ flex: 1 }} 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <Ionicons name="build" size={24} color="#8b5cf6" />
+                  <Text style={styles.modalTitle}>Dodaj wpis serwisowy</Text>
+                </View>
+                <TouchableOpacity onPress={() => setServiceModalVisible(false)}>
+                  <Ionicons name="close" size={24} color="#888" />
+                </TouchableOpacity>
+              </View>
+              
+              <ScrollView 
+                style={styles.modalBody}
+                keyboardShouldPersistTaps="handled"
+                contentContainerStyle={{ paddingBottom: 40 }}
+              >
+                <Text style={styles.inputLabel}>Pojazd *</Text>
+                <TouchableOpacity 
+                  style={styles.selectInput}
+                  onPress={() => setShowVehiclePicker(!showVehiclePicker)}
+                >
+                  <Text style={serviceForm.vehicle_id ? styles.selectInputText : styles.selectInputPlaceholder}>
+                    {serviceForm.vehicle_id 
+                      ? vehicles.find(v => v.vehicle_id === serviceForm.vehicle_id)?.plate_number || 'Wybierz pojazd'
+                      : 'Wybierz pojazd z listy'}
+                  </Text>
+                  <Ionicons name={showVehiclePicker ? 'chevron-up' : 'chevron-down'} size={20} color="#888" />
+                </TouchableOpacity>
+                
+                {showVehiclePicker && (
+                  <View style={styles.vehiclePickerList}>
+                    {vehicles.length === 0 ? (
+                      <Text style={styles.noVehiclesText}>Brak pojazdów - dodaj pojazd w zakładce "Pojazdy"</Text>
+                    ) : (
+                      vehicles.map(vehicle => (
+                        <TouchableOpacity
+                          key={vehicle.vehicle_id}
+                          style={[
+                            styles.vehiclePickerItem,
+                            serviceForm.vehicle_id === vehicle.vehicle_id && styles.vehiclePickerItemSelected
+                          ]}
+                          onPress={() => {
+                            setServiceForm(prev => ({ ...prev, vehicle_id: vehicle.vehicle_id }));
+                            setShowVehiclePicker(false);
+                          }}
+                        >
+                          <Ionicons name="car" size={18} color={serviceForm.vehicle_id === vehicle.vehicle_id ? '#8b5cf6' : '#888'} />
+                          <Text style={[
+                            styles.vehiclePickerItemText,
+                            serviceForm.vehicle_id === vehicle.vehicle_id && styles.vehiclePickerItemTextSelected
+                          ]}>
+                            {vehicle.plate_number} {vehicle.brand && vehicle.model && `- ${vehicle.brand} ${vehicle.model}`}
+                          </Text>
+                        </TouchableOpacity>
+                      ))
+                    )}
+                  </View>
+                )}
+                
+                <Text style={styles.inputLabel}>Serwis *</Text>
+                <TextInput
+                  style={styles.input}
+                  value={serviceForm.service_type}
+                  onChangeText={(text) => setServiceForm(prev => ({ ...prev, service_type: text }))}
+                  placeholder="np. Wymiana oleju"
+                  placeholderTextColor="#666"
+                />
+                
+                <Text style={styles.inputLabel}>Data *</Text>
+                <TextInput
+                  style={styles.input}
+                  value={serviceForm.service_date}
+                  onChangeText={(text) => setServiceForm(prev => ({ ...prev, service_date: text }))}
+                  placeholder="RRRR-MM-DD (np. 2026-02-15)"
+                  placeholderTextColor="#666"
+                />
+                
+                <Text style={styles.inputLabel}>Dodatkowe uwagi</Text>
+                <TextInput
+                  style={[styles.input, styles.textArea]}
+                  value={serviceForm.notes}
+                  onChangeText={(text) => setServiceForm(prev => ({ ...prev, notes: text }))}
+                  placeholder="np. 160 tys. km"
+                  placeholderTextColor="#666"
+                  multiline
+                  numberOfLines={3}
+                />
+                
+                <TouchableOpacity style={[styles.saveButton, { backgroundColor: '#8b5cf6' }]} onPress={saveService}>
+                  <Text style={styles.saveButtonText}>Zapisz wpis serwisowy</Text>
+                </TouchableOpacity>
+              </ScrollView>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
       {/* History Modal */}
       <Modal visible={historyModalVisible} transparent animationType="slide">
         <View style={styles.modalOverlay}>
