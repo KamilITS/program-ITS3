@@ -2256,6 +2256,74 @@ export default function Vehicles() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* Assignment Report Modal */}
+      <Modal visible={showAssignmentReportModal} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.reportModalContent}>
+            <View style={styles.reportModalHeader}>
+              <Ionicons name="document-text" size={40} color="#10b981" />
+              <Text style={styles.reportModalTitle}>Urządzenie przypisane!</Text>
+              <Text style={styles.reportModalSubtitle}>
+                Przypisano do: {lastAssignment?.workerName}
+              </Text>
+            </View>
+            
+            <View style={styles.reportModalBody}>
+              <Text style={styles.reportModalQuestion}>
+                Czy chcesz wygenerować protokół przekazania urządzeń (PDF)?
+              </Text>
+              
+              <View style={styles.reportModalInfo}>
+                <Text style={styles.reportModalInfoTitle}>Raport będzie zawierał:</Text>
+                <View style={styles.reportModalInfoItem}>
+                  <Ionicons name="checkmark-circle" size={16} color="#10b981" />
+                  <Text style={styles.reportModalInfoText}>Datę przypisania</Text>
+                </View>
+                <View style={styles.reportModalInfoItem}>
+                  <Ionicons name="checkmark-circle" size={16} color="#10b981" />
+                  <Text style={styles.reportModalInfoText}>Dane pracownika</Text>
+                </View>
+                <View style={styles.reportModalInfoItem}>
+                  <Ionicons name="checkmark-circle" size={16} color="#10b981" />
+                  <Text style={styles.reportModalInfoText}>Listę urządzeń z numerami seryjnymi</Text>
+                </View>
+                <View style={styles.reportModalInfoItem}>
+                  <Ionicons name="checkmark-circle" size={16} color="#10b981" />
+                  <Text style={styles.reportModalInfoText}>Miejsce na podpis pracownika</Text>
+                </View>
+              </View>
+            </View>
+            
+            <View style={styles.reportModalButtons}>
+              <TouchableOpacity 
+                style={styles.reportModalButtonSecondary}
+                onPress={() => {
+                  setShowAssignmentReportModal(false);
+                  Alert.alert('Sukces', 'Przypisano do pracownika');
+                }}
+              >
+                <Text style={styles.reportModalButtonSecondaryText}>Pomiń</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[styles.reportModalButtonPrimary, generatingPdf && styles.disabledButton]}
+                onPress={generateAssignmentPdf}
+                disabled={generatingPdf}
+              >
+                {generatingPdf ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <>
+                    <Ionicons name="print" size={20} color="#fff" />
+                    <Text style={styles.reportModalButtonPrimaryText}>Generuj PDF</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
