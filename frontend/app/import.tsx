@@ -265,49 +265,83 @@ export default function Import() {
           <View style={{ width: 40 }} />
         </View>
         
-        <View style={styles.scannerContainer}>
+        <View style={styles.fullScreenScanner}>
           <CameraView
-            style={styles.camera}
+            style={StyleSheet.absoluteFillObject}
             facing="back"
             onBarcodeScanned={handleBarCodeScanned}
             barcodeScannerSettings={{
               barcodeTypes: ['qr', 'ean13', 'ean8', 'code128', 'code39', 'code93', 'codabar', 'itf14', 'upc_a', 'upc_e', 'pdf417', 'aztec', 'datamatrix'],
             }}
           />
+          
+          {/* Scan frame overlay */}
           <View style={styles.scannerOverlay}>
             <View style={styles.scannerFrame} />
           </View>
           
-          {/* Hint text */}
-          <View style={styles.scanHintContainer}>
-            <Text style={styles.scanHintText}>
-              {scannedCodes.length > 0 
-                ? `Wykryto ${scannedCodes.length} kod(y) - dotknij aby wybrać`
-                : 'Skieruj kamerę na kod QR lub kreskowy'
+          {/* Hint text at top */}
+          <View style={styles.scanHintTop}>
+            <Text style={styles.scanHintTextBold}>
+              {scannedCodes.length === 0 
+                ? '📷 Skieruj kamerę na kod kreskowy'
+                : '👆 DOTKNIJ KOD KTÓRY CHCESZ WYBRAĆ'
               }
             </Text>
           </View>
           
-          {/* Scanned codes preview at bottom */}
+          {/* Detected codes panel at bottom */}
           {scannedCodes.length > 0 && (
-            <View style={styles.scannedCodesPreview}>
-              {scannedCodes.map((code, index) => (
-                <TouchableOpacity
-                  key={`${code.data}-${index}`}
-                  style={styles.scannedCodeItem}
-                  onPress={() => selectCode(code.data)}
-                >
-                  <Ionicons name="barcode-outline" size={16} color="#fff" />
-                  <Text style={styles.scannedCodeText} numberOfLines={1}>
-                    {code.data}
+            <View style={styles.detectedCodesPanel}>
+              <View style={styles.detectedCodesPanelHeader}>
+                <View style={styles.detectedCodesPanelIcon}>
+                  <Ionicons name="checkmark-done" size={24} color="#10b981" />
+                </View>
+                <View>
+                  <Text style={styles.detectedCodesPanelTitle}>
+                    Wykryto {scannedCodes.length} {scannedCodes.length === 1 ? 'kod' : 'kodów'}
                   </Text>
-                </TouchableOpacity>
-              ))}
+                  <Text style={styles.detectedCodesPanelSubtitle}>
+                    Wybierz kod który chcesz użyć
+                  </Text>
+                </View>
+              </View>
+              
+              <ScrollView style={styles.detectedCodesScroll} showsVerticalScrollIndicator={true}>
+                {scannedCodes.map((code, index) => (
+                  <TouchableOpacity
+                    key={`${code.data}-${index}`}
+                    style={styles.detectedCodeCard}
+                    onPress={() => selectCode(code.data)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.detectedCodeCardIcon}>
+                      <Ionicons 
+                        name={code.type.includes('qr') ? 'qr-code' : 'barcode-outline'} 
+                        size={24} 
+                        color="#fff" 
+                      />
+                    </View>
+                    <View style={styles.detectedCodeCardInfo}>
+                      <Text style={styles.detectedCodeCardLabel}>
+                        {code.type.includes('qr') ? 'Kod QR' : 'Kod kreskowy'}
+                      </Text>
+                      <Text style={styles.detectedCodeCardData}>
+                        {code.data}
+                      </Text>
+                    </View>
+                    <View style={styles.detectedCodeCardButton}>
+                      <Text style={styles.detectedCodeCardButtonText}>WYBIERZ</Text>
+                      <Ionicons name="arrow-forward" size={18} color="#fff" />
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
             </View>
           )}
         </View>
 
-        {/* Code Selection Modal */}
+        {/* Code Selection Modal - keep for backwards compatibility */}
         <Modal
           visible={showCodeSelection}
           transparent
