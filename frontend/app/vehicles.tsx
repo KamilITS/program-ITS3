@@ -377,6 +377,139 @@ export default function Vehicles() {
     }
   };
 
+  // Refueling functions
+  const openRefuelingModal = async () => {
+    // Check if employee has an assigned vehicle
+    if (!isAdmin && myVehicles.length === 0) {
+      Alert.alert('Błąd', 'Nie masz przypisanego pojazdu');
+      return;
+    }
+    
+    // Request location permissions
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          'Brak uprawnień GPS',
+          'Aby dodać tankowanie, musisz zezwolić na dostęp do lokalizacji.'
+        );
+        return;
+      }
+    } catch (error) {
+      console.error('Location permission error:', error);
+    }
+    
+    setRefuelingForm({ liters: '', amount: '', odometer: '' });
+    setRefuelingModalVisible(true);
+  };
+
+  const addRefueling = async () => {
+    if (!refuelingForm.liters || parseFloat(refuelingForm.liters) <= 0) {
+      Alert.alert('Błąd', 'Podaj ilość litrów');
+      return;
+    }
+    if (!refuelingForm.amount || parseFloat(refuelingForm.amount) <= 0) {
+      Alert.alert('Błąd', 'Podaj kwotę tankowania');
+      return;
+    }
+    if (!refuelingForm.odometer || parseInt(refuelingForm.odometer) <= 0) {
+      Alert.alert('Błąd', 'Podaj przebieg pojazdu');
+      return;
+    }
+    
+    // Get vehicle - for employee it's their assigned vehicle
+    const vehicleId = isAdmin ? null : myVehicles[0]?.vehicle_id;
+    if (!isAdmin && !vehicleId) {
+      Alert.alert('Błąd', 'Nie masz przypisanego pojazdu');
+      return;
+    }
+    
+    setIsSubmittingRefueling(true);
+    
+    try {
+      // Get current location
+      let location = null;
+      try {
+        location = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+      } catch (locError) {
+        console.warn('Could not get location:', locError);
+      }
+      
+      const body: any = {
+        liters: parseFloat(refuelingForm.liters),
+        amount: parseFloat(refuelingForm.amount),
+        odometer: parseInt(refuelingForm.odometer),
+      };
+      
+      if (location) {
+        body.latitude = location.coords.latitude;
+        body.longitude = location.coords.longitude;
+      }
+      
+      await apiFetch('/api/refueling', {
+        method: 'POST',
+        body,
+      });
+      
+      Alert.alert('Sukces', 'Tankowanie zostało zapisane');
+      setRefuelingModalVisible(false);
+      loadData();
+    } catch (error: any) {
+      Alert.alert('Błąd', error.message || 'Nie udało się zapisać tankowania');
+    } finally {
+      setIsSubmittingRefueling(false);
+    }
+  };
+
+  const deleteRefueling = (record: Refueling) => {
+    Alert.alert(
+      'Usuń wpis tankowania',
+      `Czy na pewno chcesz usunąć tankowanie ${record.liters}L dla ${record.vehicle_plate}?`,
+      [
+        { text: 'Anuluj', style: 'cancel' },
+        {
+          text: 'Usuń',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await apiFetch(`/api/refueling/${record.refueling_id}`, { method: 'DELETE' });
+              loadData();
+            } catch (error: any) {
+              Alert.alert('Błąd', error.message);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // Get filtered refueling records (for admin)
+  const getFilteredRefuelings = () => {
+    let filtered = [...refuelingRecords];
+    
+    if (refuelingFilterVehicle !== 'all') {
+      filtered = filtered.filter(r => r.vehicle_id === refuelingFilterVehicle);
+    }
+    
+    if (refuelingFilterWorker !== 'all') {
+      filtered = filtered.filter(r => r.user_id === refuelingFilterWorker);
+    }
+    
+    return filtered;
+  };
+
+  const formatRefuelingDate = (dateStr: string) => {
+    try {
+      const date = new Date(dateStr);
+      const warsawDate = toZonedTime(date, 'Europe/Warsaw');
+      return format(warsawDate, 'd MMM yyyy, HH:mm', { locale: pl });
+    } catch {
+      return dateStr;
+    }
+  };
+
   // Vehicle CRUD
   const openVehicleModal = (vehicle?: Vehicle) => {
     if (vehicle) {
