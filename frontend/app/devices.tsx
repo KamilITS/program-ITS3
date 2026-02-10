@@ -115,6 +115,15 @@ export default function Devices() {
   const [historyDevice, setHistoryDevice] = useState<Device | null>(null);
   const [deviceFullInfo, setDeviceFullInfo] = useState<any>(null); // Device info from API with import date
 
+  // PDF Report modal state
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [lastAssignment, setLastAssignment] = useState<{
+    workerName: string;
+    items: Array<{ name: string; serialNumber: string; type: string }>;
+    date: Date;
+  } | null>(null);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+
   const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
