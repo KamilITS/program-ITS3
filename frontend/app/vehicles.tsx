@@ -3508,4 +3508,137 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
   },
+  // Refueling Statistics Styles
+  statsToggleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#1a1a1a',
+    borderWidth: 1,
+    borderColor: '#10b981',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    marginBottom: 16,
+    gap: 8,
+  },
+  statsToggleButtonActive: {
+    backgroundColor: '#10b981',
+    borderColor: '#10b981',
+  },
+  statsToggleButtonText: {
+    color: '#10b981',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  statsToggleButtonTextActive: {
+    color: '#fff',
+  },
+  statsContainer: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+  },
+  statsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    gap: 10,
+  },
+  statsTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  statsEmpty: {
+    color: '#666',
+    fontSize: 14,
+    textAlign: 'center',
+    padding: 20,
+  },
+  statsScroll: {
+    marginHorizontal: -8,
+  },
+  statsCard: {
+    backgroundColor: '#0a0a0a',
+    borderRadius: 16,
+    padding: 16,
+    marginHorizontal: 8,
+    width: 280,
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  statsCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  statsCardPlate: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  statsCardModel: {
+    color: '#888',
+    fontSize: 13,
+    marginBottom: 12,
+  },
+  statsCardDivider: {
+    height: 1,
+    backgroundColor: '#333',
+    marginVertical: 12,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  statItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statLabel: {
+    color: '#666',
+    fontSize: 11,
+    marginTop: 4,
+    marginBottom: 2,
+  },
+  statValue: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  statsOdometer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  statsOdometerLabel: {
+    color: '#666',
+    fontSize: 12,
+  },
+  statsOdometerValue: {
+    color: '#888',
+    fontSize: 12,
+  },
+  statsTotalCost: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#333',
+  },
+  statsTotalCostLabel: {
+    color: '#888',
+    fontSize: 13,
+  },
+  statsTotalCostValue: {
+    color: '#10b981',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });
