@@ -361,9 +361,23 @@ export default function Devices() {
         body: { worker_id: workerId },
       });
       
-      Alert.alert('Sukces', 'Urządzenie zostało przypisane');
+      // Find worker name
+      const worker = workers.find(w => w.user_id === workerId);
+      
+      // Prepare data for PDF report
+      setLastAssignment({
+        workerName: worker?.name || 'Nieznany pracownik',
+        items: [{
+          name: selectedDevice.nazwa,
+          serialNumber: selectedDevice.numer_seryjny,
+          type: 'Urządzenie'
+        }],
+        date: new Date()
+      });
+      
       setAssignModalVisible(false);
       setSelectedDevice(null);
+      setShowReportModal(true);
       loadData();
     } catch (error: any) {
       Alert.alert('Błąd', error.message);
@@ -382,10 +396,36 @@ export default function Devices() {
         },
       });
       
-      Alert.alert('Sukces', `Przypisano ${selectedDevices.size} urządzeń`);
+      // Find worker name
+      const worker = workers.find(w => w.user_id === workerId);
+      
+      // Get all assigned devices info
+      const assignedDevicesList: Array<{ name: string; serialNumber: string; type: string }> = [];
+      
+      // Find devices in categories
+      categories.forEach(category => {
+        category.devices.forEach(device => {
+          if (selectedDevices.has(device.device_id)) {
+            assignedDevicesList.push({
+              name: device.nazwa,
+              serialNumber: device.numer_seryjny,
+              type: 'Urządzenie'
+            });
+          }
+        });
+      });
+      
+      // Prepare data for PDF report
+      setLastAssignment({
+        workerName: worker?.name || 'Nieznany pracownik',
+        items: assignedDevicesList,
+        date: new Date()
+      });
+      
       setBulkAssignModalVisible(false);
       setSelectedDevices(new Set());
       setSelectionMode(false);
+      setShowReportModal(true);
       loadData();
     } catch (error: any) {
       Alert.alert('Błąd', error.message);
