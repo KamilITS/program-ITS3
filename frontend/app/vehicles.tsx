@@ -558,11 +558,93 @@ export default function Vehicles() {
     return filtered;
   };
 
+  // Helper functions for weeks generation
+  const getWeeksInRange = () => {
+    const weeks: { label: string; value: string }[] = [];
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    
+    // Generate last 12 weeks
+    for (let i = 0; i < 12; i++) {
+      const date = new Date(now);
+      date.setDate(date.getDate() - (i * 7));
+      
+      // Find Monday of this week
+      const day = date.getDay();
+      const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+      const monday = new Date(date);
+      monday.setDate(diff);
+      monday.setHours(0, 0, 0, 0);
+      
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      
+      const label = `${format(monday, 'd MMM', { locale: pl })} - ${format(sunday, 'd MMM yyyy', { locale: pl })}`;
+      weeks.push({ label, value: monday.toISOString().split('T')[0] });
+    }
+    
+    return weeks;
+  };
+
+  const getMonthsOptions = () => {
+    const months: { label: string; value: { month: number; year: number } }[] = [];
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+    
+    // Generate last 24 months
+    for (let i = 0; i < 24; i++) {
+      let month = currentMonth - i;
+      let year = currentYear;
+      
+      while (month <= 0) {
+        month += 12;
+        year -= 1;
+      }
+      
+      const monthNames = ['Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 
+                          'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'];
+      months.push({ 
+        label: `${monthNames[month - 1]} ${year}`, 
+        value: { month, year } 
+      });
+    }
+    
+    return months;
+  };
+
+  const getYearsOptions = () => {
+    const years: number[] = [];
+    const currentYear = new Date().getFullYear();
+    
+    // Generate years from 2024 to current + 1
+    for (let year = currentYear + 1; year >= 2024; year--) {
+      years.push(year);
+    }
+    
+    return years;
+  };
+
   // Load stats with period filter
-  const loadRefuelingStats = async (period: 'all' | 'week' | 'month' | 'year') => {
+  const loadRefuelingStats = async (
+    period: 'all' | 'week' | 'month' | 'year',
+    weekStart?: string,
+    month?: number,
+    year?: number
+  ) => {
     setLoadingStats(true);
     try {
-      const data = await apiFetch(`/api/refueling/stats?period=${period}`);
+      let url = `/api/refueling/stats?period=${period}`;
+      
+      if (period === 'week' && weekStart) {
+        url += `&week_start=${weekStart}`;
+      } else if (period === 'month' && month && year) {
+        url += `&month=${month}&year=${year}`;
+      } else if (period === 'year' && year) {
+        url += `&year=${year}`;
+      }
+      
+      const data = await apiFetch(url);
       setRefuelingStats(data);
     } catch (error) {
       console.error('Error loading stats:', error);
@@ -574,7 +656,27 @@ export default function Vehicles() {
   // Handle period change
   const handlePeriodChange = (period: 'all' | 'week' | 'month' | 'year') => {
     setStatsPeriod(period);
-    loadRefuelingStats(period);
+    
+    if (period === 'all') {
+      loadRefuelingStats(period);
+    } else if (period === 'week') {
+      const weeks = getWeeksInRange();
+      if (weeks.length > 0) {
+        setStatsWeek(weeks[0].value);
+        loadRefuelingStats(period, weeks[0].value);
+      }
+    } else if (period === 'month') {
+      const now = new Date();
+      const month = now.getMonth() + 1;
+      const year = now.getFullYear();
+      setStatsMonth(month);
+      setStatsYear(year);
+      loadRefuelingStats(period, undefined, month, year);
+    } else if (period === 'year') {
+      const year = new Date().getFullYear();
+      setStatsYear(year);
+      loadRefuelingStats(period, undefined, undefined, year);
+    }
   };
 
   const formatRefuelingDate = (dateStr: string) => {
